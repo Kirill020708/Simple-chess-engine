@@ -25,7 +25,7 @@ struct Board{
 	Bitboard whitePieces,blackPieces;
 	Bitboard pawns,knights,bishops,rooks,queens,kings;
 
-	bool castlingWhiteLeftBroke,castlingWhiteRightBroke,castlingBlackLeftBroke,castlingBlackRightBroke;
+	bool castlingWhiteQueensideBroke,castlingWhiteKingsideBroke,castlingBlackQueensideBroke,castlingBlackKingsideBroke;
 
 	int enPassantColumn;
 
@@ -38,7 +38,7 @@ struct Board{
 		rooks=(1ull<<0)|(1ull<<7)|(1ull<<56)|(1ull<<63);
 		queens=(1ull<<3)|(1ull<<59);
 		kings=(1ull<<4)|(1ull<<60);
-		castlingWhiteLeftBroke=castlingWhiteRightBroke=castlingBlackLeftBroke=castlingBlackRightBroke=0;
+		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=0;
 		enPassantColumn=-1;
 	}
 
@@ -50,6 +50,57 @@ struct Board{
 		if(blackPieces.getBit(square))
 			return BLACK;
 		return EMPTY;
+	}
+
+	void initFromFEN(string fen){
+		vector<string>tokens=splitStr(fen," ");
+		string position=tokens[0],currentColor=tokens[1],castlingAvailability=tokens[2],enPassantSquare=tokens[3];
+		whitePieces=blackPieces=pawns=knights=bishops=rooks=queens=kings=0;
+		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=1;
+		enPassantColumn=-1;
+
+		int currentSquare=0;
+		for(auto piece:position){
+			if(piece=='/')
+				continue;
+			if(piece>='0'&&piece<='9'){
+				currentSquare+=piece-'0';
+				continue;
+			}
+			ull currentSquareBit=(1ull<<currentSquare);
+			if(piece>='A'&&piece<='Z'){
+				whitePieces|=currentSquareBit;
+				piece+='a'-'A';
+			}else
+				blackPieces|=currentSquareBit;
+			if(piece=='p')
+				pawns|=currentSquareBit;
+			if(piece=='n')
+				knights|=currentSquareBit;
+			if(piece=='b')
+				bishops|=currentSquareBit;
+			if(piece=='r')
+				rooks|=currentSquareBit;
+			if(piece=='q')
+				queens|=currentSquareBit;
+			if(piece=='k')
+				kings|=currentSquareBit;
+			currentSquare++;
+		}
+
+		for(auto cst:castlingAvailability){
+			if(cst=='Q')
+				castlingWhiteQueensideBroke=0;
+			if(cst=='K')
+				castlingWhiteKingsideBroke=0;
+			if(cst=='q')
+				castlingBlackQueensideBroke=0;
+			if(cst=='k')
+				castlingBlackKingsideBroke=0;
+		}
+
+		if(enPassantSquare!="-")
+			enPassantColumn=enPassantSquare[0]-'a';
 	}
 };
 

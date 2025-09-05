@@ -28,23 +28,25 @@ struct MoveGeneration{
 		int occup=board.occupancy(square);
 		Bitboard moves;
 		if(occup==WHITE){
-			if(board.occupancy(square-8)==EMPTY)
+			if(board.occupancy(square-8)==EMPTY){
 				moves|=(1ull<<(square-8));
-			if(board.occupancy(square-16)==EMPTY)
-				moves|=(1ull<<(square-16));
+				if(row==6&&board.occupancy(square-16)==EMPTY)
+					moves|=(1ull<<(square-16));
+			}
 			if(column>0&&(board.occupancy(square-9)==BLACK||(row==3&&board.enPassantColumn==column-1)))
 				moves|=(1ull<<(square-9));
 			if(column<7&&(board.occupancy(square-7)==BLACK||(row==3&&board.enPassantColumn==column+1)))
 				moves|=(1ull<<(square-7));
 		}
 		if(occup==BLACK){
-			if(board.occupancy(square+8)==EMPTY)
+			if(board.occupancy(square+8)==EMPTY){
 				moves|=(1ull<<(square+8));
-			if(board.occupancy(square+16)==EMPTY)
-				moves|=(1ull<<(square+16));
-			if(column>0&&(board.occupancy(square+7)==BLACK||(row==3&&board.enPassantColumn==column-1)))
+				if(row==1&&board.occupancy(square+16)==EMPTY)
+					moves|=(1ull<<(square+16));
+			}
+			if(column>0&&(board.occupancy(square+7)==WHITE||(row==3&&board.enPassantColumn==column-1)))
 				moves|=(1ull<<(square+7));
-			if(column<7&&(board.occupancy(square+9)==BLACK||(row==3&&board.enPassantColumn==column+1)))
+			if(column<7&&(board.occupancy(square+9)==WHITE||(row==3&&board.enPassantColumn==column+1)))
 				moves|=(1ull<<(square+9));
 		}
 		return moves;
@@ -83,7 +85,7 @@ struct MoveGeneration{
 	}
 
 	Bitboard queenMoves(int square){
-		return bishopMoves(square)&rookMoves(square);
+		return bishopMoves(square)|rookMoves(square);
 	}
 
     bool isSquareAttackedByWhite();
@@ -98,27 +100,27 @@ struct MoveGeneration{
     }
 
     bool canWhiteCastleQueenside(){
-    	return (!board.castlingWhiteLeftBroke)&&
+    	return (!board.castlingWhiteQueensideBroke)&&
     			((boardHelper.generateMask(57,59)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByBlack(58)&&!isSquareAttackedByBlack(59)&&!isSquareAttackedByBlack(60);
     }
 
     bool canWhiteCastleKingside(){
-    	return (!board.castlingWhiteLeftBroke)&&
+    	return (!board.castlingWhiteKingsideBroke)&&
     			((boardHelper.generateMask(61,62)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByBlack(60)&&!isSquareAttackedByBlack(61)&&!isSquareAttackedByBlack(62);
     }
 
     bool canBlackCastleQueenside(){
-    	return (!board.castlingWhiteLeftBroke)&&
+    	return (!board.castlingBlackQueensideBroke)&&
     			((boardHelper.generateMask(1,3)&(board.whitePieces|board.blackPieces))==0)&&
-    			!isSquareAttackedByBlack(2)&&!isSquareAttackedByBlack(3)&&!isSquareAttackedByBlack(4);
+    			!isSquareAttackedByWhite(2)&&!isSquareAttackedByWhite(3)&&!isSquareAttackedByWhite(4);
     }
 
     bool canBlackCastleKingside(){
-    	return (!board.castlingWhiteLeftBroke)&&
+    	return (!board.castlingBlackKingsideBroke)&&
     			((boardHelper.generateMask(5,6)&(board.whitePieces|board.blackPieces))==0)&&
-    			!isSquareAttackedByBlack(4)&&!isSquareAttackedByBlack(5)&&!isSquareAttackedByBlack(6);
+    			!isSquareAttackedByWhite(4)&&!isSquareAttackedByWhite(5)&&!isSquareAttackedByWhite(6);
     }
 
 	Bitboard kingMoves(int square){
@@ -126,16 +128,16 @@ struct MoveGeneration{
 		Bitboard moves=boardHelper.kingMoves[square];
 		if(occup==WHITE){
 			if(canWhiteCastleQueenside())
-				moves&=(1ull<<58);
+				moves|=(1ull<<58);
 			if(canWhiteCastleKingside())
-				moves&=(1ull<<62);
+				moves|=(1ull<<62);
 			moves&=(~board.whitePieces);
 		}
 		if(occup==BLACK){
 			if(canBlackCastleQueenside())
-				moves&=(1ull<<2);
+				moves|=(1ull<<2);
 			if(canBlackCastleKingside())
-				moves&=(1ull<<6);
+				moves|=(1ull<<6);
 			moves&=(~board.blackPieces);
 		}
 		return moves;
@@ -166,7 +168,7 @@ struct MoveGeneration{
 			return true;
 		if((board.whitePieces&board.kings&boardHelper.kingMoves[square]).getBit(square))
 			return true;
-		Bitboard pieces=board.whitePieces&(~board.pawns)&(~board.knights)&(~board.kings);
+		Bitboard pieces=board.whitePieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
 		while(pieces>0){
 			int currentSquare=pieces.getFirstBitNumberAndExclude();
 			if(moves(currentSquare).getBit(square))
@@ -184,7 +186,7 @@ struct MoveGeneration{
 			return true;
 		if((board.blackPieces&board.kings&boardHelper.kingMoves[square]).getBit(square))
 			return true;
-		Bitboard pieces=board.blackPieces&(~board.pawns)&(~board.knights)&(~board.kings);
+		Bitboard pieces=board.blackPieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
 		while(pieces>0){
 			int currentSquare=pieces.getFirstBitNumberAndExclude();
 			if(moves(currentSquare).getBit(square))

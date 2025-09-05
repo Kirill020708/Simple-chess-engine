@@ -33,10 +33,18 @@ const ld eps = 1e-9, pi = 3.1415926;
 #define S second
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-
-
-const int KNIGHT_PROM=1,BISHOP_PROM=2,ROOK_PROM=3,QUEEN_PROM=4;
-
-ull generateMask(int start,int end){//mask with 1-s from start bit to end bit
-	return ((1ull<<(end-start+1))-1)<<start;
+vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for FEN parsing)
+	s+=c;
+	vector<string>an;
+	string t;
+	for(auto i:s){
+		t.push_back(i);
+		if(t.length()>=c.length()&&t.substr(t.length()-c.length(),c.length())==c){
+			t=t.substr(0,t.length()-c.length());
+			if(t!="")
+				an.push_back(t);
+			t="";
+		}
+	}
+	return an;
 }

@@ -5,6 +5,8 @@
 
 #endif /* DECLARS */
 
+const int KNIGHT_PROM=1,BISHOP_PROM=2,ROOK_PROM=3,QUEEN_PROM=4;
+
 struct Move{
 	int move;//0-5b: start, 6-11: end; 11-...:flag for promotion
 
