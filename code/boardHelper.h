@@ -24,4 +24,22 @@ struct BoardHelper{
 					}
 			}
 	}
+
+	int getColumnNumber(int square){
+		return square&7;
+	}
+
+	int getRowNumber(int square){
+		return square>>3;
+	}
+
+	Bitboard getColumn(int columnNuber){
+		return Bitboard(ull(0b1000000010000000100000001000000010000000100000001000000010000000)<<columnNuber);
+	}
+
+	Bitboard generateMask(int start,int end){//mask with 1-s from start bit to end bit
+		return Bitboard(((1ull<<(end-start+1))-1)<<start);
+	}
 };
+
+BoardHelper boardHelper;

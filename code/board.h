@@ -12,6 +12,15 @@
 
 #endif /* BITBOARD */
 
+#ifndef BOARDHELP
+#define BOARDHELP
+
+#include "boardHelper.h"
+
+#endif /* BOARDHELP */
+
+const int EMPTY=-1,WHITE=0,BLACK=1,ERROR=2;
+
 struct Board{
 	Bitboard whitePieces,blackPieces;
 	Bitboard pawns,knights,bishops,rooks,queens,kings;
@@ -21,9 +30,9 @@ struct Board{
 	int enPassantColumn;
 
 	Board(){
-		whitePieces=generateMask(48,63);
-		blackPieces=generateMask(0,15);
-		pawns=generateMask(8,15)|generateMask(48,55);
+		whitePieces=boardHelper.generateMask(48,63);
+		blackPieces=boardHelper.generateMask(0,15);
+		pawns=boardHelper.generateMask(8,15)|boardHelper.generateMask(48,55);
 		knights=(1ull<<1)|(1ull<<6)|(1ull<<57)|(1ull<<62);
 		bishops=(1ull<<2)|(1ull<<5)|(1ull<<58)|(1ull<<61);
 		rooks=(1ull<<0)|(1ull<<7)|(1ull<<56)|(1ull<<63);
@@ -33,28 +42,15 @@ struct Board{
 		enPassantColumn=-1;
 	}
 
-	const int EMPTY=-1,WHITE=0,BLACK=1,ERROR=2;
 	int occupancy(int square){
 		if(square<0||square>63)
 			return ERROR;
-		if(whitePieces&(1ull<<square))
+		if(whitePieces.getBit(square))
 			return WHITE;
-		if(blackPieces&(1ull<<square))
+		if(blackPieces.getBit(square))
 			return BLACK;
 		return EMPTY;
 	}
-
-	Bitboard pawnMoves(int square){
-		if(occupancy(square)==WHITE){
-			Bitboard moves;
-			if(occupancy(square-8)==EMPTY)
-				moves|=(1ull<<(square-8));
-			if(occupancy(square-16)==EMPTY)
-				moves|=(1ull<<(square-16));
-			if(occupancy(square-9)==BLACK)
-				moves|=(1ull<<(square-9));
-			if(occupancy(square-7)==BLACK)
-				moves|=(1ull<<(square-7));
-		}
-	}
 };
+
+Board board;
