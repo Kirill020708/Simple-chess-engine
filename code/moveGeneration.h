@@ -22,7 +22,7 @@
 
 struct MoveGeneration{
 
-	Bitboard pawnMoves(int square){
+	inline Bitboard pawnMoves(int square){
 		int column=boardHelper.getColumnNumber(square);
 		int row=boardHelper.getRowNumber(square);
 		int occup=board.occupancy(square);
@@ -44,15 +44,15 @@ struct MoveGeneration{
 				if(row==1&&board.occupancy(square+16)==EMPTY)
 					moves|=(1ull<<(square+16));
 			}
-			if(column>0&&(board.occupancy(square+7)==WHITE||(row==3&&board.enPassantColumn==column-1)))
+			if(column>0&&(board.occupancy(square+7)==WHITE||(row==4&&board.enPassantColumn==column-1)))
 				moves|=(1ull<<(square+7));
-			if(column<7&&(board.occupancy(square+9)==WHITE||(row==3&&board.enPassantColumn==column+1)))
+			if(column<7&&(board.occupancy(square+9)==WHITE||(row==4&&board.enPassantColumn==column+1)))
 				moves|=(1ull<<(square+9));
 		}
 		return moves;
 	}
 
-	Bitboard knightMoves(int square){
+	inline Bitboard knightMoves(int square){
 		int occup=board.occupancy(square);
 		Bitboard moves=boardHelper.knightMoves[square];
 		if(occup==WHITE)
@@ -62,7 +62,7 @@ struct MoveGeneration{
 		return moves;
 	}
 
-	Bitboard bishopMoves(int square){
+	inline Bitboard bishopMoves(int square){
         ull key=(((magic.bishopAttackPruned[square]&ull(board.whitePieces|board.blackPieces))*magic.bishopsMagics[square])>>magic.bishopsShifts[square]);
         Bitboard moves=magic.bishopCaptures[square][key];
 		int occup=board.occupancy(square);
@@ -73,7 +73,7 @@ struct MoveGeneration{
 		return moves;
 	}
 
-	Bitboard rookMoves(int square){
+	inline Bitboard rookMoves(int square){
         ull key=(((magic.rookAttackPruned[square]&ull(board.whitePieces|board.blackPieces))*magic.rooksMagics[square])>>magic.rooksShifts[square]);
         Bitboard moves=magic.rookCaptures[square][key];
 		int occup=board.occupancy(square);
@@ -84,46 +84,46 @@ struct MoveGeneration{
 		return moves;
 	}
 
-	Bitboard queenMoves(int square){
+	inline Bitboard queenMoves(int square){
 		return bishopMoves(square)|rookMoves(square);
 	}
 
-    bool isSquareAttackedByWhite();
-    bool isSquareAttackedByBlack();
+    inline bool isSquareAttackedByWhite();
+    inline bool isSquareAttackedByBlack();
 
-    bool isWhiteInCheck(){
-    	return isSquareAttackedByWhite((board.kings&board.whitePieces).getFirstBitNumber());
+    inline bool isWhiteInCheck(){
+    	return isSquareAttackedByBlack((board.kings&board.whitePieces).getFirstBitNumber());
     }
 
-    bool isBlackInCheck(){
-    	return isSquareAttackedByBlack((board.kings&board.blackPieces).getFirstBitNumber());
+    inline bool isBlackInCheck(){
+    	return isSquareAttackedByWhite((board.kings&board.blackPieces).getFirstBitNumber());
     }
 
-    bool canWhiteCastleQueenside(){
+    inline bool canWhiteCastleQueenside(){
     	return (!board.castlingWhiteQueensideBroke)&&
     			((boardHelper.generateMask(57,59)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByBlack(58)&&!isSquareAttackedByBlack(59)&&!isSquareAttackedByBlack(60);
     }
 
-    bool canWhiteCastleKingside(){
+    inline bool canWhiteCastleKingside(){
     	return (!board.castlingWhiteKingsideBroke)&&
     			((boardHelper.generateMask(61,62)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByBlack(60)&&!isSquareAttackedByBlack(61)&&!isSquareAttackedByBlack(62);
     }
 
-    bool canBlackCastleQueenside(){
+    inline bool canBlackCastleQueenside(){
     	return (!board.castlingBlackQueensideBroke)&&
     			((boardHelper.generateMask(1,3)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByWhite(2)&&!isSquareAttackedByWhite(3)&&!isSquareAttackedByWhite(4);
     }
 
-    bool canBlackCastleKingside(){
+    inline bool canBlackCastleKingside(){
     	return (!board.castlingBlackKingsideBroke)&&
     			((boardHelper.generateMask(5,6)&(board.whitePieces|board.blackPieces))==0)&&
     			!isSquareAttackedByWhite(4)&&!isSquareAttackedByWhite(5)&&!isSquareAttackedByWhite(6);
     }
 
-	Bitboard kingMoves(int square){
+	inline Bitboard kingMoves(int square){
 		int occup=board.occupancy(square);
 		Bitboard moves=boardHelper.kingMoves[square];
 		if(occup==WHITE){
@@ -143,7 +143,7 @@ struct MoveGeneration{
 		return moves;
 	}
 
-	Bitboard moves(int square){
+	inline Bitboard moves(int square){
 		if(board.pawns.getBit(square))
 			return pawnMoves(square);
 		if(board.knights.getBit(square))
@@ -159,14 +159,14 @@ struct MoveGeneration{
 		return 0;
 	}
 
-	bool isSquareAttackedByWhite(int square){
+	inline bool isSquareAttackedByWhite(int square){
 		Bitboard whitePawns=board.pawns&board.whitePieces;
 		Bitboard pawnsAttack=(((whitePawns&(~boardHelper.getColumn(7)))>>7)|((whitePawns&(~boardHelper.getColumn(0)))>>9))&(~board.whitePieces);
 		if(pawnsAttack.getBit(square))
 			return true;
-		if((board.whitePieces&board.knights&boardHelper.knightMoves[square]).getBit(square))
+		if(board.whitePieces&board.knights&boardHelper.knightMoves[square])
 			return true;
-		if((board.whitePieces&board.kings&boardHelper.kingMoves[square]).getBit(square))
+		if(board.whitePieces&board.kings&boardHelper.kingMoves[square])
 			return true;
 		Bitboard pieces=board.whitePieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
 		while(pieces>0){
@@ -177,14 +177,14 @@ struct MoveGeneration{
 		return false;
 	}
 
-	bool isSquareAttackedByBlack(int square){
+	inline bool isSquareAttackedByBlack(int square){
 		Bitboard blackPawns=board.pawns&board.blackPieces;
 		Bitboard pawnsAttack=(((blackPawns&(~boardHelper.getColumn(0)))<<7)|((blackPawns&(~boardHelper.getColumn(7)))<<9))&(~board.blackPieces);
 		if(pawnsAttack.getBit(square))
 			return true;
-		if((board.blackPieces&board.knights&boardHelper.knightMoves[square]).getBit(square))
+		if(board.blackPieces&board.knights&boardHelper.knightMoves[square])
 			return true;
-		if((board.blackPieces&board.kings&boardHelper.kingMoves[square]).getBit(square))
+		if(board.blackPieces&board.kings&boardHelper.kingMoves[square])
 			return true;
 		Bitboard pieces=board.blackPieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
 		while(pieces>0){

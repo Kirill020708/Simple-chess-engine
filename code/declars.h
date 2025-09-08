@@ -33,6 +33,11 @@ const ld eps = 1e-9, pi = 3.1415926;
 #define S second
 mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 
+
+const int EMPTY=-1,WHITE=0,BLACK=1,ERROR=-2;
+const int NOPIECE=0,PAWN=1,KNIGHT=2,BISHOP=3,ROOK=4,QUEEN=5,KING=6;
+
+
 vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for FEN parsing)
 	s+=c;
 	vector<string>an;
@@ -47,4 +52,11 @@ vector<string>splitStr(string s,string c){//splits a string by (c) substrings (f
 		}
 	}
 	return an;
+}
+
+string squareNumberToUCI(int square){
+    string s;
+    s.push_back(char('a'+(square&7)));
+    s.push_back(char('0'+8-(square>>3)));
+    return s;
 }

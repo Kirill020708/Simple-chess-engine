@@ -14,17 +14,17 @@ struct Bitboard{
 		bitboard=bitboard_;
 	}
 
-	bool getBit(ll i){
+	inline bool getBit(ll i){
 		return (bitboard&(1ull<<i))>0;
 	}
 
-	int getFirstBitNumber(){//returns the number of first enabled bit
+	inline int getFirstBitNumber(){//returns the number of first enabled bit
 		if(!bitboard)
 			return -1;
 		return __builtin_ctzll(bitboard);
 	}
 
-	int getFirstBitNumberAndExclude(){//returns the number of first enabled bit and disables it
+	inline int getFirstBitNumberAndExclude(){//returns the number of first enabled bit and disables it
 		if(!bitboard)
 			return -1;
 		int b=__builtin_ctzll(bitboard);
