@@ -1,4 +1,6 @@
-// #include <SFML/Graphics.hpp>
+// declarations
+
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -24,7 +26,7 @@ typedef long long ll;
 typedef unsigned long long ull;
 typedef __int128 lll;
 typedef long double ld;
-const ll mod = 1e9+7, inf = 2e15 + 1;
+const ll mod = 1e9+7, inf = 1e9 + 1;
 const ll noneCode=inf/173;
 const ld eps = 1e-9, pi = 3.1415926;
 #define all(a) a.begin(), a.end()
@@ -36,6 +38,8 @@ mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 
 const int EMPTY=-1,WHITE=0,BLACK=1,ERROR=-2;
 const int NOPIECE=0,PAWN=1,KNIGHT=2,BISHOP=3,ROOK=4,QUEEN=5,KING=6;
+const int DONT_SORT=0,DO_SORT=1;
+const int ALL_MOVES=0,ONLY_CAPTURES=1;
 
 
 vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for FEN parsing)

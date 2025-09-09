@@ -1,3 +1,6 @@
+// struct for move
+
+
 #ifndef DECLARS
 #define DECLARS
 
@@ -7,15 +10,23 @@
 
 struct Move{
 	int move;//0-5b: start, 6-11: end; 11-...:flag for promotion
+	ll score;
 
 	Move(){}
 
 	Move(int move_){
 		move=move_;
+		score=0;
 	}
 
 	Move(int startSq,int targetSq,int flag){
 		move=startSq+(targetSq<<6)+(flag<<12);
+		score=0;
+	}
+
+	Move(int startSq,int targetSq,int flag,int score_){
+		move=startSq+(targetSq<<6)+(flag<<12);
+		score=score_;
 	}
 
 	Move(string uciMove){
@@ -56,3 +67,21 @@ struct Move{
 	    return ans;
 	}
 };
+
+// reverse because if move1 < move2 then move2 is better
+
+bool operator<(Move x,Move y){
+	return (x.score>y.score);
+}
+
+bool operator<=(Move x,Move y){
+	return (x.score>=y.score);
+}
+
+bool operator>(Move x,Move y){
+	return (x.score<y.score);
+}
+
+bool operator>=(Move x,Move y){
+	return (x.score<=y.score);
+}

@@ -1,3 +1,5 @@
+// struct for board
+
 #ifndef MOVE
 #define MOVE
 
@@ -19,8 +21,17 @@
 
 #endif /* BOARDHELP */
 
+#ifndef PIECESQTABLE
+#define PIECESQTABLE
+
+#include "pieceSquareTable.h"
+
+#endif /* PIECESQTABLE */
+
+
 struct Board{
 	int color;
+	int evaluation;
 
 	Bitboard whitePieces,blackPieces;
 	Bitboard pawns,knights,bishops,rooks,queens,kings;
@@ -41,17 +52,7 @@ struct Board{
 		kings=(1ull<<4)|(1ull<<60);
 		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=0;
 		enPassantColumn=-1;
-	}
-
-	inline void clearPosition(int square){
-		whitePieces&=(~(1ull<<square));
-		blackPieces&=(~(1ull<<square));
-		pawns&=(~(1ull<<square));
-		knights&=(~(1ull<<square));
-		bishops&=(~(1ull<<square));
-		rooks&=(~(1ull<<square));
-		queens&=(~(1ull<<square));
-		kings&=(~(1ull<<square));
+		evaluation=0;
 	}
 
 	inline int occupancy(int square){
@@ -82,7 +83,20 @@ struct Board{
 		return NOPIECE;
 	}
 
+	inline void clearPosition(int square){
+		evaluation-=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
+		whitePieces&=(~(1ull<<square));
+		blackPieces&=(~(1ull<<square));
+		pawns&=(~(1ull<<square));
+		knights&=(~(1ull<<square));
+		bishops&=(~(1ull<<square));
+		rooks&=(~(1ull<<square));
+		queens&=(~(1ull<<square));
+		kings&=(~(1ull<<square));
+	}
+
 	inline void putPiece(int square,int color,int pieceType){
+		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color);
 		if(color==WHITE)
 			whitePieces|=(1ull<<square);
 		if(color==BLACK)
@@ -211,6 +225,12 @@ struct Board{
 
 		if(enPassantSquare!="-")
 			enPassantColumn=enPassantSquare[0]-'a';
+
+		evaluation=0;
+		for(int square=0;square<64;square++)
+			if(occupancy(square)!=EMPTY){
+				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
+			}
 	}
 };
 

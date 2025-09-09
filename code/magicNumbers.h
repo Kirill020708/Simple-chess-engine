@@ -1,3 +1,6 @@
+// magic bitboards for fast sliding piece's moves generation
+
+
 #ifndef BITBOARD
 #define BITBOARD
 

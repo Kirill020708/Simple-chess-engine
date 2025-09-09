@@ -1,7 +1,7 @@
 #ifndef BBB
 #define BBB
 
-#include "perft.h"
+#include "searcher.h"
 
 #endif /* BBB */
 
@@ -18,7 +18,12 @@ void printDesk01(ull x){
 }
 
 int main(){
-	perfTest();
+	// board.initFromFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+	// board.makeMove(Move("e2e4"));
+	// board.makeMove(Move("a7a6"));
+	// cout<<board.evaluation<<'\n';
+	searcher.iterativeDeepeningSearch(WHITE,100);
+	// perfTest();
 }
 
 

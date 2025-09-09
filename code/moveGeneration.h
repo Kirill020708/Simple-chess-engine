@@ -1,3 +1,6 @@
+// generator of bitboards of moves for a piece
+
+
 #ifndef BOARD
 #define BOARD
 

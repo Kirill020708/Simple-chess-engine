@@ -1,3 +1,6 @@
+// perfomance test
+
+
 #ifndef MOVEGENLIST
 #define MOVEGENLIST
 
@@ -33,7 +36,7 @@ void perfTest(){
 	for(int depth=1;depth<=256;depth++){
         std::chrono::steady_clock::time_point timeBegin = std::chrono::steady_clock::now();
 		int color=board.color;
-		moveListGenerator.generateMoves(color,depth);
+		moveListGenerator.generateMoves(color,depth,DONT_SORT,ALL_MOVES);
 		ll nodes=0;
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depth];currentMove++){
 			Move move=moveListGenerator.moveList[depth][currentMove];

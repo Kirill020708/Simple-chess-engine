@@ -1,3 +1,6 @@
+// functions for different board data
+
+
 #ifndef BITBOARD
 #define BITBOARD
 
