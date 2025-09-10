@@ -7,6 +7,7 @@
 
 #endif /* MOVE */
 
+
 #ifndef BITBOARD
 #define BITBOARD
 
@@ -14,12 +15,14 @@
 
 #endif /* BITBOARD */
 
+
 #ifndef BOARDHELP
 #define BOARDHELP
 
 #include "boardHelper.h"
 
 #endif /* BOARDHELP */
+
 
 #ifndef PIECESQTABLE
 #define PIECESQTABLE
@@ -29,8 +32,16 @@
 #endif /* PIECESQTABLE */
 
 
+#ifndef ZOBRIST
+#define ZOBRIST
+
+#include "zobrist.h"
+
+#endif /* ZOBRIST */
+
+
 struct Board{
-	int color;
+	int boardColor;
 	int evaluation;
 
 	Bitboard whitePieces,blackPieces;
@@ -40,20 +51,9 @@ struct Board{
 
 	int enPassantColumn;
 
-	Board(){
-		color=WHITE;
-		whitePieces=boardHelper.generateMask(48,63);
-		blackPieces=boardHelper.generateMask(0,15);
-		pawns=boardHelper.generateMask(8,15)|boardHelper.generateMask(48,55);
-		knights=(1ull<<1)|(1ull<<6)|(1ull<<57)|(1ull<<62);
-		bishops=(1ull<<2)|(1ull<<5)|(1ull<<58)|(1ull<<61);
-		rooks=(1ull<<0)|(1ull<<7)|(1ull<<56)|(1ull<<63);
-		queens=(1ull<<3)|(1ull<<59);
-		kings=(1ull<<4)|(1ull<<60);
-		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=0;
-		enPassantColumn=-1;
-		evaluation=0;
-	}
+	ull zobristKey;
+
+	char age;
 
 	inline int occupancy(int square){
 		if(square<0||square>63)
@@ -83,7 +83,34 @@ struct Board{
 		return NOPIECE;
 	}
 
+	void initZobristKey(){
+		for(int square=0;square<64;square++){
+			int piece=occupancyPiece(square);
+			int pieceColor=occupancy(square);
+			if(pieceColor!=EMPTY)
+				zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
+		}
+	}
+
+	ull getZobristKey(){
+		return zobristKey^
+		
+				((boardColor==WHITE)?0:zobristKeys.colorKey)^
+
+				zobristKeys.canCastle[castlingWhiteQueensideBroke+
+									(castlingWhiteKingsideBroke<<1)+
+									(castlingBlackQueensideBroke<<2)+
+									(castlingBlackKingsideBroke<<3)]^
+
+				zobristKeys.enPassant[enPassantColumn];
+	}
+
 	inline void clearPosition(int square){
+		int piece=occupancyPiece(square);
+		int pieceColor=occupancy(square);
+		if(pieceColor!=EMPTY)
+			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
+
 		evaluation-=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
 		whitePieces&=(~(1ull<<square));
 		blackPieces&=(~(1ull<<square));
@@ -113,6 +140,9 @@ struct Board{
 			queens|=(1ull<<square);
 		if(pieceType==KING)
 			kings|=(1ull<<square);
+
+		if(color!=EMPTY)
+			zobristKey^=zobristKeys.pieceKeys[square][color][pieceType];
 	}
 
 	inline void movePiece(int startSquare,int targetSquare){
@@ -124,12 +154,13 @@ struct Board{
 	}
 
 	inline void makeMove(Move move){
-		color=(color==WHITE)?BLACK:WHITE;
+		age++;
+		boardColor=(boardColor==WHITE)?BLACK:WHITE;
 		int startSquare=move.getStartSquare();
 		int targetSquare=move.getTargetSquare();
 		int color=occupancy(startSquare);
 		int movingPiece=occupancyPiece(startSquare);
-		enPassantColumn=-1;
+		enPassantColumn=NO_EN_PASSANT;
 		if(movingPiece==PAWN){
 			if((abs(targetSquare-startSquare)&1)&&occupancy(targetSquare)==EMPTY){//enPassant capture
 				if(color==WHITE)
@@ -172,11 +203,12 @@ struct Board{
 	}
 
 	void initFromFEN(string fen){
+		age=0;
 		vector<string>tokens=splitStr(fen," ");
 		string position=tokens[0],currentColor=tokens[1],castlingAvailability=tokens[2],enPassantSquare=tokens[3];
 		whitePieces=blackPieces=pawns=knights=bishops=rooks=queens=kings=0;
 		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=1;
-		enPassantColumn=-1;
+		enPassantColumn=NO_EN_PASSANT;
 
 		int currentSquare=0;
 		for(auto piece:position){
@@ -208,9 +240,9 @@ struct Board{
 		}
 
 		if(currentColor=="w")
-			color=WHITE;
+			boardColor=WHITE;
 		else
-			color=BLACK;
+			boardColor=BLACK;
 
 		for(auto cst:castlingAvailability){
 			if(cst=='Q')
@@ -231,6 +263,24 @@ struct Board{
 			if(occupancy(square)!=EMPTY){
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
 			}
+		initZobristKey();
+	}
+
+	Board(){
+		age=0;
+		boardColor=WHITE;
+		whitePieces=boardHelper.generateMask(48,63);
+		blackPieces=boardHelper.generateMask(0,15);
+		pawns=boardHelper.generateMask(8,15)|boardHelper.generateMask(48,55);
+		knights=(1ull<<1)|(1ull<<6)|(1ull<<57)|(1ull<<62);
+		bishops=(1ull<<2)|(1ull<<5)|(1ull<<58)|(1ull<<61);
+		rooks=(1ull<<0)|(1ull<<7)|(1ull<<56)|(1ull<<63);
+		queens=(1ull<<3)|(1ull<<59);
+		kings=(1ull<<4)|(1ull<<60);
+		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=0;
+		enPassantColumn=NO_EN_PASSANT;
+		evaluation=0;
+		initZobristKey();
 	}
 };
 

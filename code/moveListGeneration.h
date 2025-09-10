@@ -41,10 +41,12 @@ const int maxDepth=256,maxListSize=256;
 //score: 10 bits for eval, 4 bits for mvv-lva, 
 
 struct MoveListGenerator{
-	const int captureShift=10;
+	const int captureShift=10,hashMoveShift=14;
 
 	Move moveList[maxDepth][maxListSize];
 	int moveListSize[maxDepth];
+
+	Move hashMove;
 
 	inline void generateWhiteMoves(int depth,bool doSort,bool onlyCaptures){
 		Board boardCopy=board;
@@ -79,6 +81,8 @@ struct MoveListGenerator{
 							board=boardCopy;
 							continue;
 						}
+						if(promotionMoves[i]==hashMove)
+							promotionMoves[i].score+=(1<<hashMoveShift);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
 					}
 				}else{
@@ -87,8 +91,11 @@ struct MoveListGenerator{
 						board=boardCopy;
 						continue;
 					}
-					moveList[depth][moveListSize[depth]++]=Move(startSquare,targetSquare,NOPIECE,
+					Move move=Move(startSquare,targetSquare,NOPIECE,
 						(captureCoeff<<captureShift)+board.evaluation-currentEvaluation);
+					if(move==hashMove)
+						move.score+=(1<<hashMoveShift);
+					moveList[depth][moveListSize[depth]++]=move;
 				}
 				board=boardCopy;
 			}
@@ -130,6 +137,8 @@ struct MoveListGenerator{
 							board=boardCopy;
 							continue;
 						}
+						if(promotionMoves[i]==hashMove)
+							promotionMoves[i].score+=(1<<hashMoveShift);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
 					}
 				}else{
@@ -138,8 +147,11 @@ struct MoveListGenerator{
 						board=boardCopy;
 						continue;
 					}
-					moveList[depth][moveListSize[depth]++]=Move(startSquare,targetSquare,NOPIECE,
+					Move move=Move(startSquare,targetSquare,NOPIECE,
 						(captureCoeff<<captureShift)+(-board.evaluation+currentEvaluation));
+					if(move==hashMove)
+						move.score+=(1<<hashMoveShift);
+					moveList[depth][moveListSize[depth]++]=move;
 				}
 				board=boardCopy;
 			}

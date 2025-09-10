@@ -9,7 +9,7 @@
 #endif /* DECLARS */
 
 struct Move{
-	int move;//0-5b: start, 6-11: end; 11-...:flag for promotion
+	int move=0;//0-5b: start, 6-11: end; 11-...:flag for promotion
 	ll score;
 
 	Move(){}
@@ -84,4 +84,12 @@ bool operator>(Move x,Move y){
 
 bool operator>=(Move x,Move y){
 	return (x.score<=y.score);
+}
+
+bool operator==(Move x,Move y){
+	return (x.move==y.move);
+}
+
+bool operator!=(Move x,Move y){
+	return (x.move!=y.move);
 }
