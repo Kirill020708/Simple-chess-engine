@@ -35,7 +35,7 @@ struct Evaluator{
 
 	int evaluateStalledPosition(int color,int depthFromRoot){
 		if(moveGenerator.isInCheck(color))
-			return (mateScore-depthFromRoot)*((color==WHITE)?-1:1);
+			return -(mateScore-depthFromRoot);
 		return 0;
 	}
 };

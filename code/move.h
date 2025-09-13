@@ -61,7 +61,7 @@ struct Move{
 
 	string convertToUCI(){
 	    string ans=squareNumberToUCI(getStartSquare())+squareNumberToUCI(getTargetSquare());
-	    char proms[5]={'0','n','b','r','q'};
+	    char proms[6]={'0','0','n','b','r','q'};
 	    if(getPromotionFlag()!=0)
 	    	ans.push_back(proms[getPromotionFlag()]);
 	    return ans;
