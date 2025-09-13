@@ -105,7 +105,7 @@ struct PieceSquareTable{
 	}
 
 	inline int getPiecePositionEval(int piece,int square,int color){
-		if(color==WHITE)
+		if(color==BLACK)
 			square=((7-(square>>3))<<3)+(square&7);
 		if(piece==PAWN)
 			return pawns[square];

@@ -38,133 +38,142 @@
 
 const int maxDepth=256,maxListSize=256;
 
-//score: 10 bits for eval, 4 bits for mvv-lva, 
+//score: 10 bits for eval, 6 bits for mvv-lva, 
 
 struct MoveListGenerator{
-	const int captureShift=10,hashMoveShift=14;
+	const int captureShift=10,hashMoveShift=16;
 
 	Move moveList[maxDepth][maxListSize];
 	int moveListSize[maxDepth];
 
 	Move hashMove;
 
-	inline void generateWhiteMoves(int depth,bool doSort,bool onlyCaptures){
-		Board boardCopy=board;
-		moveListSize[depth]=0;
-		Bitboard pieces=board.whitePieces;
-		int currentEvaluation=board.evaluation;
-		while(pieces>0){
-			int startSquare=pieces.getFirstBitNumberAndExclude();
-			Bitboard moves=moveGenerator.moves(startSquare);
-			if(onlyCaptures)
-				moves&=board.blackPieces;
-
-			while(moves>0){
-				int targetSquare=moves.getFirstBitNumberAndExclude();
-
-				int captureCoeff=0;
-				if(board.blackPieces.getBit(targetSquare)){
-					int attackingPiece=board.occupancyPiece(startSquare);
-					int capturedPiece=board.occupancyPiece(targetSquare);
-					captureCoeff=pieceSquareTable.materialEval[capturedPiece]-pieceSquareTable.materialEval[attackingPiece];
-				}
-
-				if(board.occupancyPiece(startSquare)==PAWN&&targetSquare<8){//white promotion
-					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
-					for(int i=0;i<4;i++){
-						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isWhiteInCheck()){
-							board=boardCopy;
-							continue;
-						}
-						if(promotionMoves[i]==hashMove)
-							promotionMoves[i].score+=(1<<hashMoveShift);
-						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
-					}
-				}else{
-					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isWhiteInCheck()){
-						board=boardCopy;
-						continue;
-					}
-					Move move=Move(startSquare,targetSquare,NOPIECE,
-						(captureCoeff<<captureShift)+board.evaluation-currentEvaluation);
-					if(move==hashMove)
-						move.score+=(1<<hashMoveShift);
-					moveList[depth][moveListSize[depth]++]=move;
-				}
-				board=boardCopy;
-			}
-		}
-		if(doSort)
-			sort(moveList[depth],moveList[depth]+moveListSize[depth]);
-	}
-
-	inline void generateBlackMoves(int depth,bool doSort,bool onlyCaptures){
-		Board boardCopy=board;
-		moveListSize[depth]=0;
-		Bitboard pieces=board.blackPieces;
-		int currentEvaluation=board.evaluation;
-		while(pieces>0){
-			int startSquare=pieces.getFirstBitNumberAndExclude();
-			Bitboard moves=moveGenerator.moves(startSquare);
-			if(onlyCaptures)
-				moves&=board.whitePieces;
-			
-			while(moves>0){
-				int targetSquare=moves.getFirstBitNumberAndExclude();
-
-				int captureCoeff=0;
-				if(board.blackPieces.getBit(targetSquare)){
-					int attackingPiece=board.occupancyPiece(startSquare);
-					int capturedPiece=board.occupancyPiece(targetSquare);
-					captureCoeff=pieceSquareTable.materialEval[capturedPiece]-pieceSquareTable.materialEval[attackingPiece];
-				}
-
-				if(board.occupancyPiece(startSquare)==PAWN&&targetSquare>=56){//black promotion
-					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
-					for(int i=0;i<4;i++){
-						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isBlackInCheck()){
-							board=boardCopy;
-							continue;
-						}
-						if(promotionMoves[i]==hashMove)
-							promotionMoves[i].score+=(1<<hashMoveShift);
-						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
-					}
-				}else{
-					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isBlackInCheck()){
-						board=boardCopy;
-						continue;
-					}
-					Move move=Move(startSquare,targetSquare,NOPIECE,
-						(captureCoeff<<captureShift)+(-board.evaluation+currentEvaluation));
-					if(move==hashMove)
-						move.score+=(1<<hashMoveShift);
-					moveList[depth][moveListSize[depth]++]=move;
-				}
-				board=boardCopy;
-			}
-		}
-		if(doSort)
-			sort(moveList[depth],moveList[depth]+moveListSize[depth]);
-	}
-
 	inline void generateMoves(int color,int depth,bool doSort,bool onlyCaptures){
+		Board boardCopy=board;
+		moveListSize[depth]=0;
+
+		Bitboard friendPieces,opponentPieces;
+
+
+		if(color==WHITE){
+			friendPieces=board.whitePieces;
+			opponentPieces=board.blackPieces;
+		}else{
+			friendPieces=board.blackPieces;
+			opponentPieces=board.whitePieces;
+		}
+
+
+		Bitboard pieces=friendPieces;
+		int currentEvaluation=board.evaluation;
+
+		while(pieces>0){
+			int startSquare=pieces.getFirstBitNumberAndExclude();
+			Bitboard moves=moveGenerator.moves(startSquare);
+			if(onlyCaptures){
+				moves&=opponentPieces;
+			}
+
+			while(moves>0){
+				int targetSquare=moves.getFirstBitNumberAndExclude();
+
+				int captureCoeff=0;
+				if(opponentPieces.getBit(targetSquare)){
+					int attackingPiece=board.occupancyPiece(startSquare);
+					int capturedPiece=board.occupancyPiece(targetSquare);
+					captureCoeff=(capturedPiece-attackingPiece)+10;
+				}
+
+				if(board.occupancyPiece(startSquare)==PAWN&&
+					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
+					Move promotionMoves[4];
+					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
+					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
+					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
+					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
+					for(int i=0;i<4;i++){
+						board.makeMove(promotionMoves[i]);
+						if(moveGenerator.isInCheck(color)){
+							board=boardCopy;
+							continue;
+						}
+						if(promotionMoves[i]==hashMove)
+							promotionMoves[i].score+=(1<<hashMoveShift);
+						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
+					}
+				}else{
+					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
+					if(moveGenerator.isInCheck(color)){
+						board=boardCopy;
+						continue;
+					}
+					int multForColor=1; // if color is black, we must get board.evaluation diff with negating, because board.evaluation is from white perspective
+					if(color==BLACK)
+						multForColor=-1;
+					Move move=Move(startSquare,targetSquare,NOPIECE,
+						(captureCoeff<<captureShift)+(board.evaluation)*multForColor);
+					if(move==hashMove)
+						move.score+=(1<<hashMoveShift);
+					moveList[depth][moveListSize[depth]++]=move;
+				}
+				board=boardCopy;
+			}
+		}
+		if(doSort)
+			sort(moveList[depth],moveList[depth]+moveListSize[depth]);
+	}
+
+
+
+
+	bool isStalled(int color){
+		Board boardCopy=board;
+		Bitboard friendPieces;
+
+
 		if(color==WHITE)
-			generateWhiteMoves(depth,doSort,onlyCaptures);
-		if(color==BLACK)
-			generateBlackMoves(depth,doSort,onlyCaptures);
+			friendPieces=board.whitePieces;
+		else
+			friendPieces=board.blackPieces;
+
+
+		Bitboard pieces=friendPieces;
+
+		while(pieces>0){
+			int startSquare=pieces.getFirstBitNumberAndExclude();
+			Bitboard moves=moveGenerator.moves(startSquare);
+
+			while(moves>0){
+				int targetSquare=moves.getFirstBitNumberAndExclude();
+
+				if(board.occupancyPiece(startSquare)==PAWN&&
+					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
+					Move promotionMoves[4];
+					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
+					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
+					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
+					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
+					for(int i=0;i<4;i++){
+						board.makeMove(promotionMoves[i]);
+						if(moveGenerator.isInCheck(color)){
+							board=boardCopy;
+							continue;
+						}
+						board=boardCopy;
+						return false;
+					}
+				}else{
+					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
+					if(moveGenerator.isInCheck(color)){
+						board=boardCopy;
+						continue;
+					}
+					board=boardCopy;
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 };
 

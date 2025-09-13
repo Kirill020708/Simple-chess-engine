@@ -44,7 +44,7 @@ const int ALL_MOVES=0,ONLY_CAPTURES=1;
 const int NO_EN_PASSANT=10;
 
 
-vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for FEN parsing)
+vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for parsing)
 	s+=c;
 	vector<string>an;
 	string t;

@@ -35,6 +35,8 @@
 struct Searcher{
 	bool UCIout=1;
 
+	bool stopSearch;
+
 	int boardCurrentAge;
 
 	Move bestMove;
@@ -44,6 +46,8 @@ struct Searcher{
 	std::chrono::steady_clock::time_point searchStartTime;
 
 	int quiescentSearch(int color,int alpha,int beta,int depthFromRoot){
+		if(stopSearch)
+			return 0;
 		ull currentZobristKey=board.getZobristKey();
 		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(currentZobristKey,0,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
@@ -53,15 +57,22 @@ struct Searcher{
 		}
 		moveListGenerator.hashMove=bestHashMove;
 		nodes++;
-		int evaluation=evaluator.evaluatePosition(color);
 		Board boardCopy=board;
 		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
+
+		int evaluation;
+		if(moveListGenerator.isStalled(color))
+			evaluation=evaluator.evaluateStalledPosition(color,depthFromRoot);
+		else
+			evaluation=evaluator.evaluatePosition(color);
+
 		int maxEvaluation=evaluation;
-		alpha=evaluation;
+		alpha=max(alpha,evaluation);
 		if(alpha>=beta){
 			transpositionTableQuiescent.write(currentZobristKey,maxEvaluation,0,LOWER_BOUND,boardCurrentAge,bestHashMove);
 			return maxEvaluation;
 		}
+
 		bool isFirstMove=1;
 		char type=UPPER_BOUND;
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
@@ -70,6 +81,8 @@ struct Searcher{
 			int score=-quiescentSearch((color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;
+			if(stopSearch)
+				return 0;
 			if(maxEvaluation<score){
 				if(score>alpha)
 					type=EXACT;
@@ -88,6 +101,12 @@ struct Searcher{
 	}
 
 	int search(int color,int depth,int isRoot,int alpha,int beta,int depthFromRoot){
+		if(stopSearch)
+			return 0;
+
+		if(moveListGenerator.isStalled(color))
+			return evaluator.evaluateStalledPosition(color,depthFromRoot);
+
 		ull currentZobristKey=board.getZobristKey();
 		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(currentZobristKey,depth,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
@@ -96,6 +115,8 @@ struct Searcher{
 				return alpha;
 		}
 		moveListGenerator.hashMove=bestHashMove;
+		if(isRoot&&depth>1)
+			moveListGenerator.hashMove=bestMove;
 		nodes++;
 		if(depth==0)
 			return quiescentSearch(color,alpha,beta,depthFromRoot);
@@ -108,14 +129,16 @@ struct Searcher{
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 			board.makeMove(move);
 			int score;
-			if(!isFirstMove){
-				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
-				if(score>alpha&&score<beta)
-					score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
-			}else
+			// if(!isFirstMove){
+			// 	score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
+			// 	if(score>alpha&&score<beta)
+			// 		score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
+			// }else
 				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;
+			if(stopSearch)
+				return 0;
 			if(maxEvaluation<score){
 				if(score>alpha)
 					type=EXACT;
@@ -137,11 +160,14 @@ struct Searcher{
 	}
 
 	void iterativeDeepeningSearch(int color,int maxDepth){
+		stopSearch=0;
 		nodes=0;
 		boardCurrentAge=board.age;
         searchStartTime = std::chrono::steady_clock::now();
 		for(int depth=1;depth<=maxDepth;depth++){
 			int score=search(color,depth,1,-inf*2,inf*2,0);
+			if(stopSearch)
+				return;
 	        std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
 	        ll timeThinked=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - searchStartTime).count();
 			if(UCIout){
@@ -149,7 +175,7 @@ struct Searcher{
 				" score cp "<<score<<
 				" nodes "<<nodes<<
 				" nps "<<(nodes*1000)/(timeThinked+1)<<
-				" time ms "<<timeThinked<<
+				" time "<<timeThinked<<
 				" pv "<<bestMove.convertToUCI()<<'\n';
 			}
 		}

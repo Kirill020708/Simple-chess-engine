@@ -23,12 +23,20 @@
 #endif /* PIECESQTABLE */
 
 struct Evaluator{
+	const int mateScore=inf/10;
+
 	int evaluatePosition(){
 		return board.evaluation;
 	}
 
 	int evaluatePosition(int color){
 		return board.evaluation*((color==WHITE)?1:-1);
+	}
+
+	int evaluateStalledPosition(int color,int depthFromRoot){
+		if(moveGenerator.isInCheck(color))
+			return (mateScore-depthFromRoot)*((color==WHITE)?-1:1);
+		return 0;
 	}
 };
 

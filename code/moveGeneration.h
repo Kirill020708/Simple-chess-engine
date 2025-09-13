@@ -102,6 +102,12 @@ struct MoveGeneration{
     	return isSquareAttackedByWhite((board.kings&board.blackPieces).getFirstBitNumber());
     }
 
+    inline bool isInCheck(int color){
+    	if(color==WHITE)
+    		return isWhiteInCheck();
+    	return isBlackInCheck();
+    }
+
     inline bool canWhiteCastleQueenside(){
     	return (!board.castlingWhiteQueensideBroke)&&
     			((boardHelper.generateMask(57,59)&(board.whitePieces|board.blackPieces))==0)&&
