@@ -26,8 +26,30 @@
 struct MoveGeneration{
 
 	inline Bitboard pawnMoves(int square){
+		Bitboard moves;
+		int col=board.occupancy(square);
+		Bitboard pieces=board.whitePieces|board.blackPieces;
+		Bitboard shiftedPieces=((col==WHITE) ? ((pieces^(1ull<<square))>>8) : ((pieces^(1ull<<square))<<8));
+		Bitboard opponentPieces=(col==BLACK)?board.whitePieces:board.blackPieces;
+
+		moves|=(boardHelper.pawnMoves[col][square]&(~(pieces|shiftedPieces)));
+
+		moves|=(boardHelper.pawnCaptures[col][square]&(opponentPieces));
+
 		int column=boardHelper.getColumnNumber(square);
-		int row=boardHelper.getRowNumber(square);
+
+		if(boardHelper.getRowNumber(square)==(4-(col==WHITE))){
+			if(board.enPassantColumn==column-1)
+				moves|=boardHelper.pawnCaptureLeft[col][square];
+
+			if(board.enPassantColumn==column+1)
+				moves|=boardHelper.pawnCaptureRight[col][square];
+		}
+
+		return moves;
+/*
+		
+		
 		int occup=board.occupancy(square);
 		Bitboard moves;
 		if(occup==WHITE){
@@ -53,6 +75,7 @@ struct MoveGeneration{
 				moves|=(1ull<<(square+9));
 		}
 		return moves;
+		*/
 	}
 
 	inline Bitboard knightMoves(int square){
@@ -133,6 +156,7 @@ struct MoveGeneration{
     }
 
 	inline Bitboard kingMoves(int square){
+		// this_thread::sleep_for(std::chrono::milliseconds(1));
 		int occup=board.occupancy(square);
 		Bitboard moves=boardHelper.kingMoves[square];
 		if(occup==WHITE){

@@ -11,6 +11,10 @@
 struct BoardHelper{
 	Bitboard kingMoves[64],knightMoves[64];
 
+	Bitboard pawnMoves[2][64],pawnCaptures[2][64],pawnCaptureLeft[2][64],pawnCaptureRight[2][64];
+
+	int distanceToEdge[64];
+
 	BoardHelper(){
 		for(int i=0;i<8;i++)
 			for(int j=0;j<8;j++){
@@ -25,6 +29,44 @@ struct BoardHelper{
 						if(abs(i1-i)*abs(j1-j)==2)
 							knightMoves[s]|=(1ull<<s1);
 					}
+
+				if(i>=1){
+					pawnMoves[WHITE][s]|=(1ull<<(s-8));
+					if(i==6)
+						pawnMoves[WHITE][s]|=(1ull<<(s-16));
+				}
+
+				if(i<=6){
+					pawnMoves[BLACK][s]|=(1ull<<(s+8));
+					if(i==1)
+						pawnMoves[BLACK][s]|=(1ull<<(s+16));
+				}
+
+
+				if(i>=1){
+					if(j<=6){
+						pawnCaptures[WHITE][s]|=(1ull<<(s-7));
+						pawnCaptureRight[WHITE][s]=(1ull<<(s-7));
+					}
+					if(j>=1){
+						pawnCaptures[WHITE][s]|=(1ull<<(s-9));
+						pawnCaptureLeft[WHITE][s]=(1ull<<(s-9));
+					}
+				}
+
+				if(i<=6){
+					if(j>=1){
+						pawnCaptures[BLACK][s]|=(1ull<<(s+7));
+						pawnCaptureLeft[BLACK][s]=(1ull<<(s+7));
+					}
+					if(j<=6){
+						pawnCaptures[BLACK][s]|=(1ull<<(s+9));
+						pawnCaptureRight[BLACK][s]=(1ull<<(s+9));
+					}
+				}
+
+
+				distanceToEdge[s]=min(i,7-i)+min(j,7-j);
 			}
 	}
 

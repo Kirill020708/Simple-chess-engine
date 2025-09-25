@@ -39,9 +39,14 @@
 
 #endif /* ZOBRIST */
 
+struct OccuredPositionsHelper{
+	ull occuredPositions[256]; // positions occured in current variation; for testing repetition
+};
+
+OccuredPositionsHelper occuredPositionsHelper;
 
 struct Board{
-	int boardColor;
+	char boardColor;
 	int evaluation;
 
 	Bitboard whitePieces,blackPieces;
@@ -49,13 +54,27 @@ struct Board{
 
 	bool castlingWhiteQueensideBroke,castlingWhiteKingsideBroke,castlingBlackQueensideBroke,castlingBlackKingsideBroke;
 
-	int enPassantColumn;
+	char enPassantColumn;
 
 	ull zobristKey;
 
 	char age;
 
+	int lastIrreversibleMoveAge=-1; // age of last irreversible move (capture/pawn move), for testing repetition
+
+	inline int numberOfPieces(){
+		return (whitePieces|blackPieces).popcnt();
+	}
+
 	inline int occupancy(int square){
+		if(square<0||square>63)
+			return ERROR;
+
+		return WHITE*(whitePieces.getBit(square))+
+			BLACK*(blackPieces.getBit(square))+
+			EMPTY*(!((whitePieces|blackPieces).getBit(square)));
+
+
 		if(square<0||square>63)
 			return ERROR;
 		if(whitePieces.getBit(square))
@@ -66,6 +85,15 @@ struct Board{
 	}
 
 	inline int occupancyPiece(int square){
+		return ERROR*(square<0||square>63)+
+			PAWN*(pawns.getBit(square))+
+			KNIGHT*(knights.getBit(square))+
+			BISHOP*(bishops.getBit(square))+
+			ROOK*(rooks.getBit(square))+
+			QUEEN*(queens.getBit(square))+
+			KING*(kings.getBit(square))+
+			NOPIECE;
+
 		if(square<0||square>63)
 			return ERROR;
 		if(pawns.getBit(square))
@@ -111,7 +139,7 @@ struct Board{
 		if(pieceColor!=EMPTY)
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 
-		evaluation-=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
+		evaluation-=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),numberOfPieces());
 		whitePieces&=(~(1ull<<square));
 		blackPieces&=(~(1ull<<square));
 		pawns&=(~(1ull<<square));
@@ -123,7 +151,7 @@ struct Board{
 	}
 
 	inline void putPiece(int square,int color,int pieceType){
-		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color);
+		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,numberOfPieces());
 		if(color==WHITE)
 			whitePieces|=(1ull<<square);
 		if(color==BLACK)
@@ -154,7 +182,10 @@ struct Board{
 	}
 
 	inline void makeMove(Move move){
-		age++;
+		if((whitePieces|blackPieces).getBit(move.getTargetSquare())||pawns.getBit(move.getStartSquare())) // check if move is irreversible
+			lastIrreversibleMoveAge=age;
+
+		occuredPositionsHelper.occuredPositions[age++]=getZobristKey();
 		boardColor=(boardColor==WHITE)?BLACK:WHITE;
 		int startSquare=move.getStartSquare();
 		int targetSquare=move.getTargetSquare();
@@ -261,7 +292,7 @@ struct Board{
 		evaluation=0;
 		for(int square=0;square<64;square++)
 			if(occupancy(square)!=EMPTY){
-				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square));
+				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),numberOfPieces());
 			}
 		initZobristKey();
 	}

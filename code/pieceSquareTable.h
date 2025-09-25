@@ -1,13 +1,6 @@
 // evaluation for piece value and position
 
 
-#ifndef BOARD
-#define BOARD
-
-#include "board.h"
-
-#endif /* BOARD */
-
 #ifndef BOARDHELP
 #define BOARDHELP
 
@@ -104,11 +97,13 @@ struct PieceSquareTable{
 		return materialEval[piece];
 	}
 
-	inline int getPiecePositionEval(int piece,int square,int color){
+	// pawns and king: total_eval=(eval*(number_of_pieces)+eval_endgame*(32-number_of_pieces))/32
+
+	inline int getPiecePositionEval(int piece,int square,int color,int numberOfPieces){
 		if(color==BLACK)
-			square=((7-(square>>3))<<3)+(square&7);
+			square=((7-(square>>3))<<3)+(square&7); // mirror the square
 		if(piece==PAWN)
-			return pawns[square];
+			return (pawns[square]*numberOfPieces+pawnsEnd[square]*(32-numberOfPieces))>>5;
 		if(piece==KNIGHT)
 			return knights[square];
 		if(piece==BISHOP)
@@ -118,12 +113,12 @@ struct PieceSquareTable{
 		if(piece==QUEEN)
 			return queens[square];
 		if(piece==KING)
-			return kings[square];
+			return (kings[square]*numberOfPieces+kingsEnd[square]*(32-numberOfPieces))>>5;
 		return 0;
 	}
 
-	inline int getPieceEval(int piece,int square,int color){
-		return (getPieceMaterialEval(piece)+getPiecePositionEval(piece,square,color))*((color==WHITE)?1:-1);
+	inline int getPieceEval(int piece,int square,int color,int numberOfPieces){
+		return (getPieceMaterialEval(piece)+getPiecePositionEval(piece,square,color,numberOfPieces))*((color==WHITE)?1:-1);
 	}
 };
 

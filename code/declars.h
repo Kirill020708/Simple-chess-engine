@@ -18,6 +18,7 @@
 #include <thread>
 #include <random>
 #include <mutex>
+#include <future>
 
 
 using namespace std;

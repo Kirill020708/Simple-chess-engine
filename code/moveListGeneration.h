@@ -124,6 +124,60 @@ struct MoveListGenerator{
 	}
 
 
+	inline void generateMovesForPerft(int color,int depth){ // optimized gen without scores
+		Board boardCopy=board;
+		moveListSize[depth]=0;
+
+		Bitboard friendPieces,opponentPieces;
+
+
+		if(color==WHITE){
+			friendPieces=board.whitePieces;
+			opponentPieces=board.blackPieces;
+		}else{
+			friendPieces=board.blackPieces;
+			opponentPieces=board.whitePieces;
+		}
+
+
+		Bitboard pieces=friendPieces;
+
+		while(pieces>0){
+			int startSquare=pieces.getFirstBitNumberAndExclude();
+			Bitboard moves=moveGenerator.moves(startSquare);
+
+			while(moves>0){
+				int targetSquare=moves.getFirstBitNumberAndExclude();
+
+				if(board.occupancyPiece(startSquare)==PAWN&&
+					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
+					Move promotionMoves[4];
+					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT);
+					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP);
+					promotionMoves[2]=Move(startSquare,targetSquare,ROOK);
+					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN);
+					for(int i=0;i<4;i++){
+						board.makeMove(promotionMoves[i]);
+						if(moveGenerator.isInCheck(color)){
+							board=boardCopy;
+							continue;
+						}
+						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
+					}
+				}else{
+					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
+					if(moveGenerator.isInCheck(color)){
+						board=boardCopy;
+						continue;
+					}
+					moveList[depth][moveListSize[depth]++]=Move(startSquare,targetSquare,NOPIECE);
+				}
+				board=boardCopy;
+			}
+		}
+	}
+
+
 
 
 	bool isStalled(int color){

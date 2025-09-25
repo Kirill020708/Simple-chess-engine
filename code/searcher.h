@@ -104,16 +104,27 @@ struct Searcher{
 		if(stopSearch)
 			return 0;
 
+		ull currentZobristKey=board.getZobristKey();
+
+		if(!isRoot){
+			for(int repAge=board.age-4;repAge>board.lastIrreversibleMoveAge;repAge-=1)
+				if(currentZobristKey==occuredPositionsHelper.occuredPositions[repAge])
+					return DRAW_SCORE;
+		}
+
 		if(moveListGenerator.isStalled(color))
 			return evaluator.evaluateStalledPosition(color,depthFromRoot);
 
-		ull currentZobristKey=board.getZobristKey();
+
 		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(currentZobristKey,depth,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
 			alpha=max(alpha,hashTableEvaluation);
 			if(alpha>=beta)
 				return alpha;
 		}
+
+		// occuredPositions[board.age]=currentZobristKey;
+
 		moveListGenerator.hashMove=bestHashMove;
 		if(isRoot&&depth>1)
 			moveListGenerator.hashMove=bestMove;
@@ -127,6 +138,7 @@ struct Searcher{
 		bool isFirstMove=1;
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
+
 			board.makeMove(move);
 			int score;
 			// if(!isFirstMove){
@@ -137,6 +149,7 @@ struct Searcher{
 				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;
+
 			if(stopSearch)
 				return 0;
 			if(maxEvaluation<score){
@@ -160,7 +173,6 @@ struct Searcher{
 	}
 
 	void iterativeDeepeningSearch(int color,int maxDepth){
-		stopSearch=0;
 		nodes=0;
 		boardCurrentAge=board.age;
         searchStartTime = std::chrono::steady_clock::now();
