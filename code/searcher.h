@@ -78,6 +78,10 @@ struct Searcher{
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 			board.makeMove(move);
+			if(moveGenerator.isInCheck(color)){
+				board=boardCopy;
+				continue;
+			}
 			int score=-quiescentSearch((color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;
@@ -128,6 +132,16 @@ struct Searcher{
 		moveListGenerator.hashMove=bestHashMove;
 		if(isRoot&&depth>1)
 			moveListGenerator.hashMove=bestMove;
+
+		// Reverse futility pruning
+		if(!moveGenerator.isInCheck(color)&& // position no in check
+			(bestHashMove==Move()||(board.whitePieces|board.blackPieces).getBit(bestHashMove.getTargetSquare())==0)&&
+			transpositionTable.getNodeType(currentZobristKey)!=EXACT){ // TT move is null or non-capture
+			int staticEval=evaluator.evaluatePosition(color);
+			if(staticEval>=beta+150*depth)
+				return staticEval;
+		}
+
 		nodes++;
 		if(depth==0)
 			return quiescentSearch(color,alpha,beta,depthFromRoot);
@@ -140,12 +154,18 @@ struct Searcher{
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 
 			board.makeMove(move);
+
+			if(moveGenerator.isInCheck(color)){
+				board=boardCopy;
+				continue;
+			}
+
 			int score;
-			// if(!isFirstMove){
-			// 	score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
-			// 	if(score>alpha&&score<beta)
-			// 		score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
-			// }else
+			if(!isFirstMove){ // PVS
+				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
+				if(score>alpha&&score<beta)
+					score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
+			}else
 				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;

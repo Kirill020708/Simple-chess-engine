@@ -49,5 +49,28 @@ int main(){
 
 cd /Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code
 c++ main.cpp -o app -std=c++2a -O2
+c++ main.cpp -o appPVS -std=c++2a -O2
+
+./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
+            -report penta=true -pgnout results.pgn\
+            -srand 5895699939700649196 -resign movecount=3 score=600\
+            -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
+            -openings file=UHO_Lichess_4852_v1.epd format=epd order=random plies=16 start=15619\
+            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appPVS dir=.\
+            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app dir=.\
+            -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
+
+
+
+./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
+            -report penta=true -pgnout results.pgn\
+            -srand 5895699939700649196 -resign movecount=3 score=600\
+            -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
+            -openings file=8moves_v3.pgn format=pgn order=random\
+            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appPVS dir=.\
+            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app dir=.\
+            -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
+
+
 
 */

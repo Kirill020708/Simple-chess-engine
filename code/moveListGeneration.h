@@ -93,20 +93,20 @@ struct MoveListGenerator{
 					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
 					for(int i=0;i<4;i++){
 						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isInCheck(color)){
-							board=boardCopy;
-							continue;
-						}
+						// if(moveGenerator.isInCheck(color)){
+						// 	board=boardCopy;
+						// 	continue;
+						// }
 						if(promotionMoves[i]==hashMove)
 							promotionMoves[i].score+=(1<<hashMoveShift);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
 					}
 				}else{
 					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isInCheck(color)){
-						board=boardCopy;
-						continue;
-					}
+					// if(moveGenerator.isInCheck(color)){
+					// 	board=boardCopy;
+					// 	continue;
+					// }
 					int multForColor=1; // if color is black, we must get board.evaluation diff with negating, because board.evaluation is from white perspective
 					if(color==BLACK)
 						multForColor=-1;

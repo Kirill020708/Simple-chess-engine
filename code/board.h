@@ -139,7 +139,7 @@ struct Board{
 		if(pieceColor!=EMPTY)
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 
-		evaluation-=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),numberOfPieces());
+		evaluation-=pieceSquareTable.getPieceEval(piece,square,pieceColor,numberOfPieces());
 		whitePieces&=(~(1ull<<square));
 		blackPieces&=(~(1ull<<square));
 		pawns&=(~(1ull<<square));
