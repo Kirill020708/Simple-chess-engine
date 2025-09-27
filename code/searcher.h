@@ -48,6 +48,7 @@ struct Searcher{
 	int quiescentSearch(int color,int alpha,int beta,int depthFromRoot){
 		if(stopSearch)
 			return 0;
+		nodes++;
 		ull currentZobristKey=board.getZobristKey();
 		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(currentZobristKey,0,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
@@ -56,7 +57,6 @@ struct Searcher{
 				return alpha;
 		}
 		moveListGenerator.hashMove=bestHashMove;
-		nodes++;
 		Board boardCopy=board;
 		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
@@ -108,6 +108,8 @@ struct Searcher{
 		if(stopSearch)
 			return 0;
 
+		nodes++;
+
 		ull currentZobristKey=board.getZobristKey();
 
 		if(!isRoot){
@@ -133,18 +135,38 @@ struct Searcher{
 		if(isRoot&&depth>1)
 			moveListGenerator.hashMove=bestMove;
 
+		int staticEval=evaluator.evaluatePosition(color);
+
+		bool isMovingSideInCheck=moveGenerator.isInCheck(color);
+
+		int nodeType=transpositionTable.getNodeType(currentZobristKey);
+
 		// Reverse futility pruning
-		if(!moveGenerator.isInCheck(color)&& // position no in check
-			(bestHashMove==Move()||(board.whitePieces|board.blackPieces).getBit(bestHashMove.getTargetSquare())==0)&&
-			transpositionTable.getNodeType(currentZobristKey)!=EXACT){ // TT move is null or non-capture
-			int staticEval=evaluator.evaluatePosition(color);
+		if(!isMovingSideInCheck && // position not in check
+			(bestHashMove==Move()||(board.whitePieces|board.blackPieces).getBit(bestHashMove.getTargetSquare())==0) && // TT move is null or non-capture
+			nodeType!=EXACT){ // node type is not PV
+
 			if(staticEval>=beta+150*depth)
 				return staticEval;
 		}
 
-		nodes++;
-		if(depth==0)
+		if(depth<=0)
 			return quiescentSearch(color,alpha,beta,depthFromRoot);
+
+		// Null move pruning
+		if(!isMovingSideInCheck && // position not in check
+			((board.whitePieces|board.blackPieces)^(board.pawns|board.kings))>0 &&  // pieces except kings and pawns exist (to prevent zugzwang)
+			staticEval>=beta){ // static evaluation >= beta
+
+			const int NULL_MOVE_DEPTH_REDUCTION=3;
+			int prevEnPassColumn=board.makeNullMove();
+			int score=-search((color==WHITE)?BLACK:WHITE,depth-NULL_MOVE_DEPTH_REDUCTION,0,-beta,-beta+1,depthFromRoot+1);
+			board.makeNullMove();
+			board.enPassantColumn=prevEnPassColumn;
+			if(score>=beta)
+				return score;
+		}
+
 		Board boardCopy=board;
 		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ALL_MOVES);
 		int maxEvaluation=-inf;
@@ -161,7 +183,7 @@ struct Searcher{
 			}
 
 			int score;
-			if(!isFirstMove){ // PVS
+			if(!isFirstMove){ // Principal variation search
 				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
 				if(score>alpha&&score<beta)
 					score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);

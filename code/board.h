@@ -181,6 +181,13 @@ struct Board{
 		putPiece(targetSquare,color,movingPiece);
 	}
 
+	inline int makeNullMove(){
+		boardColor=(boardColor==WHITE)?BLACK:WHITE;
+		int enPassantColumnPrev=enPassantColumn;
+		enPassantColumn=NO_EN_PASSANT;
+		return enPassantColumnPrev;
+	}
+
 	inline void makeMove(Move move){
 		if((whitePieces|blackPieces).getBit(move.getTargetSquare())||pawns.getBit(move.getStartSquare())) // check if move is irreversible
 			lastIrreversibleMoveAge=age;

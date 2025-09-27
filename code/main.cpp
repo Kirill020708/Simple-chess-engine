@@ -56,8 +56,8 @@ c++ main.cpp -o appPVS -std=c++2a -O2
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=UHO_Lichess_4852_v1.epd format=epd order=random plies=16 start=15619\
-            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appPVS dir=.\
-            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app dir=.\
+            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appPVS restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 
@@ -67,8 +67,8 @@ c++ main.cpp -o appPVS -std=c++2a -O2
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appPVS dir=.\
-            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app dir=.\
+            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appV4_NLLMV restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/appV3_RFP restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

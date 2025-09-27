@@ -29,7 +29,7 @@ struct TableEntry{
 	}
 };
 
-#define memoryUsageMB 256
+#define memoryUsageMB 64
 
 struct TranspositionTable{
 	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);
