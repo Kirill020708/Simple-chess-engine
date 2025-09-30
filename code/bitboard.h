@@ -36,7 +36,7 @@ struct Bitboard{
 	}
 
 	inline int popcnt(){
-		return __builtin_popcount(bitboard);
+		return __builtin_popcountll(bitboard);
 	}
 
 	operator ull(){

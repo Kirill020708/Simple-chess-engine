@@ -46,6 +46,38 @@ struct Evaluator{
 			}
 		}
 */
+		// const int isolatedPawnScore=0;
+		// const int doubledPawnScore=-10;
+		// const int blockedPawnScore=0;
+		// const int defendedPawnScore=0;
+
+		// Bitboard pawns=board.pawns;
+
+		// while(pawns){
+		// 	int square=pawns.getFirstBitNumberAndExclude();
+		// 	int color=board.occupancy(square);
+		// 	int oppositeColor=(color==WHITE)?BLACK:WHITE;
+
+		// 	Bitboard friendPawns=board.pawns&((color==WHITE)?board.whitePieces:board.blackPieces);
+
+		// 	int pawnScore=0;
+
+		// 	if((boardHelper.neighborColumns[square]&friendPawns)==0)
+		// 		pawnScore+=isolatedPawnScore;
+
+		// 	if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
+		// 		pawnScore+=doubledPawnScore;
+
+		// 	int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
+
+		// 	if(board.pawns.getBit(nextSquare))
+		// 		pawnScore+=blockedPawnScore;
+
+		// 	if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
+		// 		pawnScore+=defendedPawnScore;
+
+		// 	evaluation+=(color==WHITE)?pawnScore:-pawnScore;
+		// }
 
 		return evaluation;
 	}

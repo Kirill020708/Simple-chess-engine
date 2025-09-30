@@ -36,6 +36,15 @@
 
 #endif /* PIECESQTABLE */
 
+
+#ifndef HISTORY
+#define HISTORY
+
+#include "historyHelper.h"
+
+#endif /* HISTORY */
+
+
 const int maxDepth=256,maxListSize=256;
 
 //score: 10 bits for eval, 6 bits for mvv-lva, 
@@ -93,25 +102,25 @@ struct MoveListGenerator{
 					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
 					for(int i=0;i<4;i++){
 						board.makeMove(promotionMoves[i]);
-						// if(moveGenerator.isInCheck(color)){
-						// 	board=boardCopy;
-						// 	continue;
-						// }
+						if(moveGenerator.isInCheck(color)){
+							board=boardCopy;
+							continue;
+						}
 						if(promotionMoves[i]==hashMove)
 							promotionMoves[i].score+=(1<<hashMoveShift);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
 					}
 				}else{
 					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					// if(moveGenerator.isInCheck(color)){
-					// 	board=boardCopy;
-					// 	continue;
-					// }
+					if(moveGenerator.isInCheck(color)){
+						board=boardCopy;
+						continue;
+					}
 					int multForColor=1; // if color is black, we must get board.evaluation diff with negating, because board.evaluation is from white perspective
 					if(color==BLACK)
 						multForColor=-1;
-					Move move=Move(startSquare,targetSquare,NOPIECE,
-						(captureCoeff<<captureShift)+(board.evaluation)*multForColor);
+					Move move=Move(startSquare,targetSquare,NOPIECE);
+					move.score+=(captureCoeff<<captureShift)+historyHelper.getScore(color,move);
 					if(move==hashMove)
 						move.score+=(1<<hashMoveShift);
 					moveList[depth][moveListSize[depth]++]=move;
