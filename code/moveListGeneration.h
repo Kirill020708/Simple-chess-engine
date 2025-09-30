@@ -96,10 +96,10 @@ struct MoveListGenerator{
 				if(board.occupancyPiece(startSquare)==PAWN&&
 					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
 					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
+					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,(KNIGHT+captureCoeff)<<captureShift);
+					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,(BISHOP+captureCoeff)<<captureShift);
+					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,(ROOK+captureCoeff)<<captureShift);
+					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,(QUEEN+captureCoeff)<<captureShift);
 					for(int i=0;i<4;i++){
 						board.makeMove(promotionMoves[i]);
 						if(moveGenerator.isInCheck(color)){
