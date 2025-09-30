@@ -32,6 +32,13 @@
 #endif /* TRANSPOSTABLE */
 
 
+#ifndef HISTORY
+#define HISTORY
+
+#include "historyHelper.h"
+
+#endif /* HISTORY */
+
 struct Searcher{
 	bool UCIout=1;
 
@@ -75,13 +82,11 @@ struct Searcher{
 
 		bool isFirstMove=1;
 		char type=UPPER_BOUND;
+		bestHashMove=Move();
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 			board.makeMove(move);
-			if(moveGenerator.isInCheck(color)){
-				board=boardCopy;
-				continue;
-			}
+
 			int score=-quiescentSearch((color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
 			isFirstMove=0;
 			board=boardCopy;
@@ -153,6 +158,8 @@ struct Searcher{
 		if(depth<=0)
 			return quiescentSearch(color,alpha,beta,depthFromRoot);
 
+		int oppositeColor=(color==WHITE)?BLACK:WHITE;
+
 		// Null move pruning
 		if(!isMovingSideInCheck && // position not in check
 			((board.whitePieces|board.blackPieces)^(board.pawns|board.kings))>0 &&  // pieces except kings and pawns exist (to prevent zugzwang)
@@ -160,7 +167,7 @@ struct Searcher{
 
 			const int NULL_MOVE_DEPTH_REDUCTION=3;
 			int prevEnPassColumn=board.makeNullMove();
-			int score=-search((color==WHITE)?BLACK:WHITE,depth-NULL_MOVE_DEPTH_REDUCTION,0,-beta,-beta+1,depthFromRoot+1);
+			int score=-search(oppositeColor,depth-NULL_MOVE_DEPTH_REDUCTION,0,-beta,-beta+1,depthFromRoot+1);
 			board.makeNullMove();
 			board.enPassantColumn=prevEnPassColumn;
 			if(score>=beta)
@@ -171,26 +178,28 @@ struct Searcher{
 		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ALL_MOVES);
 		int maxEvaluation=-inf;
 		char type=UPPER_BOUND;
-		bool isFirstMove=1;
+		int movesSearched=0;
+		bestHashMove=Move();
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 
 			board.makeMove(move);
 
-			if(moveGenerator.isInCheck(color)){
-				board=boardCopy;
-				continue;
-			}
+			int extendDepth=0;
+			// if(moveGenerator.isInCheck(oppositeColor)) // if in check, search deeper for 1 ply
+			// 	extendDepth++;
 
 			int score;
-			if(!isFirstMove){ // Principal variation search
-				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-(alpha+1),-alpha,depthFromRoot+1);
+			if(movesSearched){ // Principal variation search
+				score=-search(oppositeColor,depth-1+extendDepth,0,-(alpha+1),-alpha,depthFromRoot+1);
 				if(score>alpha&&score<beta)
-					score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
+					score=-search(oppositeColor,depth-1+extendDepth,0,-beta,-alpha,depthFromRoot+1);
 			}else
-				score=-search((color==WHITE)?BLACK:WHITE,depth-1,0,-beta,-alpha,depthFromRoot+1);
-			isFirstMove=0;
+				score=-search(oppositeColor,depth-1+extendDepth,0,-beta,-alpha,depthFromRoot+1);
+
+
 			board=boardCopy;
+			movesSearched++;
 
 			if(stopSearch)
 				return 0;
@@ -204,6 +213,15 @@ struct Searcher{
 				if(alpha<score)
 					alpha=score;
 				if(alpha>=beta){
+					if((board.whitePieces&board.blackPieces).getBit(move.getTargetSquare())==0) // move is not capture
+						historyHelper.update(color,move,depth*depth);
+
+					for(int previousMoves=0;previousMoves<currentMove;previousMoves++){ // negate all searched non-capture moves
+						Move prevMove=moveListGenerator.moveList[depthFromRoot][previousMoves];
+						if((board.whitePieces&board.blackPieces).getBit(prevMove.getTargetSquare())==0) // move is not capture
+							historyHelper.update(color,prevMove,-(depth*depth));
+					}
+
 					transpositionTable.write(currentZobristKey,maxEvaluation,depth,LOWER_BOUND,boardCurrentAge,bestHashMove);
 					return maxEvaluation;
 				}
@@ -214,23 +232,47 @@ struct Searcher{
 		return maxEvaluation;
 	}
 
+	Move pvLine[256];
+	int pvLineSize;
+
+	void getPvLine(int color){
+		ull currentZobristKey=board.getZobristKey();
+
+		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(currentZobristKey,0,0,0);
+
+		if(bestHashMove!=Move()){
+			pvLine[pvLineSize++]=bestHashMove;
+			Board boardCopy=board;
+			board.makeMove(bestHashMove);
+			getPvLine((color==WHITE)?BLACK:WHITE);
+			board=boardCopy;
+		}
+	}
+
 	void iterativeDeepeningSearch(int color,int maxDepth){
 		nodes=0;
 		boardCurrentAge=board.age;
         searchStartTime = std::chrono::steady_clock::now();
+        bestMove=Move();
 		for(int depth=1;depth<=maxDepth;depth++){
 			int score=search(color,depth,1,-inf*2,inf*2,0);
 			if(stopSearch)
 				return;
 	        std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
 	        ll timeThinked=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - searchStartTime).count();
+	        pvLineSize=0;
+	        // getPvLine(color);
 			if(UCIout){
 				cout<<"info depth "<<depth<<
 				" score cp "<<score<<
 				" nodes "<<nodes<<
 				" nps "<<(nodes*1000)/(timeThinked+1)<<
 				" time "<<timeThinked<<
-				" pv "<<bestMove.convertToUCI()<<'\n';
+				" pv "<<bestMove.convertToUCI();
+				// for(int i=0;i<1;i++)
+					// cout<<pvLine[i].convertToUCI()<<' ';
+
+				cout<<endl;
 			}
 		}
 	}
