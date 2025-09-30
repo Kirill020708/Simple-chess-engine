@@ -191,9 +191,26 @@ struct Searcher{
 
 			int score;
 			if(movesSearched){ // Principal variation search
-				score=-search(oppositeColor,depth-1+extendDepth,0,-(alpha+1),-alpha,depthFromRoot+1);
-				if(score>alpha&&score<beta)
-					score=-search(oppositeColor,depth-1+extendDepth,0,-beta,-alpha,depthFromRoot+1);
+
+				// Late move reduction
+				const int LMR_FULL_MOVES=4; // number of moves to search with full depth
+				const int LMR_MIN_DEPTH=3; // don't reduct depth if it's more or equal to this value
+				const int LMR_DEPTH_REDUCTION=1; // reduction of depth
+
+				if(movesSearched>=LMR_FULL_MOVES && 
+					!isMovingSideInCheck &&
+					depth>=LMR_MIN_DEPTH && 
+					!moveGenerator.isInCheck((color==WHITE)?BLACK:WHITE)&& // if possibly good move (check), don't use lmr
+					historyHelper.getScore(color,move)<historyHelper.maxHistoryScore)
+					score=-search((color==WHITE)?BLACK:WHITE,depth-1-LMR_DEPTH_REDUCTION,0,-(alpha+1),-alpha,depthFromRoot+1);
+				else
+					score=alpha+1; // if LMR is restricted, do this to do PVS
+
+				if(score>alpha){
+					score=-search(oppositeColor,depth-1+extendDepth,0,-(alpha+1),-alpha,depthFromRoot+1);
+					if(score>alpha&&score<beta)
+						score=-search(oppositeColor,depth-1+extendDepth,0,-beta,-alpha,depthFromRoot+1);
+				}
 			}else
 				score=-search(oppositeColor,depth-1+extendDepth,0,-beta,-alpha,depthFromRoot+1);
 
