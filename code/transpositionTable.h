@@ -58,7 +58,7 @@ struct TranspositionTable{
 		if(table[index].key!=key)
 			return {NO_EVAL,Move()};
 		if(table[index].depth<depth)
-			return {NO_EVAL,table[index].bestMove};
+			return {NO_EVAL,Move()};
 
 		int eval=NO_EVAL;
 		if(table[index].type==EXACT)

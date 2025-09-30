@@ -28,18 +28,7 @@ string squareToString(int square){
 int main(){
 
 	// cout<<sizeof(Board)<<'\n';
-	// board.initFromFEN("4rrk1/1pqb1pb1/p2p3p/4pPp1/2P1B1P1/1P3N1P/P3Q3/1R2K2R w K - 5 22");
-
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,52,WHITE,32-3)<<'\n';
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,54,WHITE,32-3)<<'\n';
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,52-8,WHITE,32-3)<<'\n';
-	// cout<<board.numberOfPieces()<<'\n';
-
-	// moveListGenerator.generateMoves(WHITE,0,1,0);
-	// 	for(int currentMove=0;currentMove<moveListGenerator.moveListSize[0];currentMove++){
-	// 		Move move=moveListGenerator.moveList[0][currentMove];
-	// 		cout<<move.convertToUCI()<<' '<<move.score<<'\n';
-	// 		}
+	// board.initFromFEN("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
 	// cout<<board.evaluation<<'\n';
 	// board.makeMove(Move("a1d1"));
 	// cout<<board.evaluation<<'\n';
@@ -71,9 +60,6 @@ c++ main.cpp -o appPVS -std=c++2a -O2
             -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
-go movetime 1000
-position startpos moves e2e4 e7e5
-go movetime 1000
 
 
 ./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
@@ -81,8 +67,8 @@ go movetime 1000
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appV6_PWNEV restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/appV5_POPCNTBUG restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appV4_NLLMV restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/appV3_RFP restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 
