@@ -26,9 +26,25 @@ string squareToString(int square){
 }
 
 int main(){
-
+	// for(ll depth=1;depth<=15;depth++){
+		// cout<<depth<<": ";
+		// for(ll j=1;j<=40;j++)
+			// cout<<int(floor(log(float(depth)) * log(float(j)) / 3))<<' ';
+		// cout<<'\n';
+	// }
 	// cout<<sizeof(Board)<<'\n';
-	// board.initFromFEN("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
+	// board.initFromFEN("4rrk1/1pqb1pb1/p2p3p/4pPp1/2P1B1P1/1P3N1P/P3Q3/1R2K2R w K - 5 22");
+
+	// cout<<pieceSquareTable.getPiecePositionEval(KING,52,WHITE,32-3)<<'\n';
+	// cout<<pieceSquareTable.getPiecePositionEval(KING,54,WHITE,32-3)<<'\n';
+	// cout<<pieceSquareTable.getPiecePositionEval(KING,52-8,WHITE,32-3)<<'\n';
+	// cout<<board.numberOfPieces()<<'\n';
+
+	// moveListGenerator.generateMoves(WHITE,0,1,0);
+	// 	for(int currentMove=0;currentMove<moveListGenerator.moveListSize[0];currentMove++){
+	// 		Move move=moveListGenerator.moveList[0][currentMove];
+	// 		cout<<move.convertToUCI()<<' '<<move.score<<'\n';
+	// 		}
 	// cout<<board.evaluation<<'\n';
 	// board.makeMove(Move("a1d1"));
 	// cout<<board.evaluation<<'\n';
@@ -48,7 +64,7 @@ int main(){
 /*
 
 cd /Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code
-c++ main.cpp -o app -std=c++2a -O2
+c++ ../Simple-chess-engine/code/main.cpp -o app -std=c++2a -O2
 c++ main.cpp -o appPVS -std=c++2a -O2
 
 ./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
@@ -60,15 +76,20 @@ c++ main.cpp -o appPVS -std=c++2a -O2
             -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/app restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
+go movetime 1000
+position startpos moves e2e4 e7e5
+go movetime 1000
 
+position fen 5r2/4k2P/R7/8/8/5PK1/8/8 w - - 0 82
+go movetime 100
 
 ./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
             -report penta=true -pgnout results.pgn\
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./Simple-chess-engine/code/appV4_NLLMV restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./Simple-chess-engine/code/appV3_RFP restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./apps/appV10_PVTT restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./apps/appV9_PVLMR restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

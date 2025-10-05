@@ -60,7 +60,8 @@ struct UCIcommunicationHepler{
 	void waitAndEndSearch(int timeToThink){
 		searcher.stopSearch=false;
 		searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,board.boardColor,256);
-		sleepCond(timeToThink);
+		// sleepCond(timeToThink);
+		this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
 		searcher.stopSearch=true;
 		searcherThread.join();
 		cout<<"bestmove "<<searcher.bestMove.convertToUCI()<<endl;
@@ -126,7 +127,7 @@ struct UCIcommunicationHepler{
 			if(waitingThread.joinable())
 				waitingThread.join();
 
-			int wtime=-1,btime=0,winc=-1,binc=0;
+			int wtime=-1,btime=-1,winc=-1,binc=0;
 			int movetime=-1;
 			int depth=256;
 			for(int i=1;i<tokens.size();i++){
@@ -146,13 +147,21 @@ struct UCIcommunicationHepler{
 					depth=stoi(tokens[i+1]);
 			}
 			int timeToThink=1e9;
-			if(board.boardColor==WHITE && wtime!=-1)
+			if(board.boardColor==WHITE && wtime!=-1){
 				timeToThink=wtime*0.025+winc;
-			if(board.boardColor==BLACK && wtime!=-1)
+				if(timeToThink>=wtime-100)
+					timeToThink=wtime-100;
+			}
+			if(board.boardColor==BLACK && btime!=-1){
 				timeToThink=btime*0.025+binc;
+				if(timeToThink>=btime-100)
+					timeToThink=btime-100;
+			}
 			if(movetime!=-1)
 				timeToThink=movetime;
-			waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
+			// cout<<timeToThink<<'\n';
+			waitAndEndSearch(timeToThink);
+			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
 		}
 		if(mainCommand=="stop"){
 			stopWaitingThread=1;

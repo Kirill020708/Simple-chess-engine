@@ -47,15 +47,17 @@
 
 const int maxDepth=256,maxListSize=256;
 
-//score: 10 bits for eval, 6 bits for mvv-lva, 
+//score: 10 bits for history < 1 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
 
 struct MoveListGenerator{
-	const int captureShift=10,hashMoveShift=16;
+	const int killerMoveShift=10,captureShift=11,hashMoveShift=17;
 
 	Move moveList[maxDepth][maxListSize];
 	int moveListSize[maxDepth];
 
 	Move hashMove;
+
+	Move killerMove;
 
 	inline void generateMoves(int color,int depth,bool doSort,bool onlyCaptures){
 		Board boardCopy=board;
@@ -100,12 +102,17 @@ struct MoveListGenerator{
 					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,(BISHOP+captureCoeff)<<captureShift);
 					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,(ROOK+captureCoeff)<<captureShift);
 					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,(QUEEN+captureCoeff)<<captureShift);
+					// promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
+					// promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
+					// promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
+					// promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
 					for(int i=0;i<4;i++){
 						board.makeMove(promotionMoves[i]);
 						if(moveGenerator.isInCheck(color)){
 							board=boardCopy;
 							continue;
 						}
+						board=boardCopy;
 						if(promotionMoves[i]==hashMove)
 							promotionMoves[i].score+=(1<<hashMoveShift);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
@@ -116,16 +123,15 @@ struct MoveListGenerator{
 						board=boardCopy;
 						continue;
 					}
-					int multForColor=1; // if color is black, we must get board.evaluation diff with negating, because board.evaluation is from white perspective
-					if(color==BLACK)
-						multForColor=-1;
+					board=boardCopy;
 					Move move=Move(startSquare,targetSquare,NOPIECE);
 					move.score+=(captureCoeff<<captureShift)+historyHelper.getScore(color,move);
 					if(move==hashMove)
 						move.score+=(1<<hashMoveShift);
+					// if(move==killerMove && !captureCoeff)
+					// 	move.score+=(1<<killerMoveShift);
 					moveList[depth][moveListSize[depth]++]=move;
 				}
-				board=boardCopy;
 			}
 		}
 		if(doSort)

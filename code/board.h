@@ -111,6 +111,10 @@ struct Board{
 		return NOPIECE;
 	}
 
+	inline bool isQuietMove(Move move){ // is move quiet (no capture/promotion)
+		return !(occupancy(move.getTargetSquare())!=EMPTY||move.getPromotionFlag()!=0);
+	}
+
 	void initZobristKey(){
 		for(int square=0;square<64;square++){
 			int piece=occupancyPiece(square);
