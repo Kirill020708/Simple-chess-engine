@@ -66,6 +66,10 @@ struct Board{
 		return (whitePieces|blackPieces).popcnt();
 	}
 
+	inline float endgameWeight(){
+		return 1-float(numberOfPieces())/32;
+	}
+
 	inline int occupancy(int square){
 		if(square<0||square>63)
 			return ERROR;
@@ -143,7 +147,7 @@ struct Board{
 		if(pieceColor!=EMPTY)
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 
-		evaluation-=pieceSquareTable.getPieceEval(piece,square,pieceColor,numberOfPieces());
+		evaluation-=pieceSquareTable.getPieceEval(piece,square,pieceColor,endgameWeight());
 		whitePieces&=(~(1ull<<square));
 		blackPieces&=(~(1ull<<square));
 		pawns&=(~(1ull<<square));
@@ -155,7 +159,7 @@ struct Board{
 	}
 
 	inline void putPiece(int square,int color,int pieceType){
-		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,numberOfPieces());
+		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,endgameWeight());
 		if(color==WHITE)
 			whitePieces|=(1ull<<square);
 		if(color==BLACK)
@@ -303,7 +307,7 @@ struct Board{
 		evaluation=0;
 		for(int square=0;square<64;square++)
 			if(occupancy(square)!=EMPTY){
-				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),numberOfPieces());
+				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
 			}
 		initZobristKey();
 	}

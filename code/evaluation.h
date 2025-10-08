@@ -27,8 +27,11 @@ const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
 
 struct Evaluator{
 
-	int evaluatePosition(){ // board evaluation with white's perspective
+
+	inline int evaluatePosition(){ // board evaluation with white's perspective
 		int evaluation=board.evaluation;
+
+		// int numberOfPieces=board.numberOfPieces();
 /*
 		if(abs(board.evaluation)>=300){ // EDGE_EVAL one side is better -> push opp king to side and keep friend king close
 			int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
@@ -46,12 +49,14 @@ struct Evaluator{
 			}
 		}
 */
-		// const int isolatedPawnScore=0;
-		// const int doubledPawnScore=-10;
+		// const int isolatedPawnScore=-10;
+		// const int doubledPawnScore=0;
 		// const int blockedPawnScore=0;
 		// const int defendedPawnScore=0;
 
 		// Bitboard pawns=board.pawns;
+
+		// int pawnsEval=0;
 
 		// while(pawns){
 		// 	int square=pawns.getFirstBitNumberAndExclude();
@@ -65,19 +70,24 @@ struct Evaluator{
 		// 	if((boardHelper.neighborColumns[square]&friendPawns)==0)
 		// 		pawnScore+=isolatedPawnScore;
 
-		// 	if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
-		// 		pawnScore+=doubledPawnScore;
+			// if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
+			// 	pawnScore+=doubledPawnScore;
 
-		// 	int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
+			// int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
 
-		// 	if(board.pawns.getBit(nextSquare))
-		// 		pawnScore+=blockedPawnScore;
+			// if(board.pawns.getBit(nextSquare))
+			// 	pawnScore+=blockedPawnScore;
 
-		// 	if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
-		// 		pawnScore+=defendedPawnScore;
+			// if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
+			// 	pawnScore+=defendedPawnScore;
 
-		// 	evaluation+=(color==WHITE)?pawnScore:-pawnScore;
+		// 	pawnsEval+=(color==WHITE)?pawnScore:-pawnScore;
 		// }
+
+		// evaluation+=pawnsEval;
+
+		const int attackSquareScore=1;
+		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
 
 		return evaluation;
 	}

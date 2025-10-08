@@ -57,13 +57,14 @@ int main(){
 	// perftester.perfTest(256);
 	// searcher.iterativeDeepeningSearch(WHITE,100);
 	// system("/Users/Apple/Desktop/projects/chesscpp/app");
+	// printDesk01(boardHelper.neighborColumns[34].bitboard);
 	uciHelper.listenInput();
 }
 
 
 /*
 
-cd /Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code
+cd /Users/Apple/Desktop/projects/chessEngv2/apps
 c++ ../Simple-chess-engine/code/main.cpp -o app -std=c++2a -O2
 c++ main.cpp -o appPVS -std=c++2a -O2
 
@@ -88,8 +89,8 @@ go movetime 100
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./apps/appV10_PVTT restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./apps/appV9_PVLMR restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./apps/appV12_PWN2 restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./apps/appV12_PWN restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

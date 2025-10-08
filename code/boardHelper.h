@@ -13,12 +13,21 @@ struct BoardHelper{
 
 	Bitboard pawnMoves[2][64],pawnCaptures[2][64],pawnCaptureLeft[2][64],pawnCaptureRight[2][64];
 
+	Bitboard neighborColumns[64];
+
 	int distanceToEdge[64];
 
 	BoardHelper(){
 		for(int i=0;i<8;i++)
 			for(int j=0;j<8;j++){
 				int s=i*8+j;
+
+				neighborColumns[s]=0;
+				if(j)
+					neighborColumns[s]|=getColumn(j-1);
+				if(j<7)
+					neighborColumns[s]|=getColumn(j+1);
+
 				for(int i1=0;i1<8;i1++)
 					for(int j1=0;j1<8;j1++){
 						int s1=i1*8+j1;

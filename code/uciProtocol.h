@@ -17,6 +17,14 @@
 #endif /* BOARD */
 
 
+#ifndef EVALUATOR
+#define EVALUATOR
+
+#include "evaluation.h"
+
+#endif /* EVALUATOR */
+
+
 void waitAndEndSearch(int timeToThink){
 	searcher.stopSearch=false;
 	thread th(&Searcher::iterativeDeepeningSearch,&searcher,board.boardColor,256);
@@ -95,6 +103,11 @@ struct UCIcommunicationHepler{
 				waitingThread.join();
 
 			board.makeMove(Move(tokens[1]));
+			return;
+		}
+		if(mainCommand=="eval"){
+			cout<<"endgame weight: "<<board.endgameWeight()<<'\n';
+			cout<<evaluator.evaluatePosition()<<" cp (white's perspective)"<<endl;
 			return;
 		}
 		if(mainCommand=="position"){

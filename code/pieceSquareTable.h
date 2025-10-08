@@ -99,11 +99,11 @@ struct PieceSquareTable{
 
 	// pawns and king: total_eval=(eval*(number_of_pieces)+eval_endgame*(32-number_of_pieces))/32
 
-	inline int getPiecePositionEval(int piece,int square,int color,int numberOfPieces){
+	inline int getPiecePositionEval(int piece,int square,int color,float endgameWeight){
 		if(color==BLACK)
 			square=((7-(square>>3))<<3)+(square&7); // mirror the square
 		if(piece==PAWN)
-			return (pawns[square]*numberOfPieces+pawnsEnd[square]*(32-numberOfPieces))>>5;
+			return int(pawns[square]*(1-endgameWeight)+pawnsEnd[square]*endgameWeight);
 		if(piece==KNIGHT)
 			return knights[square];
 		if(piece==BISHOP)
@@ -113,12 +113,12 @@ struct PieceSquareTable{
 		if(piece==QUEEN)
 			return queens[square];
 		if(piece==KING)
-			return (kings[square]*numberOfPieces+kingsEnd[square]*(32-numberOfPieces))>>5;
+			return int(kings[square]*(1-endgameWeight)+kingsEnd[square]*endgameWeight);
 		return 0;
 	}
 
-	inline int getPieceEval(int piece,int square,int color,int numberOfPieces){
-		return (getPieceMaterialEval(piece)+getPiecePositionEval(piece,square,color,numberOfPieces))*((color==WHITE)?1:-1);
+	inline int getPieceEval(int piece,int square,int color,float endgameWeight){
+		return (getPieceMaterialEval(piece)+getPiecePositionEval(piece,square,color,endgameWeight))*((color==WHITE)?1:-1);
 	}
 };
 
