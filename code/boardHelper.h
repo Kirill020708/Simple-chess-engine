@@ -1,6 +1,8 @@
 // functions for different board data
 
 
+#pragma once
+
 #ifndef BITBOARD
 #define BITBOARD
 

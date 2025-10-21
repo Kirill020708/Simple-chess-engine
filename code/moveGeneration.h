@@ -1,5 +1,7 @@
 // generator of bitboards of moves for a piece
 
+#pragma once
+
 
 #ifndef BOARD
 #define BOARD
@@ -201,12 +203,20 @@ struct MoveGeneration{
 			return true;
 		if(board.whitePieces&board.kings&boardHelper.kingMoves[square])
 			return true;
-		Bitboard pieces=board.whitePieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
-		while(pieces>0){
-			int currentSquare=pieces.getFirstBitNumberAndExclude();
-			if(moves(currentSquare).getBit(square))
-				return true;
-		}
+
+
+		Bitboard bishopRays=bishopMoves(square);
+		if(board.whitePieces&board.bishops&bishopRays)
+			return true;
+
+		Bitboard rookRays=rookMoves(square);
+		if(board.whitePieces&board.rooks&rookRays)
+			return true;
+
+		Bitboard queenRays=bishopRays|rookRays;
+		if(board.whitePieces&board.queens&queenRays)
+			return true;
+
 		return false;
 	}
 
@@ -219,13 +229,25 @@ struct MoveGeneration{
 			return true;
 		if(board.blackPieces&board.kings&boardHelper.kingMoves[square])
 			return true;
-		Bitboard pieces=board.blackPieces&(~board.pawns)&(~board.knights)&(~board.kings)&queenMoves(square);
-		while(pieces>0){
-			int currentSquare=pieces.getFirstBitNumberAndExclude();
-			if(moves(currentSquare).getBit(square))
-				return true;
-		}
+
+		Bitboard bishopRays=bishopMoves(square);
+		if(board.blackPieces&board.bishops&bishopRays)
+			return true;
+
+		Bitboard rookRays=rookMoves(square);
+		if(board.blackPieces&board.rooks&rookRays)
+			return true;
+
+		Bitboard queenRays=bishopRays|rookRays;
+		if(board.blackPieces&board.queens&queenRays)
+			return true;
 		return false;
+	}
+
+	inline bool isSquareAttacked(int square,int color){
+		if(color==WHITE)
+			return isSquareAttackedByWhite(square);
+		return isSquareAttackedByBlack(square);
 	}
 
 	inline int numOfSquaresAttackedByWhite(){
@@ -257,6 +279,105 @@ struct MoveGeneration{
 		}
 
 		return numOfSquares;
+	}
+
+	inline int getSmallestAttacker(int square,int color){
+		int oppositeColor=(color==WHITE)?BLACK:WHITE;
+		Bitboard friendPieces=(color==WHITE)?board.whitePieces:board.blackPieces;
+		Bitboard opponentPieces=(color==WHITE)?board.blackPieces:board.whitePieces;
+
+		if(boardHelper.pawnCaptureLeft[oppositeColor][square]&board.pawns&friendPieces)
+			return boardHelper.pawnCaptureLeft[oppositeColor][square].getFirstBitNumber();
+		if(boardHelper.pawnCaptureRight[oppositeColor][square]&board.pawns&friendPieces)
+			return boardHelper.pawnCaptureRight[oppositeColor][square].getFirstBitNumber();
+
+
+		if(friendPieces&board.knights&boardHelper.knightMoves[square])
+			return (friendPieces&board.knights&boardHelper.knightMoves[square]).getFirstBitNumber();
+
+		Bitboard bishopRays=bishopMoves(square);
+		if(friendPieces&board.bishops&bishopRays)
+			return (friendPieces&board.bishops&bishopRays).getFirstBitNumber();
+
+		Bitboard rookRays=rookMoves(square);
+		if(friendPieces&board.rooks&rookRays)
+			return (friendPieces&board.rooks&rookRays).getFirstBitNumber();
+
+		Bitboard queenRays=bishopRays|rookRays;
+		if(friendPieces&board.queens&queenRays)
+			return (friendPieces&board.queens&queenRays).getFirstBitNumber();
+
+		if((friendPieces&board.kings&boardHelper.kingMoves[square]))
+			return (friendPieces&board.kings&boardHelper.kingMoves[square]).getFirstBitNumber();
+
+		return -1;
+	}
+
+	int pieceMaterial[7]={0,1,3,3,5,10,100000};
+	int evalStack[32];
+
+	inline int sseEval(int square,int color,int firstAttacker){
+		Board boardCopy=board;
+		int captureNumber=1;
+		int eval=0;
+		evalStack[0]=0;
+		while(true){
+			int attacker;
+			if(captureNumber==1)
+				attacker=firstAttacker;
+			else
+				attacker=getSmallestAttacker(square,color);
+
+			// cout<<attacker<<'\n';
+
+			int mult=(captureNumber&1)?1:-1;
+
+			if(attacker==-1){
+				eval*=mult;
+				break;
+			}
+
+			int capturedPiece=board.occupancyPiece(square);
+			int attackingPiece=board.occupancyPiece(attacker);
+
+			bool isPromotion=0;
+			if(attackingPiece==PAWN){
+				if(color==WHITE)
+					isPromotion=(square<8);
+				else
+					isPromotion=(square>=56);
+			}
+
+			board.makeMove(Move(attacker,square,isPromotion*QUEEN));
+			if(attackingPiece==KING){
+				if(isInCheck(color))
+					break;
+			}
+
+			evalStack[captureNumber++]=pieceMaterial[capturedPiece]+isPromotion*(pieceMaterial[QUEEN]-pieceMaterial[PAWN]);
+
+			eval+=evalStack[captureNumber-1];
+			if(eval-pieceMaterial[attackingPiece]>0 || attackingPiece==KING){
+				break;
+			}
+			eval=-eval;
+			color=(color==WHITE)?BLACK:WHITE;
+		}
+		board=boardCopy;
+		evalStack[captureNumber]=0;
+
+		// for(ll i=0;i<captureNumber;i++)
+		// 	cout<<evalStack[i]<<' ';
+		// cout<<'\n';
+
+		for(int i=captureNumber-2;i>=2;i--){
+			evalStack[i]=max(0,-evalStack[i+1]+evalStack[i]);
+		}
+		// for(ll i=0;i<captureNumber;i++)
+		// 	cout<<evalStack[i]<<' ';
+		// cout<<'\n';
+
+		return evalStack[1]-evalStack[2];
 	}
 };
 

@@ -1,5 +1,7 @@
 // struct for move
 
+#pragma once
+
 
 #ifndef DECLARS
 #define DECLARS

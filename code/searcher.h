@@ -1,5 +1,7 @@
 // searches the best move
 
+#pragma once
+
 #ifndef MOVEGENLIST
 #define MOVEGENLIST
 
@@ -68,31 +70,58 @@ struct Searcher{
 				return alpha;
 		}
 		moveListGenerator.hashMove=bestHashMove;
-		// moveListGenerator.killerMove=moveListGenerator.hashMove;
-		Board boardCopy=board;
-		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
-		int evaluation;
+		int staticEval;
 		if(moveListGenerator.isStalled(color))
-			evaluation=evaluator.evaluateStalledPosition(color,depthFromRoot);
+			staticEval=evaluator.evaluateStalledPosition(color,depthFromRoot);
 		else
-			evaluation=evaluator.evaluatePosition(color);
+			staticEval=evaluator.evaluatePosition(color);
 
-		int maxEvaluation=evaluation;
-		alpha=max(alpha,evaluation);
+		int maxEvaluation=staticEval;
+
+		int numOfPiecesOnBoard=board.numberOfPieces();
+
+		// const int deltaPruningStandpatMargin=1050;
+		// if(numOfPiecesOnBoard>=6 && staticEval+deltaPruningStandpatMargin<alpha)
+		// 	return staticEval;
+
+		alpha=max(alpha,staticEval);
 		if(alpha>=beta){
 			transpositionTableQuiescent.write(currentZobristKey,maxEvaluation,0,LOWER_BOUND,boardCurrentAge,bestHashMove);
 			return maxEvaluation;
 		}
+
+
+		// moveListGenerator.killerMove=moveListGenerator.hashMove;
+		Board boardCopy=board;
+		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
+
 
 		bool isFirstMove=1;
 		char type=UPPER_BOUND;
 		bestHashMove=Move();
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
+			int sseScore=(move.score&((1<<10)-1))-15;
+			// if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
+			// 	cout<<move.convertToUCI()<<' '<<sseScore<<' '<<moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())<<' '<<move.score<<'\n';
+			// 	cout<<board.occupancyPiece(move.getStartSquare())<<' '<<board.occupancyPiece(move.getTargetSquare())<<'\n';
+			// 	exit(0);
+			// }
 			board.makeMove(move);
+			int newStaticEval=evaluator.evaluatePosition(color);
+			int deltaPruningMargin=200;
+			// if(sseScore<=-1)
+			// 	deltaPruningMargin-=sseScore*100;
+			// assert(sseScore>=0);
+			if((numOfPiecesOnBoard-1)>=6 && (newStaticEval+deltaPruningMargin<alpha || sseScore<=-3)){
+				board=boardCopy;
+				continue;
+			}
 
 			int score=-quiescentSearch((color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
+
+
 			isFirstMove=0;
 			board=boardCopy;
 			if(stopSearch)
@@ -114,6 +143,8 @@ struct Searcher{
 		return maxEvaluation;
 	}
 
+	int staticEvaluationHistory[maxDepth];
+
 	int search(int color,int depth,int isRoot,int alpha,int beta,int depthFromRoot){
 		if(stopSearch)
 			return 0;
@@ -132,9 +163,27 @@ struct Searcher{
 			return evaluator.evaluateStalledPosition(color,depthFromRoot);
 
 
+		int staticEval=evaluator.evaluatePosition(color);
+		bool improving=false;
+		bool isMovingSideInCheck=moveGenerator.isInCheck(color);
+
+		if(isMovingSideInCheck)
+			staticEvaluationHistory[depthFromRoot]=NONE_SCORE;
+		else{
+			staticEvaluationHistory[depthFromRoot]=staticEval;
+			if(depthFromRoot>=2){
+				int previousEval=staticEvaluationHistory[depthFromRoot-2];
+				// if(previousEval==NONE_SCORE||previousEval<staticEval)
+					// improving=true;
+			}
+		}
+
+
 		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(currentZobristKey,depth,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
-			alpha=max(alpha,hashTableEvaluation);
+			if(!isPvNode)
+				alpha=max(alpha,hashTableEvaluation);
+			staticEval=hashTableEvaluation;
 			if(alpha>=beta)
 				return alpha;
 		}
@@ -142,9 +191,7 @@ struct Searcher{
 		// occuredPositions[board.age]=currentZobristKey;
 
 
-		int staticEval=evaluator.evaluatePosition(color);
-
-		bool isMovingSideInCheck=moveGenerator.isInCheck(color);
+		
 
 		int nodeType=transpositionTable.getNodeType(currentZobristKey);
 
@@ -154,7 +201,9 @@ struct Searcher{
 			(bestHashMove==Move()||board.isQuietMove(bestHashMove)) && // TT move is null or non-capture
 			nodeType!=EXACT){ // node type is not PV
 
-			if(staticEval>=beta+150*depth)
+			int margin=(150-improving*50)*depth;
+
+			if(staticEval>=beta+margin)
 				return staticEval;
 		}
 
@@ -169,7 +218,8 @@ struct Searcher{
 		if(
 			!isMovingSideInCheck && // position not in check
 			((board.whitePieces|board.blackPieces)^(board.pawns|board.kings))>0 &&  // pieces except kings and pawns exist (to prevent zugzwang)
-			staticEval>=beta // static evaluation >= beta
+			staticEval>=beta && // static evaluation >= beta
+			!isPvNode
 			){
 
 			const int NULL_MOVE_DEPTH_REDUCTION=3;
@@ -206,22 +256,35 @@ struct Searcher{
 				moveGenerator.isInCheck(oppositeColor)|| // checking move
 				!board.isQuietMove(move)); // non-quiet move
 
+			bool isCapture=(board.whitePieces|board.blackPieces).getBit(move.getTargetSquare());
+			bool inCheck=moveGenerator.isInCheck(oppositeColor);
+			bool isPromotion=(move.getPromotionFlag()>0);
+			int sseEval=0;
+			// if(isCapture)
+			// 	sseEval=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare());
+
 			board.makeMove(move);
 
 			int newStaticEval=evaluator.evaluatePosition(color);
 
+			int futilityMargin=100;
 
+			// if(isCapture){
+			// 	if(sseEval)
+			// }
 
 			// Futility pruning
-			// if(depth==1 &&
-			// 	movesSearched>0 &&
-			// 	!isMovingSideInCheck &&
-			// 	newStaticEval<alpha-150 &&
-			// 	!isMoveInteresting){
+			if(depth==1 &&
+				movesSearched>0 &&
+				!isMovingSideInCheck &&
+				newStaticEval<alpha-100 &&
+				!isMoveInteresting &&
+				abs(MATE_SCORE-beta)>maxDepth && abs(alpha+MATE_SCORE)>maxDepth
+				){
 
-			// 	board=boardCopy;
-			// 	continue;
-			// }
+				board=boardCopy;
+				continue;
+			}
 
 			int extendDepth=0;
 			if(moveGenerator.isInCheck(oppositeColor)) // if in check, search deeper for 1 ply

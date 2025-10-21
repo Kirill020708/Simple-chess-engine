@@ -1,5 +1,7 @@
 // generates list of moves for current position
 
+#pragma once
+
 
 #ifndef MOVE
 #define MOVE
@@ -47,7 +49,7 @@
 
 const int maxDepth=256,maxListSize=256;
 
-//score: 10 bits for history < 1 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
+//score: 10 bits for history (or see) < 1 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
 
 struct MoveListGenerator{
 	const int killerMoveShift=10,captureShift=11,hashMoveShift=17;
@@ -88,12 +90,27 @@ struct MoveListGenerator{
 			while(moves>0){
 				int targetSquare=moves.getFirstBitNumberAndExclude();
 
-				int captureCoeff=0;
+				int captureCoeff=0,isCapture=0,sseEval;
 				if(opponentPieces.getBit(targetSquare)){
+					isCapture=1;
+					// cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<moveGenerator.sseEval(targetSquare,color,startSquare)<<'\n';
 					int attackingPiece=board.occupancyPiece(startSquare);
 					int capturedPiece=board.occupancyPiece(targetSquare);
-					captureCoeff=(capturedPiece-attackingPiece)+10;
-				}
+
+					int captureEval;
+					if(attackingPiece>capturedPiece)
+						captureEval=sseEval=moveGenerator.sseEval(targetSquare,color,startSquare);
+					else
+						captureEval=sseEval=1;
+
+					if(captureEval>=-1)
+						captureCoeff+=(1<<5);
+
+					captureCoeff+=(capturedPiece-attackingPiece)+10;
+
+					// cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<captureEval<<'\n';
+				}else
+					captureCoeff=(1<<5); // if move isn't capture, make it's value below winning SSE but before loosing
 
 				if(board.occupancyPiece(startSquare)==PAWN&&
 					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
@@ -125,7 +142,13 @@ struct MoveListGenerator{
 					}
 					board=boardCopy;
 					Move move=Move(startSquare,targetSquare,NOPIECE);
-					move.score+=(captureCoeff<<captureShift)+historyHelper.getScore(color,move);
+					move.score+=(captureCoeff<<captureShift);
+					if(!isCapture)
+						move.score+=historyHelper.getScore(color,move);
+					else{
+						// cout<<sseEval<<'\n';
+						move.score+=(sseEval+15);
+					}
 					if(move==hashMove)
 						move.score+=(1<<hashMoveShift);
 					// if(move==killerMove && !captureCoeff)

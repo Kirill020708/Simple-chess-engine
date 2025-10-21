@@ -1,5 +1,7 @@
 // keys for Zobrist hashing
 
+#pragma once
+
 
 #ifndef DECLARS
 #define DECLARS

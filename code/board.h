@@ -1,5 +1,7 @@
 // struct for board
 
+#pragma once
+
 #ifndef MOVE
 #define MOVE
 

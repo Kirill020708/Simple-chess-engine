@@ -1,6 +1,8 @@
 // struct for easier work with bitboards
 
 
+#pragma once
+
 #ifndef DECLARS
 #define DECLARS
 

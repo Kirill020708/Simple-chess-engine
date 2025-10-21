@@ -1,5 +1,7 @@
 // history heruistics helper
 
+#pragma once
+
 
 #ifndef DECLARS
 #define DECLARS

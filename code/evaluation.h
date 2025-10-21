@@ -1,5 +1,7 @@
 // evaluation of the current position on board
 
+#pragma once
+
 
 #ifndef BOARD
 #define BOARD
@@ -22,6 +24,7 @@
 
 #endif /* PIECESQTABLE */
 
+const int NONE_SCORE=inf-10; // score which never occures
 const int MATE_SCORE=inf/10,DRAW_SCORE=0;
 const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
 
@@ -86,7 +89,7 @@ struct Evaluator{
 
 		// evaluation+=pawnsEval;
 
-		const int attackSquareScore=1;
+		// const int attackSquareScore=1;
 		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
 
 		return evaluation;

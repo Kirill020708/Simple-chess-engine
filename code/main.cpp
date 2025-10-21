@@ -65,7 +65,7 @@ int main(){
 /*
 
 cd /Users/Apple/Desktop/projects/chessEngv2/apps
-c++ ../Simple-chess-engine/code/main.cpp -o app -std=c++2a -O2
+c++ ../Simple-chess-engine/code/main.cpp -o appV17_IMP_RFP -std=c++2a -O2
 c++ main.cpp -o appPVS -std=c++2a -O2
 
 ./fastchess -recover -repeat -games 2 -rounds 50000 -ratinginterval 1 -scoreinterval 1 -autosaveinterval 0\
@@ -89,8 +89,8 @@ go movetime 100
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./apps/appV12_PWN2 restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./apps/appV12_PWN restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./apps/appV17_IMP_RFP restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./apps/appV16_TTPV restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

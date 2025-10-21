@@ -1,5 +1,7 @@
 // Transposition table
 
+#pragma once
+
 
 #ifndef DECLARS
 #define DECLARS

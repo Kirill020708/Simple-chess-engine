@@ -1,5 +1,7 @@
 // perfomance test
 
+#pragma once
+
 
 #ifndef MOVEGENLIST
 #define MOVEGENLIST
@@ -39,7 +41,7 @@ struct Perftester{
 		for(int depth=1;depth<=maxDepth;depth++){
 	        std::chrono::steady_clock::time_point timeBegin = std::chrono::steady_clock::now();
 			int color=board.boardColor;
-			moveListGenerator.generateMovesForPerft(color,depth);
+			moveListGenerator.generateMoves(color,depth,1,0);
 			ll nodes=0;
 			for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depth];currentMove++){
 				Move move=moveListGenerator.moveList[depth][currentMove];

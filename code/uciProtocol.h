@@ -1,5 +1,7 @@
 // A unit for uci communication
 
+#pragma once
+
 
 #ifndef SEARCHER
 #define SEARCHER
@@ -23,6 +25,14 @@
 #include "evaluation.h"
 
 #endif /* EVALUATOR */
+
+
+#ifndef PERFT
+#define PERFT
+
+#include "perft.h"
+
+#endif /* PERFT */
 
 
 void waitAndEndSearch(int timeToThink){
@@ -82,11 +92,13 @@ struct UCIcommunicationHepler{
 		string mainCommand=tokens[0];
 		if(mainCommand=="quit")
 			exit(0);
-		if(mainCommand=="DBG"){
+		if(mainCommand=="dbg"){
 			// printDesk01(board.rooks);
 			// perftester.perfTest(256);
-			for(ll i=0;i<board.age;i++)
-				cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
+			// for(ll i=0;i<board.age;i++)
+				// cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
+			// inline int sseEval(int square,int color,int firstAttacker){
+			cout<<moveGenerator.sseEval(stoi(tokens[1]),stoi(tokens[2]),stoi(tokens[3]))<<endl;
 			return;
 		}
 		if(mainCommand=="uci"){
@@ -175,6 +187,9 @@ struct UCIcommunicationHepler{
 			// cout<<timeToThink<<'\n';
 			waitAndEndSearch(timeToThink);
 			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
+		}
+		if(mainCommand=="perft"){
+			perftester.perfTest(stoi(tokens[1]));
 		}
 		if(mainCommand=="stop"){
 			stopWaitingThread=1;

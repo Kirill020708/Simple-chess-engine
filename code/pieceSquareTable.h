@@ -1,5 +1,7 @@
 // evaluation for piece value and position
 
+#pragma once
+
 
 #ifndef BOARDHELP
 #define BOARDHELP
