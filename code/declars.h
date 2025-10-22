@@ -47,6 +47,12 @@ const int DONT_SORT=0,DO_SORT=1;
 const int ALL_MOVES=0,ONLY_CAPTURES=1;
 const int NO_EN_PASSANT=10;
 
+const int LOWER_BOUND=0,EXACT=1,UPPER_BOUND=2,NONE=3;
+const int NO_EVAL=inf*10; // return if we can't use evaluation from the transposition table
+
+#define memoryUsageMB 64
+
+
 
 vector<string>splitStr(string s,string c){//splits a string by (c) substrings (for parsing)
 	s+=c;

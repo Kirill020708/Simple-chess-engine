@@ -17,6 +17,8 @@ struct BoardHelper{
 
 	Bitboard neighborColumns[64];
 
+	Bitboard updatedSquares[64];
+
 	int distanceToEdge[64];
 
 	BoardHelper(){
@@ -75,6 +77,14 @@ struct BoardHelper{
 						pawnCaptureRight[BLACK][s]=(1ull<<(s+9));
 					}
 				}
+
+				updatedSquares[s]=kingMoves[s]|knightMoves[s];
+				for(ll i1=0;i1<8;i1++)
+					for(ll j1=0;j1<8;j1++){
+						ll s1=i1*8+j1;
+						if(i1==i||j1==j||(abs(i-i1)==1&&abs(j-j1)==1))
+							updatedSquares[s]|=(1ull<<s1);
+					}
 
 
 				distanceToEdge[s]=min(i,7-i)+min(j,7-j);

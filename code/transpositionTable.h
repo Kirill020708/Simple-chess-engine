@@ -10,9 +10,6 @@
 
 #endif /* DECLARS */
 
-const int LOWER_BOUND=0,EXACT=1,UPPER_BOUND=2,NONE=3;
-const int NO_EVAL=inf*10; // return if we can't use evaluation from the transposition table
-
 struct TableEntry{
 	ull key;
 	int evaluation;
@@ -30,8 +27,6 @@ struct TableEntry{
 		bestMove=bestMove_;
 	}
 };
-
-#define memoryUsageMB 64
 
 struct TranspositionTable{
 	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);

@@ -28,11 +28,87 @@ const int NONE_SCORE=inf-10; // score which never occures
 const int MATE_SCORE=inf/10,DRAW_SCORE=0;
 const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
 
+// Transposition table
+
+#pragma once
+
+
+#ifndef DECLARS
+#define DECLARS
+
+#include "declars.h"
+
+#endif /* DECLARS */
+
+struct EvalTableEntry{
+	ull key;
+	int evaluation=NO_EVAL;
+
+	EvalTableEntry(){}
+
+	EvalTableEntry(ull key_,int evaluation_){
+		key=key_;
+		evaluation=evaluation_;
+	}
+};
+
+
+struct EvaluationTranspositionTable{
+	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(EvalTableEntry);
+	EvalTableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(EvalTableEntry)];
+
+	inline void write(ull key,int evaluation){
+		int index=key%tableSize;
+		table[index]={key,evaluation};
+	}
+
+	inline int get(ull key){
+		int index=key%tableSize;
+		if(table[index].key!=key)
+			return NO_EVAL;
+		return table[index].evaluation;
+	}
+};
+
+EvaluationTranspositionTable evaluationTranspositionTable;
+
+
+
 struct Evaluator{
 
+	int mobilityScoreMg[7] = {0, 0, 1, 2, 1, 0, -1};
+	int mobilityScoreEg[7] = {0, 0, 2, 3, 2, 1, 1};  // v2
+	inline int evaluateMobility(){
+		int evaluation=0;
+
+		float endgameWeight=board.endgameWeight();
+
+		Bitboard pieces=board.whitePieces&(~board.pawns);
+		while(pieces>0){
+			int square=pieces.getFirstBitNumberAndExclude();
+			int pieceType=board.occupancyPiece(square);
+			int mobility=moveGenerator.moves(square).popcnt();
+			evaluation+=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
+		}
+
+		pieces=board.blackPieces&(~board.pawns);
+		while(pieces>0){
+			int square=pieces.getFirstBitNumberAndExclude();
+			int pieceType=board.occupancyPiece(square);
+			int mobility=moveGenerator.moves(square).popcnt();
+			evaluation-=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
+		}
+
+		return evaluation;
+	}
 
 	inline int evaluatePosition(){ // board evaluation with white's perspective
-		int evaluation=board.evaluation;
+		ull key=board.getZobristKey();
+		int evaluation=evaluationTranspositionTable.get(key);
+		if(evaluation!=NO_EVAL)
+			return evaluation;
+
+		evaluation=board.evaluation;
 
 		// int numberOfPieces=board.numberOfPieces();
 /*
@@ -91,7 +167,8 @@ struct Evaluator{
 
 		// const int attackSquareScore=1;
 		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
-
+		evaluation+=evaluateMobility();
+		evaluationTranspositionTable.write(key,evaluation);
 		return evaluation;
 	}
 

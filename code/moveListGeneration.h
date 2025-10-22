@@ -132,6 +132,8 @@ struct MoveListGenerator{
 						board=boardCopy;
 						if(promotionMoves[i]==hashMove)
 							promotionMoves[i].score+=(1<<hashMoveShift);
+						if(onlyCaptures)
+							promotionMoves[i].score+=(sseEval+15);
 						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
 					}
 				}else{
@@ -143,7 +145,7 @@ struct MoveListGenerator{
 					board=boardCopy;
 					Move move=Move(startSquare,targetSquare,NOPIECE);
 					move.score+=(captureCoeff<<captureShift);
-					if(!isCapture)
+					if(!isCapture||!onlyCaptures)
 						move.score+=historyHelper.getScore(color,move);
 					else{
 						// cout<<sseEval<<'\n';
