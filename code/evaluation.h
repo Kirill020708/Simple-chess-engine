@@ -102,6 +102,80 @@ struct Evaluator{
 		return evaluation;
 	}
 
+	const int passedPawnScore[8] = {0,5,10,25,45,80,140,0};
+	inline int evaluatePawns(){
+		// const int isolatedPawnScore=-10;
+		// const int doubledPawnScore=0;
+		// const int blockedPawnScore=0;
+		// const int defendedPawnScore=0;
+
+		float endgameWeight=board.endgameWeight();
+
+		int evaluation=0;
+
+		int passedEvaluation=0;
+
+		Bitboard pawns=board.pawns&board.whitePieces;
+		Bitboard friendPawns=board.pawns&board.whitePieces;
+		Bitboard opponentPawns=board.pawns&board.blackPieces;
+
+		while(pawns){
+			int square=pawns.getFirstBitNumberAndExclude();
+			int col=boardHelper.getColumnNumber(square),row=7-boardHelper.getRowNumber(square);
+			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
+
+			if((boardHelper.possiblePawnDefendersWhite[square]&opponentPawns)==0)
+				passedEvaluation+=passedPawnScore[row];
+		}
+
+
+		pawns=board.pawns&board.blackPieces;
+		friendPawns=board.pawns&board.blackPieces;
+		opponentPawns=board.pawns&board.whitePieces;
+
+		while(pawns){
+			int square=pawns.getFirstBitNumberAndExclude();
+			int col=boardHelper.getColumnNumber(square),row=boardHelper.getRowNumber(square);
+			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
+
+			if((boardHelper.possiblePawnDefendersBlack[square]&opponentPawns)==0)
+				passedEvaluation-=passedPawnScore[row];
+		}
+
+		passedEvaluation=passedEvaluation*(0.7*(1-endgameWeight)+1.3*endgameWeight);
+
+		evaluation+=passedEvaluation;
+
+		return evaluation;
+
+
+		// while(pawns){
+		// 	int square=pawns.getFirstBitNumberAndExclude();
+		// 	int color=board.occupancy(square);
+		// 	int oppositeColor=(color==WHITE)?BLACK:WHITE;
+
+		// 	Bitboard friendPawns=board.pawns&((color==WHITE)?board.whitePieces:board.blackPieces);
+
+		// 	int pawnScore=0;
+
+		// 	if((boardHelper.neighborColumns[square]&friendPawns)==0)
+		// 		pawnScore+=isolatedPawnScore;
+
+		// 	if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
+		// 		pawnScore+=doubledPawnScore;
+
+		// 	int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
+
+		// 	if(board.pawns.getBit(nextSquare))
+		// 		pawnScore+=blockedPawnScore;
+
+		// 	if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
+		// 		pawnScore+=defendedPawnScore;
+
+		// 	pawnsEval+=(color==WHITE)?pawnScore:-pawnScore;
+		// }
+	}
+
 	inline int evaluatePosition(){ // board evaluation with white's perspective
 		ull key=board.getZobristKey();
 		int evaluation=evaluationTranspositionTable.get(key);
@@ -128,42 +202,8 @@ struct Evaluator{
 			}
 		}
 */
-		// const int isolatedPawnScore=-10;
-		// const int doubledPawnScore=0;
-		// const int blockedPawnScore=0;
-		// const int defendedPawnScore=0;
 
-		// Bitboard pawns=board.pawns;
-
-		// int pawnsEval=0;
-
-		// while(pawns){
-		// 	int square=pawns.getFirstBitNumberAndExclude();
-		// 	int color=board.occupancy(square);
-		// 	int oppositeColor=(color==WHITE)?BLACK:WHITE;
-
-		// 	Bitboard friendPawns=board.pawns&((color==WHITE)?board.whitePieces:board.blackPieces);
-
-		// 	int pawnScore=0;
-
-		// 	if((boardHelper.neighborColumns[square]&friendPawns)==0)
-		// 		pawnScore+=isolatedPawnScore;
-
-			// if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
-			// 	pawnScore+=doubledPawnScore;
-
-			// int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
-
-			// if(board.pawns.getBit(nextSquare))
-			// 	pawnScore+=blockedPawnScore;
-
-			// if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
-			// 	pawnScore+=defendedPawnScore;
-
-		// 	pawnsEval+=(color==WHITE)?pawnScore:-pawnScore;
-		// }
-
-		// evaluation+=pawnsEval;
+		evaluation+=evaluatePawns();
 
 		// const int attackSquareScore=1;
 		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;

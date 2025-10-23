@@ -15,22 +15,63 @@ struct BoardHelper{
 
 	Bitboard pawnMoves[2][64],pawnCaptures[2][64],pawnCaptureLeft[2][64],pawnCaptureRight[2][64];
 
-	Bitboard neighborColumns[64];
+	Bitboard neighborColumns[64],columns[64];
+
+	Bitboard possiblePawnDefendersWhite[64],possiblePawnDefendersBlack[64]; // squares for checking for passed pawn
 
 	Bitboard updatedSquares[64];
 
 	int distanceToEdge[64];
+
+	inline int getColumnNumber(int square){
+		return square&7;
+	}
+
+	inline int getRowNumber(int square){
+		return square>>3;
+	}
+
+	inline Bitboard getColumn(int columnNuber){
+		return Bitboard(ull(0b0000000100000001000000010000000100000001000000010000000100000001)<<columnNuber);
+	}
+
+	inline Bitboard generateMask(int start,int end){//mask with 1-s from start bit to end bit
+		return Bitboard(((1ull<<(end-start+1))-1)<<start);
+	}
 
 	BoardHelper(){
 		for(int i=0;i<8;i++)
 			for(int j=0;j<8;j++){
 				int s=i*8+j;
 
+				columns[s]=getColumn(j);
+
 				neighborColumns[s]=0;
 				if(j)
 					neighborColumns[s]|=getColumn(j-1);
 				if(j<7)
 					neighborColumns[s]|=getColumn(j+1);
+
+
+				possiblePawnDefendersWhite[s]=0;
+				for(ll i1=i-1;i1>=0;i1--){
+					int s1=i1*8+j;
+					possiblePawnDefendersWhite[s]|=(1ull<<s1);
+					if(j)
+						possiblePawnDefendersWhite[s]|=(1ull<<(s1-1));
+					if(j+1<8)
+						possiblePawnDefendersWhite[s]|=(1ull<<(s1+1));
+				}
+				possiblePawnDefendersBlack[s]=0;
+				for(ll i1=i+1;i1<8;i1++){
+					int s1=i1*8+j;
+					possiblePawnDefendersBlack[s]|=(1ull<<s1);
+					if(j)
+						possiblePawnDefendersBlack[s]|=(1ull<<(s1-1));
+					if(j+1<8)
+						possiblePawnDefendersBlack[s]|=(1ull<<(s1+1));
+				}
+
 
 				for(int i1=0;i1<8;i1++)
 					for(int j1=0;j1<8;j1++){
@@ -89,22 +130,6 @@ struct BoardHelper{
 
 				distanceToEdge[s]=min(i,7-i)+min(j,7-j);
 			}
-	}
-
-	inline int getColumnNumber(int square){
-		return square&7;
-	}
-
-	inline int getRowNumber(int square){
-		return square>>3;
-	}
-
-	inline Bitboard getColumn(int columnNuber){
-		return Bitboard(ull(0b0000000100000001000000010000000100000001000000010000000100000001)<<columnNuber);
-	}
-
-	inline Bitboard generateMask(int start,int end){//mask with 1-s from start bit to end bit
-		return Bitboard(((1ull<<(end-start+1))-1)<<start);
 	}
 };
 
