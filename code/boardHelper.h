@@ -39,6 +39,15 @@ struct BoardHelper{
 		return Bitboard(((1ull<<(end-start+1))-1)<<start);
 	}
 
+	inline int distanceColumn(Bitboard column,int color){ // distance for the first piece in this column from color's perspective
+		if(column==0)
+			return 7;
+		if(color==WHITE)
+			return 7-getRowNumber(column.getLastBitNumber());
+		else
+			return getRowNumber(column.getFirstBitNumber());
+	}
+
 	BoardHelper(){
 		for(int i=0;i<8;i++)
 			for(int j=0;j<8;j++){

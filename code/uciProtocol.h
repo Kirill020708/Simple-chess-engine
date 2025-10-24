@@ -98,7 +98,7 @@ struct UCIcommunicationHepler{
 			// for(ll i=0;i<board.age;i++)
 				// cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
 			// inline int sseEval(int square,int color,int firstAttacker){
-			cout<<moveGenerator.sseEval(stoi(tokens[1]),stoi(tokens[2]),stoi(tokens[3]))<<endl;
+			cout<<board.materialCount<<'\n';
 			return;
 		}
 		if(mainCommand=="uci"){

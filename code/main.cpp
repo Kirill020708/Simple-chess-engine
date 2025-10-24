@@ -59,6 +59,7 @@ int main(){
 	// system("/Users/Apple/Desktop/projects/chesscpp/app");
 	// printDesk01(boardHelper.neighborColumns[34].bitboard);
 	// printDesk01(boardHelper.possiblePawnDefendersBlack[31]);
+	// cout<<boardHelper.distanceColumn(board.pawns&board.whitePieces&boardHelper.getColumn(0),BLACK);
 	uciHelper.listenInput();
 }
 

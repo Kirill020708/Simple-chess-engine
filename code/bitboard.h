@@ -23,6 +23,12 @@ struct Bitboard{
 		return (bitboard&(1ull<<i))>0;
 	}
 
+	inline int getLastBitNumber(){//returns the number of first enabled bit
+		if(!bitboard)
+			return -1;
+		return 63-__builtin_clzll(bitboard);
+	}
+
 	inline int getFirstBitNumber(){//returns the number of first enabled bit
 		if(!bitboard)
 			return -1;

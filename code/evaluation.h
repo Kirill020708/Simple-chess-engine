@@ -102,10 +102,54 @@ struct Evaluator{
 		return evaluation;
 	}
 
+	inline int evaluatePawnIslands(){
+		const int pawnIslandPenalty=15;
+		int prevW=0,prevB=0;
+		int evaluation=0;
+		for(int col=0;col<8;col++){
+			Bitboard column=boardHelper.getColumn(col);
+			int colW=(column&board.pawns&board.whitePieces)>0;
+			int colB=(column&board.pawns&board.blackPieces)>0;
+			if(!colW&&prevW)
+				evaluation-=pawnIslandPenalty;
+			prevW=colW;
+
+			if(!colB&&prevB)
+				evaluation+=pawnIslandPenalty;
+			prevB=colB;
+		}
+		if(prevW)
+			evaluation-=pawnIslandPenalty;
+
+		if(prevB)
+			evaluation+=pawnIslandPenalty;
+
+		return evaluation;
+	}
+
+	inline int evaluateDoubledPawns(){
+		const int doubledPawnPenaltyMg=20,doubledPawnPenaltyEg=7;
+
+		float endgameWeight=board.endgameWeight();
+
+		int numberOfDoubled=0;
+
+		for(int col=0;col<8;col++){
+			Bitboard column=boardHelper.getColumn(col);
+			int colW=(column&board.pawns&board.whitePieces).popcnt();
+			int colB=(column&board.pawns&board.blackPieces).popcnt();
+
+			if(colW>1)
+				numberOfDoubled+=colW-1;
+			if(colB>1)
+				numberOfDoubled-=(colB-1);
+		}
+		return -(numberOfDoubled*(doubledPawnPenaltyMg*(1-endgameWeight)+doubledPawnPenaltyEg*endgameWeight));
+	}
+
 	const int passedPawnScore[8] = {0,5,10,25,45,80,140,0};
-	inline int evaluatePawns(){
+	inline int evaluatePassedPawns(){
 		// const int isolatedPawnScore=-10;
-		// const int doubledPawnScore=0;
 		// const int blockedPawnScore=0;
 		// const int defendedPawnScore=0;
 
@@ -126,6 +170,7 @@ struct Evaluator{
 
 			if((boardHelper.possiblePawnDefendersWhite[square]&opponentPawns)==0)
 				passedEvaluation+=passedPawnScore[row];
+
 		}
 
 
@@ -140,10 +185,10 @@ struct Evaluator{
 
 			if((boardHelper.possiblePawnDefendersBlack[square]&opponentPawns)==0)
 				passedEvaluation-=passedPawnScore[row];
+
 		}
 
 		passedEvaluation=passedEvaluation*(0.7*(1-endgameWeight)+1.3*endgameWeight);
-
 		evaluation+=passedEvaluation;
 
 		return evaluation;
@@ -176,6 +221,74 @@ struct Evaluator{
 		// }
 	}
 
+	int pawnDistancePenalty[8]={0,0,20,50,80,110,120,150};
+	inline int evaluateKingShield(){
+		int mainColumnEvaluationW=0,nearColumnEvaluationW=0;
+		int mainColumnEvaluationB=0,nearColumnEvaluationB=0;
+
+		float endgameWeight=board.endgameWeight();
+
+		int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
+		int col=boardHelper.getColumnNumber(whiteKingPos);
+		Bitboard mainColumn=boardHelper.getColumn(col);
+
+		int dist=boardHelper.distanceColumn(mainColumn&board.whitePieces&board.pawns,WHITE);
+		mainColumnEvaluationW-=pawnDistancePenalty[dist];
+
+		if(col>0){
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-1)&board.whitePieces&board.pawns,WHITE);
+			nearColumnEvaluationW-=pawnDistancePenalty[dist];
+		}
+		if(col<7){
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col+1)&board.whitePieces&board.pawns,WHITE);
+			nearColumnEvaluationW-=pawnDistancePenalty[dist];
+		}
+		if(whiteKingPos==58 || whiteKingPos==50){ // c1, c2
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.whitePieces&board.pawns,WHITE);
+			nearColumnEvaluationW-=pawnDistancePenalty[dist];
+		}
+
+		if(col==3||col==4){ // d or e column
+			mainColumnEvaluationW=0;
+			nearColumnEvaluationW=0;
+		}
+
+
+
+		int blackKingPos=(board.kings&board.blackPieces).getFirstBitNumber();
+		col=boardHelper.getColumnNumber(blackKingPos);
+		mainColumn=boardHelper.getColumn(col);
+
+		dist=boardHelper.distanceColumn(mainColumn&board.blackPieces&board.pawns,BLACK);
+		mainColumnEvaluationB+=pawnDistancePenalty[dist];
+
+		if(col>0){
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-1)&board.blackPieces&board.pawns,BLACK);
+			nearColumnEvaluationB+=pawnDistancePenalty[dist];
+		}
+		if(col<7){
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col+1)&board.blackPieces&board.pawns,BLACK);
+			nearColumnEvaluationB+=pawnDistancePenalty[dist];
+		}
+		if(blackKingPos==2 || blackKingPos==10){ // c8, c7
+			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.blackPieces&board.pawns,BLACK);
+			nearColumnEvaluationB+=pawnDistancePenalty[dist];
+		}
+
+		if(col==3||col==4){ // d or e column
+			mainColumnEvaluationB=0;
+			nearColumnEvaluationB=0;
+		}
+
+		int evaluation=mainColumnEvaluationW+mainColumnEvaluationB;
+
+		evaluation+=(nearColumnEvaluationW+nearColumnEvaluationB)*0.6;
+
+		evaluation*=(1-endgameWeight);
+
+		return evaluation;
+	}
+
 	inline int evaluatePosition(){ // board evaluation with white's perspective
 		ull key=board.getZobristKey();
 		int evaluation=evaluationTranspositionTable.get(key);
@@ -202,12 +315,17 @@ struct Evaluator{
 			}
 		}
 */
+		evaluation+=evaluateMobility();
 
-		evaluation+=evaluatePawns();
+		evaluation+=evaluatePassedPawns();
+		evaluation+=evaluatePawnIslands();
+		// evaluation+=evaluateDoubledPawns();
+
+
+		// evaluation+=evaluateKingShield();
 
 		// const int attackSquareScore=1;
 		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
-		evaluation+=evaluateMobility();
 		evaluationTranspositionTable.write(key,evaluation);
 		return evaluation;
 	}

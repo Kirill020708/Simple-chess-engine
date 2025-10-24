@@ -47,8 +47,11 @@ struct OccuredPositionsHelper{
 
 OccuredPositionsHelper occuredPositionsHelper;
 
+int material[8]={0,0,3,3,5,10,0};
+
 struct Board{
 	char boardColor;
+	int materialCount;
 	int evaluation;
 
 	Bitboard whitePieces,blackPieces;
@@ -69,7 +72,7 @@ struct Board{
 	}
 
 	inline float endgameWeight(){
-		return 1-float(numberOfPieces())/32;
+		return 1-float(materialCount)/64.0;
 	}
 
 	inline int occupancy(int square){
@@ -146,8 +149,10 @@ struct Board{
 	inline void clearPosition(int square){
 		int piece=occupancyPiece(square);
 		int pieceColor=occupancy(square);
-		if(pieceColor!=EMPTY)
+		if(pieceColor!=EMPTY){
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
+			materialCount-=material[piece];
+		}
 
 		evaluation-=pieceSquareTable.getPieceEval(piece,square,pieceColor,endgameWeight());
 		whitePieces&=(~(1ull<<square));
@@ -162,6 +167,7 @@ struct Board{
 
 	inline void putPiece(int square,int color,int pieceType){
 		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,endgameWeight());
+		materialCount+=material[pieceType];
 		if(color==WHITE)
 			whitePieces|=(1ull<<square);
 		if(color==BLACK)
@@ -307,8 +313,10 @@ struct Board{
 			enPassantColumn=enPassantSquare[0]-'a';
 
 		evaluation=0;
+		materialCount=0;
 		for(int square=0;square<64;square++)
 			if(occupancy(square)!=EMPTY){
+				materialCount+=material[occupancyPiece(square)];
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
 			}
 		initZobristKey();
@@ -329,6 +337,11 @@ struct Board{
 		enPassantColumn=NO_EN_PASSANT;
 		evaluation=0;
 		initZobristKey();
+
+		materialCount=0;
+		for(int square=0;square<64;square++)
+			if(occupancy(square)!=EMPTY)
+				materialCount+=material[occupancyPiece(square)];
 	}
 };
 
