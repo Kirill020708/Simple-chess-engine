@@ -72,7 +72,7 @@ struct Searcher{
 		moveListGenerator.hashMove=bestHashMove;
 
 		int staticEval;
-		if(moveListGenerator.isStalled(color))
+		if(moveListGenerator.isStalled(color) || evaluator.insufficientMaterialDraw())
 			staticEval=evaluator.evaluateStalledPosition(color,depthFromRoot);
 		else
 			staticEval=evaluator.evaluatePosition(color);
@@ -159,7 +159,7 @@ struct Searcher{
 					return DRAW_SCORE;
 		}
 
-		if(moveListGenerator.isStalled(color))
+		if(moveListGenerator.isStalled(color) || (!isRoot&&evaluator.insufficientMaterialDraw()))
 			return evaluator.evaluateStalledPosition(color,depthFromRoot);
 
 
@@ -173,8 +173,8 @@ struct Searcher{
 			staticEvaluationHistory[depthFromRoot]=staticEval;
 			if(depthFromRoot>=2){
 				int previousEval=staticEvaluationHistory[depthFromRoot-2];
-				// if(previousEval==NONE_SCORE||previousEval<staticEval)
-					// improving=true;
+				if(previousEval==NONE_SCORE||previousEval<staticEval)
+					improving=true;
 			}
 		}
 
@@ -201,7 +201,7 @@ struct Searcher{
 			(bestHashMove==Move()||board.isQuietMove(bestHashMove)) && // TT move is null or non-capture
 			nodeType!=EXACT){ // node type is not PV
 
-			int margin=(150-improving*50)*depth;
+			int margin=(150-improving*100)*depth;
 
 			if(staticEval>=beta+margin)
 				return staticEval;
@@ -222,9 +222,9 @@ struct Searcher{
 			!isPvNode
 			){
 
-			const int NULL_MOVE_DEPTH_REDUCTION=3;
+			int R=3;
 			int prevEnPassColumn=board.makeNullMove();
-			int score=-search(oppositeColor,depth-NULL_MOVE_DEPTH_REDUCTION,0,-beta,-beta+1,depthFromRoot+1);
+			int score=-search(oppositeColor,depth-R,0,-beta,-beta+1,depthFromRoot+1);
 			board.makeNullMove();
 			board.enPassantColumn=prevEnPassColumn;
 			if(score>=beta)
@@ -247,6 +247,8 @@ struct Searcher{
 		int maxEvaluation=-inf;
 		char type=UPPER_BOUND;
 		int movesSearched=0;
+
+
 		bestHashMove=Move();
 		int numberOfMoves=moveListGenerator.moveListSize[depthFromRoot];
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
@@ -434,7 +436,7 @@ struct Searcher{
 	        pvLineSize=0;
 			lastScore=score;
 	        // getPvLine(color);
-			if(UCIout){
+			if(0){
 				cout<<"info depth "<<depth<<
 				" score ";
 				if(abs(MATE_SCORE-score)>maxDepth)
@@ -449,8 +451,8 @@ struct Searcher{
 				cout<<" nodes "<<nodes<<
 				" nps "<<(nodes*1000)/(timeThinked+1)<<
 				" time "<<timeThinked<<
-				" pv "<<bestMove.convertToUCI();
-				// for(int i=0;i<pvLineSize;i++)
+				" pv "<<bestMove.convertToUCI()<<' ';
+				// for(int i=1;i<pvLineSize;i++)
 					// cout<<pvLine[i].convertToUCI()<<' ';
 
 				cout<<endl;

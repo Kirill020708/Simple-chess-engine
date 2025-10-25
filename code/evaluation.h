@@ -289,7 +289,21 @@ struct Evaluator{
 		return evaluation;
 	}
 
+	inline bool insufficientMaterialDraw(){
+		if((board.pawns|board.queens|board.rooks)!=0)
+			return false;
+		if(((board.knights|board.bishops)&board.whitePieces).popcnt()>=2)
+			return false;
+		if(((board.knights|board.bishops)&board.blackPieces).popcnt()>=2)
+			return false;
+		return true;
+	}
+
 	inline int evaluatePosition(){ // board evaluation with white's perspective
+
+		if(insufficientMaterialDraw())
+			return DRAW_SCORE;
+
 		ull key=board.getZobristKey();
 		int evaluation=evaluationTranspositionTable.get(key);
 		if(evaluation!=NO_EVAL)
@@ -335,6 +349,9 @@ struct Evaluator{
 	}
 
 	int evaluateStalledPosition(int color,int depthFromRoot){
+		if(insufficientMaterialDraw())
+			return DRAW_SCORE;
+
 		if(moveGenerator.isInCheck(color))
 			return -(MATE_SCORE-depthFromRoot);
 		return DRAW_SCORE;
@@ -342,3 +359,9 @@ struct Evaluator{
 };
 
 Evaluator evaluator;
+
+
+
+
+
+
