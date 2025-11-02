@@ -49,17 +49,17 @@
 
 const int maxDepth=256,maxListSize=256;
 
-//score: 10 bits for history (or see) < 1 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
+//score: 10 bits for history (or see) < 2 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
 
 struct MoveListGenerator{
-	const int killerMoveShift=10,captureShift=11,hashMoveShift=17;
+	const int killerMoveShift=10,captureShift=12,hashMoveShift=18;
 
 	Move moveList[maxDepth][maxListSize];
 	int moveListSize[maxDepth];
 
 	Move hashMove;
 
-	Move killerMove;
+	Move killerMove,killerBackup;
 
 	inline void generateMoves(int color,int depth,bool doSort,bool onlyCaptures){
 		Board boardCopy=board;
@@ -153,7 +153,9 @@ struct MoveListGenerator{
 					}
 					if(move==hashMove)
 						move.score+=(1<<hashMoveShift);
-					// if(move==killerMove && !captureCoeff)
+					// if(move==killerMove)
+					// 	move.score+=(1<<(killerMoveShift+1));
+					// else if(move==killerBackup)
 					// 	move.score+=(1<<killerMoveShift);
 					moveList[depth][moveListSize[depth]++]=move;
 				}

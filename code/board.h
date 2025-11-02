@@ -315,10 +315,11 @@ struct Board{
 		evaluation=0;
 		materialCount=0;
 		for(int square=0;square<64;square++)
-			if(occupancy(square)!=EMPTY){
+			if(occupancy(square)!=EMPTY)
 				materialCount+=material[occupancyPiece(square)];
+		for(int square=0;square<64;square++)
+			if(occupancy(square)!=EMPTY)
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
-			}
 		initZobristKey();
 	}
 

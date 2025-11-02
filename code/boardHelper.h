@@ -21,6 +21,8 @@ struct BoardHelper{
 
 	Bitboard updatedSquares[64];
 
+	Bitboard columnUp[64],columnDown[64];
+
 	int distanceToEdge[64];
 
 	inline int getColumnNumber(int square){
@@ -55,6 +57,7 @@ struct BoardHelper{
 
 				columns[s]=getColumn(j);
 
+
 				neighborColumns[s]=0;
 				if(j)
 					neighborColumns[s]|=getColumn(j-1);
@@ -65,6 +68,7 @@ struct BoardHelper{
 				possiblePawnDefendersWhite[s]=0;
 				for(ll i1=i-1;i1>=0;i1--){
 					int s1=i1*8+j;
+					columnUp[s]|=(1ull<<s1);
 					possiblePawnDefendersWhite[s]|=(1ull<<s1);
 					if(j)
 						possiblePawnDefendersWhite[s]|=(1ull<<(s1-1));
@@ -74,6 +78,7 @@ struct BoardHelper{
 				possiblePawnDefendersBlack[s]=0;
 				for(ll i1=i+1;i1<8;i1++){
 					int s1=i1*8+j;
+					columnDown[s]|=(1ull<<s1);
 					possiblePawnDefendersBlack[s]|=(1ull<<s1);
 					if(j)
 						possiblePawnDefendersBlack[s]|=(1ull<<(s1-1));

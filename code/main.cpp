@@ -21,11 +21,23 @@
 
 #endif /* PERFT */
 
+
+#ifndef TEXEL
+#define TEXEL
+
+#include "texel.h"
+
+#endif /* TEXEL */
+
 string squareToString(int square){
 	return string(1,char((square&7)+'a'))+string(1,char(7-(square>>3)+'1'));
 }
 
 int main(){
+	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
+	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
+	evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew.txt");
+	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelData.txt");
 	// for(ll depth=1;depth<=15;depth++){
 		// cout<<depth<<": ";
 		// for(ll j=1;j<=40;j++)
@@ -91,8 +103,8 @@ go movetime 100
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./apps/appV17_SEE restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./apps/appV16_TTPV restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./apps/appV30_BSHP restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./apps/appV29_PST restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

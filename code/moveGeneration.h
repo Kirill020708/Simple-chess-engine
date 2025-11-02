@@ -250,37 +250,6 @@ struct MoveGeneration{
 		return isSquareAttackedByBlack(square);
 	}
 
-	inline int numOfSquaresAttackedByWhite(){
-		Bitboard whitePawns=board.pawns&board.whitePieces;
-		Bitboard pawnsAttack=(((whitePawns&(~boardHelper.getColumn(7)))>>7)|((whitePawns&(~boardHelper.getColumn(0)))>>9))&(~board.whitePieces);
-
-		int numOfSquares=pawnsAttack.popcnt();
-
-
-		Bitboard pieces=board.whitePieces&(~board.pawns);
-		while(pieces>0){
-			int currentSquare=pieces.getFirstBitNumberAndExclude();
-			numOfSquares+=moves(currentSquare).popcnt();
-		}
-
-		return numOfSquares;
-	}
-
-	inline int numOfSquaresAttackedByBlack(){
-		Bitboard blackPawns=board.pawns&board.blackPieces;
-		Bitboard pawnsAttack=(((blackPawns&(~boardHelper.getColumn(0)))<<7)|((blackPawns&(~boardHelper.getColumn(7)))<<9))&(~board.blackPieces);
-
-		int numOfSquares=pawnsAttack.popcnt();
-
-		Bitboard pieces=board.blackPieces&(~board.pawns);
-		while(pieces>0){
-			int currentSquare=pieces.getFirstBitNumberAndExclude();
-			numOfSquares+=moves(currentSquare).popcnt();
-		}
-
-		return numOfSquares;
-	}
-
 	inline int getSmallestAttacker(int square,int color){
 		int oppositeColor=(color==WHITE)?BLACK:WHITE;
 		Bitboard friendPieces=(color==WHITE)?board.whitePieces:board.blackPieces;

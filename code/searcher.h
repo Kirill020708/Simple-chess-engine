@@ -54,9 +54,42 @@ struct Searcher{
 
 	std::chrono::steady_clock::time_point searchStartTime;
 
-	#define killMovesNumber 2
-	Move killerMovesTable[maxDepth][killMovesNumber];
-	int killerMovesCount[maxDepth][killMovesNumber];
+	float texelSearch(int color,float alpha,float beta,int depthFromRoot){
+		float staticEval;
+		if(moveListGenerator.isStalled(color) || evaluator.insufficientMaterialDraw())
+			staticEval=evaluator.evaluateStalledPosition(color,depthFromRoot);
+		else{
+			staticEval=evaluator.evaluatePositionDeterministic();
+			if(color==BLACK)
+				staticEval=-staticEval;
+		}
+
+		float maxEvaluation=staticEval;
+
+		alpha=max(alpha,staticEval);
+		if(alpha>=beta)
+			return maxEvaluation;
+
+		Board boardCopy=board;
+		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
+
+		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
+			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
+			board.makeMove(move);
+
+			float score=-texelSearch((color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
+
+			board=boardCopy;
+			if(maxEvaluation<score){
+				maxEvaluation=score;
+				if(alpha<score)
+					alpha=score;
+				if(alpha>=beta)
+					return maxEvaluation;
+			}
+		}
+		return maxEvaluation;
+	}
 
 	int quiescentSearch(int color,int alpha,int beta,int depthFromRoot){
 		if(stopSearch)
@@ -142,6 +175,11 @@ struct Searcher{
 		transpositionTableQuiescent.write(currentZobristKey,maxEvaluation,0,type,boardCurrentAge,bestHashMove);
 		return maxEvaluation;
 	}
+
+	#define killMovesNumber 2
+	Move killerMovesTable[maxDepth][killMovesNumber];
+	int killerMovesCount[maxDepth][killMovesNumber];
+	int killerMovesAge[maxDepth][killMovesNumber];
 
 	int staticEvaluationHistory[maxDepth];
 
@@ -237,18 +275,28 @@ struct Searcher{
 		if(isRoot&&depth>1)
 			moveListGenerator.hashMove=bestMove;
 
-		int bestKillerMove=0;
-		for(int i=0;i<killMovesNumber;i++)
-			if(killerMovesCount[depthFromRoot][i]>killerMovesCount[depthFromRoot][bestKillerMove])
-				bestKillerMove=i;
-		moveListGenerator.killerMove=killerMovesTable[depthFromRoot][bestKillerMove];
+		// int bestKillerMove=0;
+		// for(int i=0;i<killMovesNumber;i++)
+		// 	if(killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][bestKillerMove]&&killerMovesCount[depthFromRoot][i]>1)
+		// 		bestKillerMove=i;
+
+		int killerMove=-1,killerBackup=-1;
+
+		// for(int i=0;i<killMovesNumber;i++){
+		// 	if(killerMove==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerMove]){
+		// 		killerBackup=killerMove;
+		// 		killerMove=i;
+		// 	}
+		// 	else if(killerBackup==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerBackup])
+		// 		killerBackup=i;
+		// }
+		// moveListGenerator.killerMove=killerMovesTable[depthFromRoot][killerMove];
+		// moveListGenerator.killerBackup=killerMovesTable[depthFromRoot][killerBackup];
 
 		moveListGenerator.generateMoves(color,depthFromRoot,DO_SORT,ALL_MOVES);
 		int maxEvaluation=-inf;
 		char type=UPPER_BOUND;
 		int movesSearched=0;
-
-
 		bestHashMove=Move();
 		int numberOfMoves=moveListGenerator.moveListSize[depthFromRoot];
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
@@ -335,32 +383,41 @@ struct Searcher{
 				if(alpha<score)
 					alpha=score;
 				if(alpha>=beta){
-					if(!isMoveInteresting){
+					if(board.isQuietMove(move)&&0){
 						// update killer move
 						bool killerStored=false; // flag "is killer move stored"
 						int badKiller=-1; // if some killer move has only one storing, it can be replaced
 						for(int i=0;i<killMovesNumber;i++){
 							if(killerMovesTable[depthFromRoot][i]==move){
 								killerMovesCount[depthFromRoot][i]++;
+								killerMovesAge[depthFromRoot][i]=nodes;
 								killerStored=true;
 								break;
 							}
-							if(killerMovesCount[depthFromRoot][i]==1)
-								badKiller=i;
+							// if(killerMovesCount[depthFromRoot][i]==1)
+							// 	badKiller=i;
 						}
 						if(!killerStored){
 							for(int i=0;i<killMovesNumber;i++){
 								if(killerMovesTable[depthFromRoot][i]==Move()){
 									killerMovesTable[depthFromRoot][i]=move;
 									killerMovesCount[depthFromRoot][i]=1;
+									killerMovesAge[depthFromRoot][i]=nodes;
 									killerStored=true;
 									break;
 								}
 							}
 						}
-						if(!killerStored&&badKiller!=-1){
+						if(!killerStored){
+							if(badKiller==-1){
+								// get oldest killer
+								for(int i=0;i<killMovesNumber;i++)
+									if(badKiller==-1||killerMovesAge[depthFromRoot][i]<killerMovesAge[depthFromRoot][badKiller])
+										badKiller=i;
+							}
 							killerMovesTable[depthFromRoot][badKiller]=move;
 							killerMovesCount[depthFromRoot][badKiller]=1;
+							killerMovesAge[depthFromRoot][badKiller]=nodes;
 						}
 					}
 
@@ -408,6 +465,7 @@ struct Searcher{
 			for(int j=0;j<killMovesNumber;j++){
 				killerMovesTable[i][j]=Move();
 				killerMovesTable[i][j]=0;
+				killerMovesAge[i][j]=0;
 			}
 		nodes=0;
 		boardCurrentAge=board.age;
@@ -436,7 +494,7 @@ struct Searcher{
 	        pvLineSize=0;
 			lastScore=score;
 	        // getPvLine(color);
-			if(0){
+			if(UCIout){
 				cout<<"info depth "<<depth<<
 				" score ";
 				if(abs(MATE_SCORE-score)>maxDepth)
@@ -453,7 +511,7 @@ struct Searcher{
 				" time "<<timeThinked<<
 				" pv "<<bestMove.convertToUCI()<<' ';
 				// for(int i=1;i<pvLineSize;i++)
-					// cout<<pvLine[i].convertToUCI()<<' ';
+				// 	cout<<pvLine[i].convertToUCI()<<' ';
 
 				cout<<endl;
 			}

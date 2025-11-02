@@ -76,182 +76,278 @@ EvaluationTranspositionTable evaluationTranspositionTable;
 
 struct Evaluator{
 
-	int mobilityScoreMg[7] = {0, 0, 1, 2, 1, 0, -1};
-	int mobilityScoreEg[7] = {0, 0, 2, 3, 2, 1, 1};  // v2
-	inline int evaluateMobility(){
-		int evaluation=0;
+	bool showInfo=false;
 
-		float endgameWeight=board.endgameWeight();
+	
+	float mobilityScoreMg[8] = {0, 0, 1, 2, 1, 0, -1,0};
+	float mobilityScoreEg[8] = {0, 0, 2, 3, 2, 1, 1,0};  // v2
 
-		Bitboard pieces=board.whitePieces&(~board.pawns);
-		while(pieces>0){
-			int square=pieces.getFirstBitNumberAndExclude();
-			int pieceType=board.occupancyPiece(square);
-			int mobility=moveGenerator.moves(square).popcnt();
-			evaluation+=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
-		}
+	float kingAttackersWeightMg[8] = {0, 8, 20, 20, 20, 20, 20,0};
+	float kingAttackersWeightEg[8] = {0, 0, 0, 0, 0, 0, 0,0};
+	
+	float doubledPawnPenaltyMg=20,doubledPawnPenaltyEg=7;
 
-		pieces=board.blackPieces&(~board.pawns);
-		while(pieces>0){
-			int square=pieces.getFirstBitNumberAndExclude();
-			int pieceType=board.occupancyPiece(square);
-			int mobility=moveGenerator.moves(square).popcnt();
-			evaluation-=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
-		}
+	float isolatedPawnPenaltyMg[8]={10,15,20,25,25,20,15,10};
+	float isolatedPawnPenaltyEg[8]={0,5,10,10,10,10,5,0};
+	
+	float passedPawnScoreMg[8] = {0,3.5,7,17.5,31.5,56,98,0};
+	float passedPawnScoreEg[8] = {0,6.5,13,32.5,58.5,104,182,0};
 
-		return evaluation;
+	float pawnIslandPenaltyMg=15,pawnIslandPenaltyEg=15;
+	
+	float pawnDistancePenalty[8]={0,0,0,5,10,15,20,25};
+
+	float tempoScore=20;
+
+	float bishopPairMg=30,bishopPairEg=60;
+
+	float uncatchablePassedPawnScore[5]={0,0,100,200};
+
+	void initFromVector(vector<float>weights){
+		int iter=0;
+		for(int i=0;i<8;i++)
+			mobilityScoreMg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			mobilityScoreEg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			kingAttackersWeightMg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			kingAttackersWeightEg[i]=weights[iter++];
+
+		// doubledPawnPenaltyMg=weights[iter++];
+		// doubledPawnPenaltyEg=weights[iter++];
+
+		for(int i=0;i<8;i++)
+			isolatedPawnPenaltyMg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			isolatedPawnPenaltyEg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			passedPawnScoreMg[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			passedPawnScoreEg[i]=weights[iter++];
+
+		pawnIslandPenaltyMg=weights[iter++];
+		pawnIslandPenaltyEg=weights[iter++];
+
+		// for(int i=0;i<8;i++)
+		// 	pawnDistancePenalty[i]=weights[iter++];
+
+		tempoScore=weights[iter++];
+
+		bishopPairMg=weights[iter++];
+		bishopPairEg=weights[iter++];
 	}
 
-	inline int evaluatePawnIslands(){
-		const int pawnIslandPenalty=15;
-		int prevW=0,prevB=0;
-		int evaluation=0;
-		for(int col=0;col<8;col++){
-			Bitboard column=boardHelper.getColumn(col);
-			int colW=(column&board.pawns&board.whitePieces)>0;
-			int colB=(column&board.pawns&board.blackPieces)>0;
-			if(!colW&&prevW)
-				evaluation-=pawnIslandPenalty;
-			prevW=colW;
+	vector<float>writeToVector(){
+		vector<float>weights;
 
-			if(!colB&&prevB)
-				evaluation+=pawnIslandPenalty;
-			prevB=colB;
-		}
-		if(prevW)
-			evaluation-=pawnIslandPenalty;
+		for(int i=0;i<8;i++)
+			weights.push_back(mobilityScoreMg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(mobilityScoreEg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(kingAttackersWeightMg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(kingAttackersWeightEg[i]);
 
-		if(prevB)
-			evaluation+=pawnIslandPenalty;
+		// weights.push_back(doubledPawnPenaltyMg);
+		// weights.push_back(doubledPawnPenaltyEg);
 
-		return evaluation;
+		for(int i=0;i<8;i++)
+			weights.push_back(isolatedPawnPenaltyMg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(isolatedPawnPenaltyEg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(passedPawnScoreMg[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(passedPawnScoreEg[i]);
+
+		weights.push_back(pawnIslandPenaltyMg);
+		weights.push_back(pawnIslandPenaltyEg);
+
+		// for(int i=0;i<8;i++)
+		// 	weights.push_back(pawnDistancePenalty[i]);
+
+		weights.push_back(tempoScore);
+
+		weights.push_back(bishopPairMg);
+		weights.push_back(bishopPairEg);
+
+		return weights;
 	}
 
-	inline int evaluateDoubledPawns(){
-		const int doubledPawnPenaltyMg=20,doubledPawnPenaltyEg=7;
 
-		float endgameWeight=board.endgameWeight();
+	void writeToFile(string path){
+		ofstream out(path);
+		out<<"mobility mg: ";
+		for(int i=0;i<8;i++)
+			out<<mobilityScoreMg[i]<<' ';
+		out<<endl;
 
-		int numberOfDoubled=0;
+		out<<"mobility eg: ";
+		for(int i=0;i<8;i++)
+			out<<mobilityScoreEg[i]<<' ';
+		out<<endl;
 
-		for(int col=0;col<8;col++){
-			Bitboard column=boardHelper.getColumn(col);
-			int colW=(column&board.pawns&board.whitePieces).popcnt();
-			int colB=(column&board.pawns&board.blackPieces).popcnt();
+		out<<"king attack mg: ";
+		for(int i=0;i<8;i++)
+			out<<kingAttackersWeightMg[i]<<' ';
+		out<<endl;
 
-			if(colW>1)
-				numberOfDoubled+=colW-1;
-			if(colB>1)
-				numberOfDoubled-=(colB-1);
-		}
-		return -(numberOfDoubled*(doubledPawnPenaltyMg*(1-endgameWeight)+doubledPawnPenaltyEg*endgameWeight));
+		out<<"king attack eg: ";
+		for(int i=0;i<8;i++)
+			out<<kingAttackersWeightEg[i]<<' ';
+		out<<endl;
+
+		out<<"doubled mg: "<<doubledPawnPenaltyMg<<endl;
+		out<<"doubled eg: "<<doubledPawnPenaltyEg<<endl;
+
+		out<<"isolated mg: ";
+		for(int i=0;i<8;i++)
+			out<<isolatedPawnPenaltyMg[i]<<' ';
+		out<<endl;
+
+		out<<"isolated eg: ";
+		for(int i=0;i<8;i++)
+			out<<isolatedPawnPenaltyEg[i]<<' ';
+		out<<endl;
+
+		out<<"passed mg: ";
+		for(int i=0;i<8;i++)
+			out<<passedPawnScoreMg[i]<<' ';
+		out<<endl;
+
+		out<<"passed eg: ";
+		for(int i=0;i<8;i++)
+			out<<passedPawnScoreEg[i]<<' ';
+		out<<endl;
+
+		out<<"islands mg: "<<pawnIslandPenaltyMg<<endl;
+		out<<"islands eg: "<<pawnIslandPenaltyEg<<endl;
+
+
+		out<<"shield dist: ";
+		for(int i=0;i<8;i++)
+			out<<pawnDistancePenalty[i]<<' ';
+		out<<endl;
+
+		out<<"tempo: "<<tempoScore<<endl;
+
+		out<<"bishop pair mg: "<<bishopPairMg<<endl;
+		out<<"bishop pair eg: "<<bishopPairEg<<endl;
+
 	}
 
-	const int passedPawnScore[8] = {0,5,10,25,45,80,140,0};
-	inline int evaluatePassedPawns(){
-		// const int isolatedPawnScore=-10;
-		// const int blockedPawnScore=0;
-		// const int defendedPawnScore=0;
 
-		float endgameWeight=board.endgameWeight();
+	void initFromFile(string path){
+		ifstream in(path);
+		string inp;
+		while(getline(in,inp)){
+			string type;
+			vector<string>strEvals;
+			for(int i=0;i<inp.length();i++)
+				if(inp[i]==':'){
+					type=inp.substr(0,i);
+					strEvals=splitStr(inp.substr(i+1,inp.length()-i-1)," ");
+					break;
+				}
+			vector<float>evals;
+			for(auto ev:strEvals)
+				if(ev!="")
+					evals.push_back(stof(ev));
+				
+			if(type=="mobility mg")
+				for(int i=0;i<8;i++)
+					mobilityScoreMg[i]=evals[i];
+				
+			if(type=="mobility eg")
+				for(int i=0;i<8;i++)
+					mobilityScoreEg[i]=evals[i];
+				
+			if(type=="king attack mg")
+				for(int i=0;i<8;i++)
+					kingAttackersWeightMg[i]=evals[i];
+				
+			if(type=="king attack eg")
+				for(int i=0;i<8;i++)
+					kingAttackersWeightEg[i]=evals[i];
+				
+			if(type=="doubled mg")
+				doubledPawnPenaltyMg=evals[0];
+				
+			if(type=="doubled eg")
+				doubledPawnPenaltyEg=evals[0];
+				
+			if(type=="isolated mg")
+				for(int i=0;i<8;i++)
+					isolatedPawnPenaltyMg[i]=evals[i];
+				
+			if(type=="isolated eg")
+				for(int i=0;i<8;i++)
+					isolatedPawnPenaltyEg[i]=evals[i];
+				
+			if(type=="passed mg")
+				for(int i=0;i<8;i++)
+					passedPawnScoreMg[i]=evals[i];
+				
+			if(type=="passed eg")
+				for(int i=0;i<8;i++)
+					passedPawnScoreEg[i]=evals[i];
+				
+			if(type=="islands mg")
+				pawnIslandPenaltyMg=evals[0];
+				
+			if(type=="islands eg")
+				pawnIslandPenaltyEg=evals[0];
 
-		int evaluation=0;
+			if(type=="shield dist")
+				for(int i=0;i<8;i++)
+					pawnDistancePenalty[i]=evals[i];
 
-		int passedEvaluation=0;
+			if(type=="tempo")
+				tempoScore=evals[0];
 
-		Bitboard pawns=board.pawns&board.whitePieces;
-		Bitboard friendPawns=board.pawns&board.whitePieces;
-		Bitboard opponentPawns=board.pawns&board.blackPieces;
-
-		while(pawns){
-			int square=pawns.getFirstBitNumberAndExclude();
-			int col=boardHelper.getColumnNumber(square),row=7-boardHelper.getRowNumber(square);
-			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
-
-			if((boardHelper.possiblePawnDefendersWhite[square]&opponentPawns)==0)
-				passedEvaluation+=passedPawnScore[row];
-
+			if(type=="bishop pair mg")
+				bishopPairMg=evals[0];
+			if(type=="bishop pair eg")
+				bishopPairEg=evals[0];
 		}
-
-
-		pawns=board.pawns&board.blackPieces;
-		friendPawns=board.pawns&board.blackPieces;
-		opponentPawns=board.pawns&board.whitePieces;
-
-		while(pawns){
-			int square=pawns.getFirstBitNumberAndExclude();
-			int col=boardHelper.getColumnNumber(square),row=boardHelper.getRowNumber(square);
-			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
-
-			if((boardHelper.possiblePawnDefendersBlack[square]&opponentPawns)==0)
-				passedEvaluation-=passedPawnScore[row];
-
-		}
-
-		passedEvaluation=passedEvaluation*(0.7*(1-endgameWeight)+1.3*endgameWeight);
-		evaluation+=passedEvaluation;
-
-		return evaluation;
-
-
-		// while(pawns){
-		// 	int square=pawns.getFirstBitNumberAndExclude();
-		// 	int color=board.occupancy(square);
-		// 	int oppositeColor=(color==WHITE)?BLACK:WHITE;
-
-		// 	Bitboard friendPawns=board.pawns&((color==WHITE)?board.whitePieces:board.blackPieces);
-
-		// 	int pawnScore=0;
-
-		// 	if((boardHelper.neighborColumns[square]&friendPawns)==0)
-		// 		pawnScore+=isolatedPawnScore;
-
-		// 	if((boardHelper.getColumn(square&7)&friendPawns)!=(1ull<<square))
-		// 		pawnScore+=doubledPawnScore;
-
-		// 	int nextSquare=(color==WHITE)?square-8:square+8; // square, where pawn is moving
-
-		// 	if(board.pawns.getBit(nextSquare))
-		// 		pawnScore+=blockedPawnScore;
-
-		// 	if((boardHelper.pawnCaptures[oppositeColor][square]&friendPawns)>0)
-		// 		pawnScore+=defendedPawnScore;
-
-		// 	pawnsEval+=(color==WHITE)?pawnScore:-pawnScore;
-		// }
 	}
 
-	int pawnDistancePenalty[8]={0,0,20,50,80,110,120,150};
-	inline int evaluateKingShield(){
-		int mainColumnEvaluationW=0,nearColumnEvaluationW=0;
-		int mainColumnEvaluationB=0,nearColumnEvaluationB=0;
+	inline float evaluateKingShield(){
+		float mainColumnEvaluationW=0,nearColumnEvaluationW=0;
+		float mainColumnEvaluationB=0,nearColumnEvaluationB=0;
 
 		float endgameWeight=board.endgameWeight();
 
 		int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
 		int col=boardHelper.getColumnNumber(whiteKingPos);
-		Bitboard mainColumn=boardHelper.getColumn(col);
+		Bitboard mainColumn=boardHelper.columnUp[whiteKingPos];
 
 		int dist=boardHelper.distanceColumn(mainColumn&board.whitePieces&board.pawns,WHITE);
+		assert(dist>0);
 		mainColumnEvaluationW-=pawnDistancePenalty[dist];
 
 		if(col>0){
-			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-1)&board.whitePieces&board.pawns,WHITE);
+			dist=boardHelper.distanceColumn(boardHelper.columnUp[whiteKingPos-1]&board.whitePieces&board.pawns,WHITE);
+		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
 		if(col<7){
-			dist=boardHelper.distanceColumn(boardHelper.getColumn(col+1)&board.whitePieces&board.pawns,WHITE);
+			dist=boardHelper.distanceColumn(boardHelper.columnUp[whiteKingPos+1]&board.whitePieces&board.pawns,WHITE);
+		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
 		if(whiteKingPos==58 || whiteKingPos==50){ // c1, c2
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.whitePieces&board.pawns,WHITE);
+		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
 
-		if(col==3||col==4){ // d or e column
-			mainColumnEvaluationW=0;
-			nearColumnEvaluationW=0;
-		}
+		// if(col==3||col==4){ // d or e column
+		// 	// mainColumnEvaluationW*=0.4;
+		// 	// nearColumnEvaluationW*=0.4;
+		// }
 
 
 
@@ -261,31 +357,46 @@ struct Evaluator{
 
 		dist=boardHelper.distanceColumn(mainColumn&board.blackPieces&board.pawns,BLACK);
 		mainColumnEvaluationB+=pawnDistancePenalty[dist];
+		assert(dist>0);
 
 		if(col>0){
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-1)&board.blackPieces&board.pawns,BLACK);
+		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
 		if(col<7){
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col+1)&board.blackPieces&board.pawns,BLACK);
+		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
 		if(blackKingPos==2 || blackKingPos==10){ // c8, c7
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.blackPieces&board.pawns,BLACK);
+		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
 
-		if(col==3||col==4){ // d or e column
-			mainColumnEvaluationB=0;
-			nearColumnEvaluationB=0;
-		}
+		// if(col==3||col==4){ // d or e column
+		// 	// mainColumnEvaluationB*=0.4;
+		// 	// nearColumnEvaluationB*=0.4;
+		// }
 
-		int evaluation=mainColumnEvaluationW+mainColumnEvaluationB;
+		float evaluation=mainColumnEvaluationW+mainColumnEvaluationB;
 
 		evaluation+=(nearColumnEvaluationW+nearColumnEvaluationB)*0.6;
 
 		evaluation*=(1-endgameWeight);
 
+		return evaluation;
+
+	}
+
+	float evaluateBishopPair(){
+		float endgameWeight=board.endgameWeight();
+		float evaluation=0;
+		if((board.whitePieces&board.bishops).popcnt()==2)
+			evaluation+=(bishopPairMg*(1-endgameWeight)+bishopPairEg*endgameWeight);
+		if((board.blackPieces&board.bishops).popcnt()==2)
+			evaluation-=(bishopPairMg*(1-endgameWeight)+bishopPairEg*endgameWeight);
 		return evaluation;
 	}
 
@@ -299,48 +410,263 @@ struct Evaluator{
 		return true;
 	}
 
-	inline int evaluatePosition(){ // board evaluation with white's perspective
+	inline float evaluatePositionDeterministic(){ // board evaluation with white's perspective
+		float endgameWeight=board.endgameWeight();
 
+		float evaluation=0;
+
+		float PSTevaluation=0;
+
+		float mobilityEvaluation=0;
+		float kingAttackersEvaluation=0;
+		
+
+		int opponentKing=(board.kings&board.blackPieces).getFirstBitNumber();
+		Bitboard kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
+		Bitboard pieces=board.whitePieces&(~board.pawns);
+		while(pieces>0){
+			int square=pieces.getFirstBitNumberAndExclude();
+			int pieceType=board.occupancyPiece(square);
+
+			PSTevaluation+=pieceSquareTable.getPieceEval(pieceType,square,WHITE,endgameWeight);
+			// cout<<square<<' '<<pieceSquareTable.getPieceEval(pieceType,square,WHITE,endgameWeight)<<'\n';
+
+			Bitboard moves=moveGenerator.moves(square);
+			int mobility=moves.popcnt();
+			mobilityEvaluation+=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
+
+			int numberOfAttacks=(moves&kingArea).popcnt();
+			kingAttackersEvaluation+=numberOfAttacks*(kingAttackersWeightMg[pieceType]*(1-endgameWeight)+kingAttackersWeightEg[pieceType]*endgameWeight);
+		}
+
+		opponentKing=(board.kings&board.whitePieces).getFirstBitNumber();
+		kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
+		pieces=board.blackPieces&(~board.pawns);
+		while(pieces>0){
+			int square=pieces.getFirstBitNumberAndExclude();
+			int pieceType=board.occupancyPiece(square);
+
+			PSTevaluation+=pieceSquareTable.getPieceEval(pieceType,square,BLACK,endgameWeight);
+			// cout<<square<<' '<<pieceSquareTable.getPieceEval(pieceType,square,BLACK,endgameWeight)<<'\n';
+
+			Bitboard moves=moveGenerator.moves(square);
+			int mobility=moves.popcnt();
+			mobilityEvaluation-=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
+
+			int numberOfAttacks=(moves&kingArea).popcnt();
+			kingAttackersEvaluation-=numberOfAttacks*(kingAttackersWeightMg[pieceType]*(1-endgameWeight)+kingAttackersWeightEg[pieceType]*endgameWeight);
+		}
+
+
+
+
+		float isolatedPawnEvaluation=0;
+		float passedPawnsEvaluation=0;
+		int whiteUncatchablePawn=10;
+
+		Bitboard pawns=board.pawns&board.whitePieces;
+		Bitboard friendPawns=board.pawns&board.whitePieces;
+		Bitboard opponentPawns=board.pawns&board.blackPieces;
+
+		int friendKing=(board.kings&board.whitePieces).getFirstBitNumber();
+		opponentKing=(board.kings&board.blackPieces).getFirstBitNumber();
+		kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
+
+		while(pawns){
+			int square=pawns.getFirstBitNumberAndExclude();
+			
+			PSTevaluation+=pieceSquareTable.getPieceEval(PAWN,square,WHITE,endgameWeight);
+			// cout<<square<<' '<<pieceSquareTable.getPieceEval(PAWN,square,WHITE,endgameWeight)<<'\n';
+
+			int col=boardHelper.getColumnNumber(square),row=boardHelper.getRowNumber(square);
+			int dst=7-boardHelper.getRowNumber(square),dstToPass=7-dst;
+			if(dstToPass==6) // 2nd rank
+				dstToPass=5;
+			int cnt=(boardHelper.neighborColumns[square]&friendPawns).popcnt();
+
+			if(cnt==0)
+				isolatedPawnEvaluation-=(isolatedPawnPenaltyMg[col]*(1-endgameWeight)+isolatedPawnPenaltyEg[col]*endgameWeight);
+
+			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
+
+			if((boardHelper.possiblePawnDefendersWhite[square]&opponentPawns)==0){
+				passedPawnsEvaluation+=(passedPawnScoreMg[dst]*(1-endgameWeight)+passedPawnScoreEg[dst]*endgameWeight);
+
+				int nmbOfMovesToCatch=max(7-boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				if(boardHelper.columnUp[square]&(1ull<<friendKing))
+					dstToPass++;
+				if(board.boardColor==BLACK)
+					nmbOfMovesToCatch--;
+				if(nmbOfMovesToCatch>dstToPass)
+					whiteUncatchablePawn=min(whiteUncatchablePawn,dstToPass);
+			}
+
+
+
+			Bitboard moves=moveGenerator.moves(square);
+			int numberOfAttacks=(moves&kingArea).popcnt();
+			// kingAttackersEvaluation+=numberOfAttacks*(kingAttackersWeightMg[PAWN]*(1-endgameWeight)+kingAttackersWeightEg[PAWN]*endgameWeight);
+		}
+
+
+		int blackUncatchablePawn=10;
+
+		pawns=board.pawns&board.blackPieces;
+		friendPawns=board.pawns&board.blackPieces;
+		opponentPawns=board.pawns&board.whitePieces;
+
+		friendKing=(board.kings&board.blackPieces).getFirstBitNumber();
+		opponentKing=(board.kings&board.whitePieces).getFirstBitNumber();
+		kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
+
+		while(pawns){
+			int square=pawns.getFirstBitNumberAndExclude();
+			
+			PSTevaluation+=pieceSquareTable.getPieceEval(PAWN,square,BLACK,endgameWeight);
+			// cout<<square<<' '<<pieceSquareTable.getPieceEval(PAWN,square,BLACK,endgameWeight)<<'\n';
+
+			int col=boardHelper.getColumnNumber(square),row=boardHelper.getRowNumber(square);
+			int dst=boardHelper.getRowNumber(square),dstToPass=7-dst;
+			if(dstToPass==6) // 2nd rank
+				dstToPass=5;
+			int cnt=(boardHelper.neighborColumns[square]&friendPawns).popcnt();
+
+			if(cnt==0)
+				isolatedPawnEvaluation+=(isolatedPawnPenaltyMg[col]*(1-endgameWeight)+isolatedPawnPenaltyEg[col]*endgameWeight);
+
+			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
+
+			if((boardHelper.possiblePawnDefendersBlack[square]&opponentPawns)==0){
+				passedPawnsEvaluation-=(passedPawnScoreMg[dst]*(1-endgameWeight)+passedPawnScoreEg[dst]*endgameWeight);
+
+				int nmbOfMovesToCatch=max(boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				if(boardHelper.columnUp[square]&(1ull<<friendKing))
+					dstToPass--;
+				if(board.boardColor==WHITE)
+					nmbOfMovesToCatch--;
+				if(nmbOfMovesToCatch>dstToPass)
+					blackUncatchablePawn=min(blackUncatchablePawn,dstToPass);
+			}
+
+
+
+			Bitboard moves=moveGenerator.moves(square);
+			int numberOfAttacks=(moves&kingArea).popcnt();
+			// kingAttackersEvaluation-=numberOfAttacks*(kingAttackersWeightMg[PAWN]*(1-endgameWeight)+kingAttackersWeightEg[PAWN]*endgameWeight);
+		}
+
+		if(board.boardColor==BLACK)
+			blackUncatchablePawn--;
+
+		bool onlyPawnsEndgame=false;
+		if((board.whitePieces|board.blackPieces)==(board.pawns|board.kings))
+			onlyPawnsEndgame=false;
+
+		if(onlyPawnsEndgame){
+			int diff=abs(whiteUncatchablePawn-blackUncatchablePawn);
+			if(diff>3)
+				diff=3;
+			if(whiteUncatchablePawn<blackUncatchablePawn)
+				passedPawnsEvaluation+=uncatchablePassedPawnScore[diff];
+			else
+				passedPawnsEvaluation-=uncatchablePassedPawnScore[diff];
+		}
+
+		// passedPawnsEvaluation*=(0.7*(1-endgameWeight)+1.3*endgameWeight);
+
+
+		int numberOfDoubled=0;
+
+		float pawnIslandsEvaluation=0;
+		float pawnIslandPenalty=(pawnIslandPenaltyMg*(1-endgameWeight)+pawnIslandPenaltyEg*endgameWeight);
+		int prevW=0,prevB=0;
+		for(int col=0;col<8;col++){
+			Bitboard column=boardHelper.getColumn(col);
+			int colW=(column&board.pawns&board.whitePieces)>0;
+			int colB=(column&board.pawns&board.blackPieces)>0;
+			if(!colW&&prevW)
+				pawnIslandsEvaluation-=pawnIslandPenalty;
+			prevW=colW;
+
+			if(!colB&&prevB)
+				pawnIslandsEvaluation+=pawnIslandPenalty;
+			prevB=colB;
+
+
+
+			colW=(column&board.pawns&board.whitePieces).popcnt();
+			colB=(column&board.pawns&board.blackPieces).popcnt();
+			if(colW>1)
+				numberOfDoubled+=colW-1;
+			if(colB>1)
+				numberOfDoubled-=(colB-1);
+		}
+
+		float doubledPawnEvaluation= -(numberOfDoubled*(doubledPawnPenaltyMg*(1-endgameWeight)+doubledPawnPenaltyEg*endgameWeight));
+
+		if(prevW)
+			pawnIslandsEvaluation-=pawnIslandPenalty;
+
+		if(prevB)
+			pawnIslandsEvaluation+=pawnIslandPenalty;
+
+
+		float tempoEval=0;
+		if(board.boardColor==WHITE)
+			tempoEval+=tempoScore;
+		else
+			tempoEval-=tempoScore; // tempo
+
+		float kingShieldEvaluation=evaluateKingShield();
+
+		evaluation+=PSTevaluation;
+		evaluation+=mobilityEvaluation;
+		evaluation+=kingAttackersEvaluation;
+		evaluation+=isolatedPawnEvaluation;
+		// evaluation+=doubledPawnEvaluation;
+		evaluation+=passedPawnsEvaluation;
+		evaluation+=pawnIslandsEvaluation;
+		evaluation+=tempoEval;
+		// evaluation+=kingShieldEvaluation;
+		evaluation+=evaluateBishopPair();
+
+		if(showInfo==true){
+			cout<<"Material and piece-square tables: "<<PSTevaluation<<" cp"<<endl;
+			cout<<"Mobility: "<<mobilityEvaluation<<" cp"<<endl;
+			cout<<"King attackers: "<<kingAttackersEvaluation<<" cp"<<endl;
+			cout<<"King shield: "<<kingShieldEvaluation<<" cp"<<endl;
+			cout<<"Isolated pawns: "<<isolatedPawnEvaluation<<" cp"<<endl;
+			cout<<"Doubled pawns: "<<doubledPawnEvaluation<<" cp"<<endl;
+			cout<<"Passed pawns: "<<passedPawnsEvaluation<<" cp"<<endl;
+			cout<<"Pawn islands: "<<pawnIslandsEvaluation<<" cp"<<endl;
+			cout<<"Tempo: "<<tempoEval<<" cp"<<endl;
+		}
+
+
+		// evaluation+=evaluateMobility();
+
+		// evaluation+=evaluatePassedPawns();
+		// evaluation+=evaluateIsolatedPawns();
+
+		// evaluation+=evaluateKingAttackers();
+
+		// const int attackSquareScore=1;
+		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
+		return evaluation;
+	}
+
+	int evaluatePosition(){
 		if(insufficientMaterialDraw())
 			return DRAW_SCORE;
 
 		ull key=board.getZobristKey();
-		int evaluation=evaluationTranspositionTable.get(key);
-		if(evaluation!=NO_EVAL)
-			return evaluation;
-
-		evaluation=board.evaluation;
-
-		// int numberOfPieces=board.numberOfPieces();
-/*
-		if(abs(board.evaluation)>=300){ // EDGE_EVAL one side is better -> push opp king to side and keep friend king close
-			int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
-			int blackKingPos=(board.kings&board.blackPieces).getFirstBitNumber();
-
-			int whiteRow=boardHelper.getRowNumber(whiteKingPos),whiteColumn=boardHelper.getColumnNumber(whiteKingPos);
-			int blackRow=boardHelper.getRowNumber(blackKingPos),blackColumn=boardHelper.getColumnNumber(blackKingPos);
-
-			int kingsDist=abs(whiteRow-blackRow)+abs(whiteColumn-blackColumn); // distance between kings
-
-			if(board.evaluation>=300){ // white is better
-				evaluation+=(-kingsDist-boardHelper.distanceToEdge[blackKingPos])*KING_DIST_EDGE_SCORE;
-			}else{
-				evaluation-=(-kingsDist-boardHelper.distanceToEdge[whiteKingPos])*KING_DIST_EDGE_SCORE;
-			}
+		if(showInfo==false){
+			int TTevaluation=evaluationTranspositionTable.get(key);
+			if(TTevaluation!=NO_EVAL)
+				return TTevaluation;
 		}
-*/
-		evaluation+=evaluateMobility();
-
-		evaluation+=evaluatePassedPawns();
-		evaluation+=evaluatePawnIslands();
-		// evaluation+=evaluateDoubledPawns();
-
-
-		// evaluation+=evaluateKingShield();
-
-		// const int attackSquareScore=1;
-		// evaluation+=(moveGenerator.numOfSquaresAttackedByWhite()-moveGenerator.numOfSquaresAttackedByWhite())*attackSquareScore;
-		evaluationTranspositionTable.write(key,evaluation);
+		int evaluation=int(evaluatePositionDeterministic());
+		evaluationTranspositionTable.write(key,int(evaluation));
 		return evaluation;
 	}
 
