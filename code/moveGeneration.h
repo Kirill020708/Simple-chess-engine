@@ -348,6 +348,21 @@ struct MoveGeneration{
 
 		return evalStack[1]-evalStack[2];
 	}
+
+	bool isMoveLegal(Move move){
+		int startSquare=move.getStartSquare();
+		int targetSquare=move.getTargetSquare();
+		if(!moves(startSquare).getBit(targetSquare))
+			return false;
+		Board boardCopy=board;
+		board.makeMove(move);
+		if(isInCheck(boardCopy.boardColor)){
+			board=boardCopy;
+			return false;
+		}
+		board=boardCopy;
+		return true;
+	}
 };
 
 MoveGeneration moveGenerator;

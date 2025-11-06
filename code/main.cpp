@@ -34,10 +34,11 @@ string squareToString(int square){
 }
 
 int main(){
+	// texelTuner.checkData();
 	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
 	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
-	evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew.txt");
-	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelData.txt");
+	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew.txt");
+	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
 	// for(ll depth=1;depth<=15;depth++){
 		// cout<<depth<<": ";
 		// for(ll j=1;j<=40;j++)

@@ -85,7 +85,7 @@ struct Evaluator{
 	float kingAttackersWeightMg[8] = {0, 8, 20, 20, 20, 20, 20,0};
 	float kingAttackersWeightEg[8] = {0, 0, 0, 0, 0, 0, 0,0};
 	
-	float doubledPawnPenaltyMg=20,doubledPawnPenaltyEg=7;
+	float doubledPawnPenaltyMg=12,doubledPawnPenaltyEg=7;
 
 	float isolatedPawnPenaltyMg[8]={10,15,20,25,25,20,15,10};
 	float isolatedPawnPenaltyEg[8]={0,5,10,10,10,10,5,0};
@@ -129,8 +129,8 @@ struct Evaluator{
 		pawnIslandPenaltyMg=weights[iter++];
 		pawnIslandPenaltyEg=weights[iter++];
 
-		// for(int i=0;i<8;i++)
-		// 	pawnDistancePenalty[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			pawnDistancePenalty[i]=weights[iter++];
 
 		tempoScore=weights[iter++];
 
@@ -165,8 +165,8 @@ struct Evaluator{
 		weights.push_back(pawnIslandPenaltyMg);
 		weights.push_back(pawnIslandPenaltyEg);
 
-		// for(int i=0;i<8;i++)
-		// 	weights.push_back(pawnDistancePenalty[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(pawnDistancePenalty[i]);
 
 		weights.push_back(tempoScore);
 
@@ -623,7 +623,7 @@ struct Evaluator{
 		evaluation+=mobilityEvaluation;
 		evaluation+=kingAttackersEvaluation;
 		evaluation+=isolatedPawnEvaluation;
-		// evaluation+=doubledPawnEvaluation;
+		evaluation+=doubledPawnEvaluation;
 		evaluation+=passedPawnsEvaluation;
 		evaluation+=pawnIslandsEvaluation;
 		evaluation+=tempoEval;

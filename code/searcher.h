@@ -260,14 +260,28 @@ struct Searcher{
 			!isPvNode
 			){
 
-			int R=3;
+			int R=2;
+			if(depth>=6)
+				R++;
 			int prevEnPassColumn=board.makeNullMove();
-			int score=-search(oppositeColor,depth-R,0,-beta,-beta+1,depthFromRoot+1);
+			int score=-search(oppositeColor,depth-1-R,0,-beta,-beta+1,depthFromRoot+1);
 			board.makeNullMove();
 			board.enPassantColumn=prevEnPassColumn;
 			if(score>=beta)
 				return score;
 		}
+
+		// if(
+		// 	depth==1 &&
+		// 	!isMovingSideInCheck){ // Razoring
+		// 	int margin=500;
+
+		// 	if(staticEval+margin<alpha){
+		// 		int qEval=quiescentSearch(color,alpha-1,alpha,depthFromRoot);
+		// 		if(qEval<alpha)
+		// 			return qEval;
+		// 	}
+		// }
 
 		Board boardCopy=board;
 
@@ -329,7 +343,8 @@ struct Searcher{
 				!isMovingSideInCheck &&
 				newStaticEval<alpha-100 &&
 				!isMoveInteresting &&
-				abs(MATE_SCORE-beta)>maxDepth && abs(alpha+MATE_SCORE)>maxDepth
+				abs(MATE_SCORE-beta)>maxDepth && abs(alpha+MATE_SCORE)>maxDepth && 
+				!isPvNode
 				){
 
 				board=boardCopy;
