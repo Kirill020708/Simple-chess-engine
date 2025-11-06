@@ -32,7 +32,7 @@ struct TranspositionTable{
 	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);
 	TableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(TableEntry)];
 
-	inline void write(ull key,int evaluation,int depth,int type,int age,Move bestMove){
+	inline void write(Board& board,ull key,int evaluation,int depth,int type,int age,Move bestMove){
 		int index=key%tableSize;
 		if(table[index].type!=NONE){
 			if(table[index].key!=key){
@@ -48,7 +48,7 @@ struct TranspositionTable{
 		table[index]={key,evaluation,char(depth),char(type),char(age),bestMove};
 	}
 
-	inline pair<int,Move> get(ull key,int depth,int alpha,int beta){
+	inline pair<int,Move> get(Board& board,ull key,int depth,int alpha,int beta){
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return {NO_EVAL,Move()};

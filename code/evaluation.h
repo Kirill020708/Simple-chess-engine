@@ -314,7 +314,7 @@ struct Evaluator{
 		}
 	}
 
-	inline float evaluateKingShield(){
+	inline float evaluateKingShield(Board& board){
 		float mainColumnEvaluationW=0,nearColumnEvaluationW=0;
 		float mainColumnEvaluationB=0,nearColumnEvaluationB=0;
 
@@ -390,7 +390,7 @@ struct Evaluator{
 
 	}
 
-	float evaluateBishopPair(){
+	float evaluateBishopPair(Board& board){
 		float endgameWeight=board.endgameWeight();
 		float evaluation=0;
 		if((board.whitePieces&board.bishops).popcnt()==2)
@@ -400,7 +400,7 @@ struct Evaluator{
 		return evaluation;
 	}
 
-	inline bool insufficientMaterialDraw(){
+	inline bool insufficientMaterialDraw(Board& board){
 		if((board.pawns|board.queens|board.rooks)!=0)
 			return false;
 		if(((board.knights|board.bishops)&board.whitePieces).popcnt()>=2)
@@ -410,7 +410,7 @@ struct Evaluator{
 		return true;
 	}
 
-	inline float evaluatePositionDeterministic(){ // board evaluation with white's perspective
+	inline float evaluatePositionDeterministic(Board& board){ // board evaluation with white's perspective
 		float endgameWeight=board.endgameWeight();
 
 		float evaluation=0;
@@ -431,7 +431,7 @@ struct Evaluator{
 			PSTevaluation+=pieceSquareTable.getPieceEval(pieceType,square,WHITE,endgameWeight);
 			// cout<<square<<' '<<pieceSquareTable.getPieceEval(pieceType,square,WHITE,endgameWeight)<<'\n';
 
-			Bitboard moves=moveGenerator.moves(square);
+			Bitboard moves=moveGenerator.moves(board,square);
 			int mobility=moves.popcnt();
 			mobilityEvaluation+=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
 
@@ -449,7 +449,7 @@ struct Evaluator{
 			PSTevaluation+=pieceSquareTable.getPieceEval(pieceType,square,BLACK,endgameWeight);
 			// cout<<square<<' '<<pieceSquareTable.getPieceEval(pieceType,square,BLACK,endgameWeight)<<'\n';
 
-			Bitboard moves=moveGenerator.moves(square);
+			Bitboard moves=moveGenerator.moves(board,square);
 			int mobility=moves.popcnt();
 			mobilityEvaluation-=mobility*(mobilityScoreMg[pieceType]*(1-endgameWeight)+mobilityScoreEg[pieceType]*endgameWeight);
 
@@ -503,7 +503,7 @@ struct Evaluator{
 
 
 
-			Bitboard moves=moveGenerator.moves(square);
+			Bitboard moves=moveGenerator.moves(board,square);
 			int numberOfAttacks=(moves&kingArea).popcnt();
 			// kingAttackersEvaluation+=numberOfAttacks*(kingAttackersWeightMg[PAWN]*(1-endgameWeight)+kingAttackersWeightEg[PAWN]*endgameWeight);
 		}
@@ -550,7 +550,7 @@ struct Evaluator{
 
 
 
-			Bitboard moves=moveGenerator.moves(square);
+			Bitboard moves=moveGenerator.moves(board,square);
 			int numberOfAttacks=(moves&kingArea).popcnt();
 			// kingAttackersEvaluation-=numberOfAttacks*(kingAttackersWeightMg[PAWN]*(1-endgameWeight)+kingAttackersWeightEg[PAWN]*endgameWeight);
 		}
@@ -617,18 +617,18 @@ struct Evaluator{
 		else
 			tempoEval-=tempoScore; // tempo
 
-		float kingShieldEvaluation=evaluateKingShield();
+		float kingShieldEvaluation=evaluateKingShield(board);
 
 		evaluation+=PSTevaluation;
 		evaluation+=mobilityEvaluation;
 		evaluation+=kingAttackersEvaluation;
 		evaluation+=isolatedPawnEvaluation;
-		evaluation+=doubledPawnEvaluation;
+		// evaluation+=doubledPawnEvaluation;
 		evaluation+=passedPawnsEvaluation;
 		evaluation+=pawnIslandsEvaluation;
 		evaluation+=tempoEval;
 		// evaluation+=kingShieldEvaluation;
-		evaluation+=evaluateBishopPair();
+		evaluation+=evaluateBishopPair(board);
 
 		if(showInfo==true){
 			cout<<"Material and piece-square tables: "<<PSTevaluation<<" cp"<<endl;
@@ -655,8 +655,8 @@ struct Evaluator{
 		return evaluation;
 	}
 
-	int evaluatePosition(){
-		if(insufficientMaterialDraw())
+	int evaluatePosition(Board& board){
+		if(insufficientMaterialDraw(board))
 			return DRAW_SCORE;
 
 		ull key=board.getZobristKey();
@@ -665,20 +665,20 @@ struct Evaluator{
 			if(TTevaluation!=NO_EVAL)
 				return TTevaluation;
 		}
-		int evaluation=int(evaluatePositionDeterministic());
+		int evaluation=int(evaluatePositionDeterministic(board));
 		evaluationTranspositionTable.write(key,int(evaluation));
 		return evaluation;
 	}
 
-	int evaluatePosition(int color){ // board evaluation witb (color)'s perspective
-		return evaluatePosition()*((color==WHITE)?1:-1);
+	int evaluatePosition(Board& board,int color){ // board evaluation witb (color)'s perspective
+		return evaluatePosition(board)*((color==WHITE)?1:-1);
 	}
 
-	int evaluateStalledPosition(int color,int depthFromRoot){
-		if(insufficientMaterialDraw())
+	int evaluateStalledPosition(Board& board,int color,int depthFromRoot){
+		if(insufficientMaterialDraw(board))
 			return DRAW_SCORE;
 
-		if(moveGenerator.isInCheck(color))
+		if(moveGenerator.isInCheck(board,color))
 			return -(MATE_SCORE-depthFromRoot);
 		return DRAW_SCORE;
 	}

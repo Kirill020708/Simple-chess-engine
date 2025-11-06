@@ -14,7 +14,7 @@
 #ifndef BOARD
 #define BOARD
 
-#include "board.h"
+#include "mainBoard.h"
 
 #endif /* BOARD */
 
@@ -37,7 +37,7 @@
 
 void waitAndEndSearch(int timeToThink){
 	searcher.stopSearch=false;
-	thread th(&Searcher::iterativeDeepeningSearch,&searcher,board.boardColor,256);
+	thread th(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
 	this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
 	searcher.stopSearch=true;
 	th.join();
@@ -77,7 +77,7 @@ struct UCIcommunicationHepler{
 
 	void waitAndEndSearch(int timeToThink){
 		searcher.stopSearch=false;
-		searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,board.boardColor,256);
+		searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
 		// sleepCond(timeToThink);
 		this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
 		searcher.stopSearch=true;
@@ -93,9 +93,9 @@ struct UCIcommunicationHepler{
 		if(mainCommand=="quit")
 			exit(0);
 		if(mainCommand=="dbg"){
-			// printDesk01(board.rooks);
+			// printDesk01(mainBoard.rooks);
 			// perftester.perfTest(256);
-			// for(ll i=0;i<board.age;i++)
+			// for(ll i=0;i<mainBoard.age;i++)
 				// cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
 			// inline int sseEval(int square,int color,int firstAttacker){
 			// cout<<evaluator.evaluateDoubledPawns()<<'\n';
@@ -114,14 +114,14 @@ struct UCIcommunicationHepler{
 			if(waitingThread.joinable())
 				waitingThread.join();
 
-			board.makeMove(Move(tokens[1]));
+			mainBoard.makeMove(Move(tokens[1]));
 			return;
 		}
 		if(mainCommand=="eval"){
-			cout<<"endgame weight: "<<board.endgameWeight()<<'\n';
+			cout<<"endgame weight: "<<mainBoard.endgameWeight()<<'\n';
 			if(tokens[1]=="info")
 				evaluator.showInfo=true;
-			cout<<evaluator.evaluatePosition()<<" cp (white's perspective)"<<endl;
+			cout<<evaluator.evaluatePosition(mainBoard)<<" cp (white's perspective)"<<endl;
 			evaluator.showInfo=false;
 			return;
 		}
@@ -133,7 +133,7 @@ struct UCIcommunicationHepler{
 			int movesIter=tokens.size();
 			if(tokens[1]=="startpos"){
 				movesIter=3;
-				board=Board();
+				mainBoard=Board();
 			}
 			if(tokens[1]=="fen"){
 				string fen;
@@ -144,10 +144,10 @@ struct UCIcommunicationHepler{
 					}
 					fen+=tokens[i]+" ";
 				}
-				board.initFromFEN(fen);
+				mainBoard.initFromFEN(fen);
 			}
 			for(;movesIter<tokens.size();movesIter++){
-				board.makeMove(Move(tokens[movesIter]));
+				mainBoard.makeMove(Move(tokens[movesIter]));
 			}
 		}
 		if(mainCommand=="go"){
@@ -175,12 +175,12 @@ struct UCIcommunicationHepler{
 					depth=stoi(tokens[i+1]);
 			}
 			int timeToThink=1e9;
-			if(board.boardColor==WHITE && wtime!=-1){
+			if(mainBoard.boardColor==WHITE && wtime!=-1){
 				timeToThink=wtime*0.025+winc;
 				if(timeToThink>=wtime-100)
 					timeToThink=wtime-100;
 			}
-			if(board.boardColor==BLACK && btime!=-1){
+			if(mainBoard.boardColor==BLACK && btime!=-1){
 				timeToThink=btime*0.025+binc;
 				if(timeToThink>=btime-100)
 					timeToThink=btime-100;

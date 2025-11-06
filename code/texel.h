@@ -34,17 +34,17 @@ struct TexelTuner{
 	float fitOneParam(float result,int i,float eval){
 		vector<float>weights=evaluator.writeToVector();
 		int n=weights.size();
-		// float eval=searcher.texelSearch(board.boardColor,-inf*10,inf*10,0);
-		// if(board.boardColor==BLACK)
+		// float eval=searcher.texelSearch(mainBoard.boardColor,-inf*10,inf*10,0);
+		// if(mainBoard.boardColor==BLACK)
 		// 	eval=-eval;
 		float error=pow(sigmoid(eval)-result,2);
 		// err+=error;
 		weights[i]+=delta;
 		evaluator.initFromVector(weights);
 
-		float newEval=evaluator.evaluatePositionDeterministic();
-		// float newEval=searcher.texelSearch(board.boardColor,-inf*10,inf*10,0);
-		// if(board.boardColor==BLACK)
+		float newEval=evaluator.evaluatePositionDeterministic(mainBoard);
+		// float newEval=searcher.texelSearch(mainBoard.boardColor,-inf*10,inf*10,0);
+		// if(mainBoard.boardColor==BLACK)
 		// 	newEval=-newEval;
 
 		float newError=pow(sigmoid(newEval)-result,2);
@@ -59,10 +59,10 @@ struct TexelTuner{
 	vector<float> fit(float result){
 		vector<float>weights=evaluator.writeToVector();
 		int n=weights.size();
-		// float eval=searcher.texelSearch(board.boardColor,-inf*10,inf*10,0);
-		// if(board.boardColor==BLACK)
+		// float eval=searcher.texelSearch(mainBoard.boardColor,-inf*10,inf*10,0);
+		// if(mainBoard.boardColor==BLACK)
 		// 	eval=-eval;
-		float eval=evaluator.evaluatePositionDeterministic();
+		float eval=evaluator.evaluatePositionDeterministic(mainBoard);
 		// if(abs(eval)>=1e3)
 		// 	return vector<float>(n);
 		float error=pow(sigmoid(eval)-result,2);
@@ -76,8 +76,8 @@ struct TexelTuner{
 		// 	weights[i]+=gradient[i];
 		// }
 		// evaluator.initFromVector(weights);
-		// float newEval=searcher.texelSearch(board.boardColor,-inf*10,inf*10,0);
-		// if(board.boardColor==BLACK)
+		// float newEval=searcher.texelSearch(mainBoard.boardColor,-inf*10,inf*10,0);
+		// if(mainBoard.boardColor==BLACK)
 		// 	newEval=-newEval;
 		// float newError=pow(sigmoid(newEval-result),2);
 		// float grad=(newError-error)/delta;
@@ -110,10 +110,10 @@ struct TexelTuner{
 			}
 			pos.pop_back();
 			reverse(all(evalS));
-			board.initFromFEN(pos);
+			mainBoard.initFromFEN(pos);
 
-			int staticEval=evaluator.evaluatePosition(board.boardColor);
-			int qEval=searcher.texelSearch(board.boardColor,-inf*10,inf*10,0);
+			int staticEval=evaluator.evaluatePosition(mainBoard);
+			int qEval=searcher.texelSearch(mainBoard,mainBoard.boardColor,-inf*10,inf*10,0);
 			if(abs(qEval-staticEval)>=100)
 				continue;
 			nmb++;
@@ -163,7 +163,7 @@ struct TexelTuner{
 		// 			float grad=0;
 
 		// 			for(int j=i;j<min(int(database.size()),i+batchSize);j++){
-		// 				board.initFromFEN(database[j].first);
+		// 				mainBoard.initFromFEN(database[j].first);
 		// 				curFen=database[j].first;
 		// 				auto newGrad=fitOneParam(database[j].second,param);
 
@@ -197,7 +197,7 @@ struct TexelTuner{
 				int n=weights.size();
 				vector<float>grad(n);
 				for(int j=i;j<min(int(database.size()),i+batchSize);j++){
-					board.initFromFEN(database[j].first);
+					mainBoard.initFromFEN(database[j].first);
 					curFen=database[j].first;
 					auto newGrad=fit(database[j].second);
 					for(int p=0;p<n;p++)
@@ -218,7 +218,8 @@ struct TexelTuner{
 			cout<<(err/numberOfPositions)<<'\n';
 			errors.push_back(err/numberOfPositions);
 			cout<<'[';
-			for(int i=0;i<errors.size();i++){
+			for(int i=0;i<errors
+				.size();i++){
 				cout<<errors[i];
 				if(i+1<errors.size())
 					cout<<',';
@@ -227,8 +228,8 @@ struct TexelTuner{
 
 			float errV=0;
 			for(int i=0;i<databaseValid.size();i++){
-				board.initFromFEN(databaseValid[i].first);
-				float eval=evaluator.evaluatePositionDeterministic();
+				mainBoard.initFromFEN(databaseValid[i].first);
+				float eval=evaluator.evaluatePositionDeterministic(mainBoard);
 				errV+=pow(sigmoid(eval)-databaseValid[i].second,2);
 			}
 			errV/=databaseValid.size();

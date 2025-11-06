@@ -346,4 +346,4 @@ struct Board{
 	}
 };
 
-Board board;
+Board mainBoard;
