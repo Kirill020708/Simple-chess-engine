@@ -44,5 +44,3 @@ struct HistoryHelper{
 		return (historyScore[color][move.getStartSquare()][move.getTargetSquare()])+maxHistoryScore; // to prevent negative values
 	}
 };
-
-HistoryHelper historyHelper;

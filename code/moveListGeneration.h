@@ -61,7 +61,7 @@ struct MoveListGenerator{
 
 	Move killerMove,killerBackup;
 
-	inline void generateMoves(Board& board,int color,int depth,bool doSort,bool onlyCaptures){
+	inline void generateMoves(Board& board,HistoryHelper& historyHelper, int color,int depth,bool doSort,bool onlyCaptures){
 		Board boardCopy=board;
 		moveListSize[depth]=0;
 
@@ -272,5 +272,3 @@ struct MoveListGenerator{
 		return true;
 	}
 };
-
-MoveListGenerator moveListGenerator;

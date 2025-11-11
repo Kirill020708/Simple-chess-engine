@@ -37,7 +37,7 @@ int main(){
 	// texelTuner.checkData();
 	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
 	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
-	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew.txt");
+	evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/evaluationWeights.txt");
 	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
 	// for(ll depth=1;depth<=15;depth++){
 		// cout<<depth<<": ";

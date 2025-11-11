@@ -21,7 +21,7 @@ float rngF(float l,float r){
 struct TexelTuner{
 	float delta=1;
 	const float K=1.6;
-	float rate=500;
+	float rate=50000;
 
 	float sigmoid(float ev){
 		return 1.0/(1+exp(-K*ev/400));
@@ -56,6 +56,8 @@ struct TexelTuner{
 		return grad;
 	}
 
+	vector<bool>needsRecalc;
+
 	vector<float> fit(float result){
 		vector<float>weights=evaluator.writeToVector();
 		int n=weights.size();
@@ -87,7 +89,8 @@ struct TexelTuner{
 		// }
 
 		for(int i=0;i<n;i++)
-			gradient[i]=fitOneParam(result,i,eval);
+			if(needsRecalc[i])
+				gradient[i]=fitOneParam(result,i,eval);
 
 		return gradient;
 	}
@@ -99,6 +102,7 @@ struct TexelTuner{
 		ofstream out("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
 		string pos;
 		int numberOfPositions=0;
+		Worker worker;
 		while(getline(in,pos)){
 			numberOfPositions++;
 			if(numberOfPositions%100'000==0)
@@ -113,7 +117,7 @@ struct TexelTuner{
 			mainBoard.initFromFEN(pos);
 
 			int staticEval=evaluator.evaluatePosition(mainBoard);
-			int qEval=searcher.texelSearch(mainBoard,mainBoard.boardColor,-inf*10,inf*10,0);
+			int qEval=worker.texelSearch(mainBoard,mainBoard.boardColor,-inf*10,inf*10,0);
 			if(abs(qEval-staticEval)>=100)
 				continue;
 			nmb++;
@@ -149,49 +153,83 @@ struct TexelTuner{
 
 		vector<float>weights=evaluator.writeToVector();
 		int n=weights.size();
+		needsRecalc.resize(n,0);
+		needsRecalc[n-2]=needsRecalc[n-1]=1;
+
+		vector<float>errors,errValid;
 
 		// for(int param=0;param<n;param++){
 		// 	if(weights[param]==0)
 		// 		continue;
-		// 	for(int epoch=1;epoch<=10;epoch++){
+		// 	for(int epoch=1;epoch<=1000;epoch++){
 		// 		cout<<"Param "<<param+1<<"/"<<n<<" Epoch "<<epoch<<'\n';
 
 		// 		numberOfPositions=0;
 		// 		err=0;
-		// 		int batchSize=1000;
-		// 		for(int i=0;i<database.size();i+=batchSize){
-		// 			float grad=0;
+		// 		int batchSize=database.size();
+		// 		float grad=0;
 
-		// 			for(int j=i;j<min(int(database.size()),i+batchSize);j++){
-		// 				mainBoard.initFromFEN(database[j].first);
-		// 				curFen=database[j].first;
-		// 				auto newGrad=fitOneParam(database[j].second,param);
+		// 		for(int j=0;j<batchSize;j++){
+		// 			mainBoard.initFromFEN(database[j].first);
+		// 			curFen=database[j].first;
+		// 			auto newGrad=fitOneParam(database[j].second,param,evaluator.evaluatePositionDeterministic(mainBoard));
 
-		// 				grad+=newGrad;
+		// 			grad+=newGrad;
 
-		// 				numberOfPositions++;
-		// 			}
-
-		// 			grad/=batchSize;
-		// 			weights[param]-=grad*rate;
-
-		// 			evaluator.initFromVector(weights);
+		// 			numberOfPositions++;
 		// 			if(numberOfPositions%100'000==0)
-		// 				cout<<numberOfPositions<<' '<<(err/numberOfPositions)<<' '<<grad*rate<<'\n';
+		// 				cout<<numberOfPositions<<"/"<<batchSize<<' '<<float(numberOfPositions)/batchSize*100<<"%\n";
 		// 		}
+
+		// 		grad/=batchSize;
+		// 		weights[param]-=grad*rate;
+
+		// 		evaluator.initFromVector(weights);
+		// 		if(numberOfPositions%100'000==0)
+		// 			cout<<numberOfPositions<<' '<<(err/numberOfPositions)<<' '<<grad*rate<<'\n';
+
+
 		// 		cout<<(err/numberOfPositions)<<'\n';
-		// 		evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew1.txt");
+		// 		errors.push_back(err/numberOfPositions);
+		// 		cout<<'[';
+		// 		for(int i=0;i<errors.size();i++){
+		// 			cout<<errors[i];
+		// 			if(i+1<errors.size())
+		// 				cout<<',';
+		// 		}
+		// 		cout<<"]\n";
+
+		// 		float errV=0;
+		// 		for(int i=0;i<databaseValid.size();i++){
+		// 			mainBoard.initFromFEN(databaseValid[i].first);
+		// 			float eval=evaluator.evaluatePositionDeterministic(mainBoard);
+		// 			errV+=pow(sigmoid(eval)-databaseValid[i].second,2);
+		// 		}
+		// 		errV/=databaseValid.size();
+
+		// 		cout<<errV<<'\n';
+		// 		errValid.push_back(errV);
+		// 		cout<<'[';
+		// 		for(int i=0;i<errValid.size();i++){
+		// 			cout<<errValid[i];
+		// 			if(i+1<errValid.size())
+		// 				cout<<',';
+		// 		}
+		// 		cout<<"]\n";
+		// 		cout<<(err/numberOfPositions)<<'\n';
+		// 		evaluator.writeToFile(file);
+		// 		if(abs(grad*rate)<0.001)
+		// 			break;
 		// 	}
 		// }
 
-		vector<float>errors,errValid;
 
 		for(int epoch=1;;epoch++){
 			cout<<"Epoch "<<epoch<<'\n';
 
 			numberOfPositions=0;
 			err=0;
-			int batchSize=10000;
+			int batchSize=database.size();
 			for(int i=0;i<database.size();i+=batchSize){
 				vector<float>weights=evaluator.writeToVector();
 				int n=weights.size();
@@ -202,24 +240,27 @@ struct TexelTuner{
 					auto newGrad=fit(database[j].second);
 					for(int p=0;p<n;p++)
 						grad[p]+=newGrad[p];
+					numberOfPositions++;
+					if(numberOfPositions%100'00==0)
+						cout<<numberOfPositions<<"/"<<batchSize<<' '<<float(numberOfPositions)/batchSize*100<<"%\n";
 				}
-					numberOfPositions+=batchSize;
 				for(int p=0;p<n;p++){
 					grad[p]/=batchSize;
 					weights[p]-=grad[p]*rate;
+					if(abs(grad[p]*rate)<0.01)
+						needsRecalc[p]=false;
 					// cout<<weights[p]<<' ';
 				}
 				// cout<<'\n';
 				evaluator.initFromVector(weights);
 				if(numberOfPositions%100'00==0)
 					cout<<numberOfPositions<<' '<<(err/numberOfPositions)<<' '<<grad[5]*rate<<'\n';
-				evaluator.writeToFile(file);
+				// evaluator.writeToFile(file);
 			}
 			cout<<(err/numberOfPositions)<<'\n';
 			errors.push_back(err/numberOfPositions);
 			cout<<'[';
-			for(int i=0;i<errors
-				.size();i++){
+			for(int i=0;i<errors.size();i++){
 				cout<<errors[i];
 				if(i+1<errors.size())
 					cout<<',';
@@ -244,7 +285,10 @@ struct TexelTuner{
 			}
 			cout<<"]\n";
 
-
+			int feat=0;
+			for(int i=0;i<n;i++)
+				feat+=needsRecalc[i];
+			cout<<feat<<'\n';
 			evaluator.writeToFile(file);
 		}
 	}

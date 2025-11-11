@@ -17,6 +17,7 @@
 
 #endif /* BOARD */
 
+MoveListGenerator moveListGeneratorForPerft;
 
 struct Perftester{
 	bool stopPertft;
@@ -25,10 +26,10 @@ struct Perftester{
 		if(depth==0)
 			return 1;
 		Board boardCopy=board;
-		moveListGenerator.generateMovesForPerft(board,color,depth);
+		moveListGeneratorForPerft.generateMovesForPerft(board,color,depth);
 		int sum=0;
-		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depth];currentMove++){
-			Move move=moveListGenerator.moveList[depth][currentMove];
+		for(int currentMove=0;currentMove<moveListGeneratorForPerft.moveListSize[depth];currentMove++){
+			Move move=moveListGeneratorForPerft.moveList[depth][currentMove];
 			board.makeMove(move);
 			sum+=perft(board,color==WHITE?BLACK:WHITE,depth-1);
 			board=boardCopy;
@@ -41,10 +42,10 @@ struct Perftester{
 		for(int depth=1;depth<=maxDepth;depth++){
 	        std::chrono::steady_clock::time_point timeBegin = std::chrono::steady_clock::now();
 			int color=mainBoard.boardColor;
-			moveListGenerator.generateMoves(mainBoard,color,depth,1,0);
+			moveListGeneratorForPerft.generateMovesForPerft(mainBoard,color,depth);
 			ll nodes=0;
-			for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depth];currentMove++){
-				Move move=moveListGenerator.moveList[depth][currentMove];
+			for(int currentMove=0;currentMove<moveListGeneratorForPerft.moveListSize[depth];currentMove++){
+				Move move=moveListGeneratorForPerft.moveList[depth][currentMove];
 				mainBoard.makeMove(move);
 				int nmb=perft(mainBoard,color==WHITE?BLACK:WHITE,depth-1);
 				cout<<move.convertToUCI()<<' '<<nmb<<'\n';

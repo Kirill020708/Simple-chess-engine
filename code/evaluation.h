@@ -325,21 +325,37 @@ struct Evaluator{
 		Bitboard mainColumn=boardHelper.columnUp[whiteKingPos];
 
 		int dist=boardHelper.distanceColumn(mainColumn&board.whitePieces&board.pawns,WHITE);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 		mainColumnEvaluationW-=pawnDistancePenalty[dist];
 
 		if(col>0){
 			dist=boardHelper.distanceColumn(boardHelper.columnUp[whiteKingPos-1]&board.whitePieces&board.pawns,WHITE);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
 		if(col<7){
 			dist=boardHelper.distanceColumn(boardHelper.columnUp[whiteKingPos+1]&board.whitePieces&board.pawns,WHITE);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
 		if(whiteKingPos==58 || whiteKingPos==50){ // c1, c2
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.whitePieces&board.pawns,WHITE);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationW-=pawnDistancePenalty[dist];
 		}
@@ -356,21 +372,37 @@ struct Evaluator{
 		mainColumn=boardHelper.getColumn(col);
 
 		dist=boardHelper.distanceColumn(mainColumn&board.blackPieces&board.pawns,BLACK);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		mainColumnEvaluationB+=pawnDistancePenalty[dist];
 		assert(dist>0);
 
 		if(col>0){
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-1)&board.blackPieces&board.pawns,BLACK);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
 		if(col<7){
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col+1)&board.blackPieces&board.pawns,BLACK);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
 		if(blackKingPos==2 || blackKingPos==10){ // c8, c7
 			dist=boardHelper.distanceColumn(boardHelper.getColumn(col-2)&board.blackPieces&board.pawns,BLACK);
+			if(dist<=0){
+				cout<<dist<<'\n';
+				exit(0);
+			}
 		assert(dist>0);
 			nearColumnEvaluationB+=pawnDistancePenalty[dist];
 		}
@@ -617,7 +649,7 @@ struct Evaluator{
 		else
 			tempoEval-=tempoScore; // tempo
 
-		float kingShieldEvaluation=evaluateKingShield(board);
+		// float kingShieldEvaluation=evaluateKingShield(board);
 
 		evaluation+=PSTevaluation;
 		evaluation+=mobilityEvaluation;
@@ -634,7 +666,7 @@ struct Evaluator{
 			cout<<"Material and piece-square tables: "<<PSTevaluation<<" cp"<<endl;
 			cout<<"Mobility: "<<mobilityEvaluation<<" cp"<<endl;
 			cout<<"King attackers: "<<kingAttackersEvaluation<<" cp"<<endl;
-			cout<<"King shield: "<<kingShieldEvaluation<<" cp"<<endl;
+			// cout<<"King shield: "<<kingShieldEvaluation<<" cp"<<endl;
 			cout<<"Isolated pawns: "<<isolatedPawnEvaluation<<" cp"<<endl;
 			cout<<"Doubled pawns: "<<doubledPawnEvaluation<<" cp"<<endl;
 			cout<<"Passed pawns: "<<passedPawnsEvaluation<<" cp"<<endl;
