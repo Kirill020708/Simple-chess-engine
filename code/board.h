@@ -63,7 +63,7 @@ struct Board{
 
 	ull zobristKey;
 
-	char age;
+	int age;
 
 	int lastIrreversibleMoveAge=-1; // age of last irreversible move (capture/pawn move), for testing repetition
 

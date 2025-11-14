@@ -13,12 +13,13 @@
 struct TableEntry{
 	ull key;
 	int evaluation;
-	char depth,type=NONE,age;
+	char depth,type=NONE;
+	int age;
 	Move bestMove;
 
 	TableEntry(){}
 
-	TableEntry(ull key_,int evaluation_,char depth_,char type_,char age_,Move bestMove_){
+	TableEntry(ull key_,int evaluation_,char depth_,char type_,int age_,Move bestMove_){
 		key=key_;
 		evaluation=evaluation_;
 		depth=depth_;
@@ -48,7 +49,7 @@ struct TranspositionTable{
 			}
 		}
 		TTmutex.lock();
-		table[index]={key,evaluation,char(depth),char(type),char(age),bestMove};
+		table[index]={key,evaluation,char(depth),char(type),(age),bestMove};
 		TTmutex.unlock();
 	}
 
