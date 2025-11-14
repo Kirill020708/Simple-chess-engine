@@ -329,8 +329,8 @@ struct Worker{
 			bool inCheck=moveGenerator.isInCheck(board,oppositeColor);
 			bool isPromotion=(move.getPromotionFlag()>0);
 			int sseEval=0;
-			// if(isCapture)
-			// 	sseEval=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare());
+			if(isCapture)
+				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
 			board.makeMove(move);
 
@@ -355,6 +355,8 @@ struct Worker{
 				continue;
 			}
 
+			int historyValue=historyHelper.getScore(color,move)-historyHelper.maxHistoryScore;
+
 			int extendDepth=0;
 			if(moveGenerator.isInCheck(board,oppositeColor)) // if in check, search deeper for 1 ply
 				extendDepth++;
@@ -363,17 +365,25 @@ struct Worker{
 			if(movesSearched){ // Principal variation search
 
 				// Late move reduction
-				const int LMR_FULL_MOVES=3; // number of moves to search with full depth
-				const int LMR_MIN_DEPTH=4; // don't reduct depth if it's more or equal to this value
-				int LMR_DEPTH_REDUCTION=floor(log(float(depth)) * log(float(movesSearched)) / 3); // reduction of depth
+				const int LMR_FULL_MOVES=2; // number of moves to search with full depth
+				const int LMR_MIN_DEPTH=3; // don't reduct depth if it's more or equal to this value
+				int LMR_DEPTH_REDUCTION=floor(log(float(depth)) * log(float(movesSearched)) / 3+
+										0.5*(!isPvNode)-0.5*(isPvNode)-
+										float(historyValue)/historyHelper.maxHistoryScore); // reduction of depth
+
 				if(ttMove!=Move()&&!board.isQuietMove(ttMove))
 					LMR_DEPTH_REDUCTION++;
+				if(LMR_DEPTH_REDUCTION<0)
+					LMR_DEPTH_REDUCTION=0;
+
+				// if(isRoot){
+				// 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<' '<<float(historyValue)/historyHelper.maxHistoryScore<<'\n';
+				// }
 
 				if(movesSearched>=LMR_FULL_MOVES && 
 					!isMovingSideInCheck &&
 					depth>=LMR_MIN_DEPTH && 
-					!isMoveInteresting && // don't do LMR with interesting moves
-					!isPvNode
+					!isMoveInteresting // don't do LMR with interesting moves
 					// historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
 					)
 					score=-search(board,oppositeColor,depth-1-LMR_DEPTH_REDUCTION,0,-(alpha+1),-alpha,depthFromRoot+1);
