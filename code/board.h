@@ -42,7 +42,7 @@
 #endif /* ZOBRIST */
 
 struct OccuredPositionsHelper{
-	ull occuredPositions[256]; // positions occured in current variation; for testing repetition
+	ull occuredPositions[2560]; // positions occured in current variation; for testing repetition
 };
 
 OccuredPositionsHelper occuredPositionsHelper;
