@@ -33,9 +33,15 @@ struct TranspositionTable{
 	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);
 	TableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(TableEntry)];
 
-	mutex TTmutex;
+	// mutex TTmutex;
 
 	inline void write(Board& board,ull key,int evaluation,int depth,int type,int age,Move bestMove){
+		// if(MATE_SCORE-abs(evaluation)<=maxDepth){
+		// 	if(evaluation>0)
+		// 		evaluation=MATE_SCORE;
+		// 	else
+		// 		evaluation=-MATE_SCORE;
+		// }
 		int index=key%tableSize;
 		if(table[index].type!=NONE){
 			if(table[index].key!=key){
@@ -48,12 +54,12 @@ struct TranspositionTable{
 					return;
 			}
 		}
-		TTmutex.lock();
+		// TTmutex.lock();
 		table[index]={key,evaluation,char(depth),char(type),(age),bestMove};
-		TTmutex.unlock();
+		// TTmutex.unlock();
 	}
 
-	inline pair<int,Move> get(Board& board,ull key,int depth,int alpha,int beta){
+	inline pair<int,Move> get(Board& board,ull key,int depth,int alpha,int beta,int depthFromRoot){
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return {NO_EVAL,Move()};
@@ -72,17 +78,32 @@ struct TranspositionTable{
 		if(table[index].type==UPPER_BOUND && table[index].evaluation<alpha)
 			eval=table[index].evaluation;
 
+		// if(abs(eval)==MATE_SCORE){
+		// 	if(eval>0)
+		// 		eval-=depthFromRoot;
+		// 	else
+		// 		eval+=depthFromRoot;
+		// }
+
 		return {eval,table[index].bestMove};
 	}
 
-	inline TableEntry getEntry(Board& board,ull key){
+	inline TableEntry getEntry(Board& board,ull key,int depthFromRoot){
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return TableEntry();
 		if(table[index].key!=key)
 			return TableEntry();
 
-		return table[index];
+		auto entry=table[index];
+		// if(abs(entry.evaluation)==MATE_SCORE){
+		// 	if(entry.evaluation>0)
+		// 		entry.evaluation-=depthFromRoot;
+		// 	else
+		// 		entry.evaluation+=depthFromRoot;
+		// }
+
+		return entry;
 	}
 
 	inline int getDepth(Board& board,ull key){
@@ -102,6 +123,11 @@ struct TranspositionTable{
 		if(table[index].key!=key)
 			return NONE;
 		return table[index].type;
+	}
+
+	inline void prefetch(ull key){
+		int index=key%tableSize;
+		__builtin_prefetch(&table[index]);
 	}
 };
 

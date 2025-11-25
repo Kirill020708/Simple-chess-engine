@@ -41,6 +41,12 @@
 
 #endif /* HISTORY */
 
+struct StackState{
+	bool excludeTTmove=false;
+	Move excludeMove;
+	Move bestMove;
+};
+
 struct Worker{
 	bool stopSearch;
 	bool doneSearch;
@@ -50,10 +56,12 @@ struct Worker{
 	int rootScore;
 	Move bestMove;
 
-	ll nodes=0;
+	ll nodes=0,singularExtended=0;
 
 	MoveListGenerator moveListGenerator;
 	HistoryHelper historyHelper;
+
+	StackState searchStack[maxDepth];
 
 	std::chrono::steady_clock::time_point searchStartTime;
 
@@ -98,12 +106,17 @@ struct Worker{
 		if(stopSearch)
 			return 0;
 		nodes++;
+
+
 		ull currentZobristKey=board.getZobristKey();
-		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(board,currentZobristKey,0,alpha,beta);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(board,currentZobristKey,0,alpha,beta,depthFromRoot);
+		int nodeType=transpositionTableQuiescent.getNodeType(currentZobristKey);
 		if(hashTableEvaluation!=NO_EVAL){
-			alpha=max(alpha,hashTableEvaluation);
-			if(alpha>=beta)
-				return alpha;
+			return hashTableEvaluation;
+
+			// alpha=max(alpha,hashTableEvaluation);
+			// if(alpha>=beta)
+			// 	return alpha;
 		}
 		moveListGenerator.hashMove=bestHashMove;
 
@@ -115,17 +128,16 @@ struct Worker{
 
 		int maxEvaluation=staticEval;
 
-		int numOfPiecesOnBoard=board.numberOfPieces();
+		bool isMovingSideInCheck=moveGenerator.isInCheck(board,color);
 
-		// const int deltaPruningStandpatMargin=1050;
-		// if(numOfPiecesOnBoard>=6 && staticEval+deltaPruningStandpatMargin<alpha)
-		// 	return staticEval;
+		int numOfPiecesOnBoard=board.numberOfPieces();
 
 		alpha=max(alpha,staticEval);
 		if(alpha>=beta){
 			transpositionTableQuiescent.write(board,currentZobristKey,maxEvaluation,0,LOWER_BOUND,boardCurrentAge,bestHashMove);
 			return maxEvaluation;
 		}
+
 
 
 		// moveListGenerator.killerMove=moveListGenerator.hashMove;
@@ -145,12 +157,13 @@ struct Worker{
 			// 	exit(0);
 			// }
 			board.makeMove(move);
+			// transpositionTableQuiescent.prefetch(board.getZobristKey());
 			int newStaticEval=evaluator.evaluatePosition(board,color);
 			int deltaPruningMargin=200;
 			// if(sseScore<=-1)
 			// 	deltaPruningMargin-=sseScore*100;
 			// assert(sseScore>=0);
-			if((numOfPiecesOnBoard-1)>=6 && (newStaticEval+deltaPruningMargin<alpha || sseScore<=-3)){
+			if(((numOfPiecesOnBoard-1)>=6 && newStaticEval+deltaPruningMargin<alpha) || sseScore<=-1){
 				board=boardCopy;
 				continue;
 			}
@@ -192,6 +205,8 @@ struct Worker{
 		bool isPvNode=((beta-alpha)>1);
 		nodes++;
 
+
+
 		ull currentZobristKey=board.getZobristKey();
 
 		if(!isRoot){
@@ -220,13 +235,12 @@ struct Worker{
 		}
 
 
-		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,depth,alpha,beta);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,depth,alpha,beta,depthFromRoot);
 		if(hashTableEvaluation!=NO_EVAL){
 			if(!isPvNode)
-				alpha=max(alpha,hashTableEvaluation);
+				return hashTableEvaluation;
+
 			staticEval=hashTableEvaluation;
-			if(alpha>=beta)
-				return alpha;
 		}
 
 		// occuredPositions[board.age]=currentZobristKey;
@@ -242,7 +256,7 @@ struct Worker{
 			(bestHashMove==Move()||board.isQuietMove(bestHashMove)) && // TT move is null or non-capture
 			nodeType!=EXACT){ // node type is not PV
 
-			int margin=(150-improving*100)*depth;
+			int margin=(150-improving*100)*max(depth,1);
 
 			if(staticEval>=beta+margin)
 				return staticEval;
@@ -312,14 +326,59 @@ struct Worker{
 		// moveListGenerator.killerMove=killerMovesTable[depthFromRoot][killerMove];
 		// moveListGenerator.killerBackup=killerMovesTable[depthFromRoot][killerBackup];
 
+		// if(
+		// 	depth>=6 &&
+		// 	isPvNode &&
+		// 	ttMove==Move()){
+		// 	search(board,color,depth-3,0,alpha,beta,depthFromRoot+1);
+		// 	moveListGenerator.hashMove=searchStack[depthFromRoot+1].bestMove;
+		// }
+
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
+
+		int extendTTmove=0;
+		// if(
+		// 	ttMove!=Move() && 
+		// 	depth>=6 && 
+		// 	!searchStack[depthFromRoot].excludeTTmove && 
+		// 	moveListGenerator.moveListSize[depthFromRoot]>1 && 
+		// 	nodeType==LOWER_BOUND
+		// 	){
+		// 	auto ttEntry=transpositionTable.getEntry(board,currentZobristKey);
+
+		// 	searchStack[depthFromRoot+1].excludeTTmove=true;
+		// 	searchStack[depthFromRoot+1].excludeMove=ttMove;
+		// 	int margin=80;
+		// 	int singularScore=search(board,color,depth/2,0,ttEntry.evaluation-margin-1,ttEntry.evaluation-margin,depthFromRoot+1);
+
+		// 	if(singularScore<ttEntry.evaluation-margin){
+		// 		extendTTmove=1;
+		// 		singularExtended++;
+		// 		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
+		// 	}
+
+		// 	searchStack[depthFromRoot+1].excludeTTmove=false;
+		// }
+
+
 		int maxEvaluation=-inf;
 		char type=UPPER_BOUND;
 		int movesSearched=0;
+		int quietMovesSearched=0;
 		bestHashMove=Move();
 		int numberOfMoves=moveListGenerator.moveListSize[depthFromRoot];
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
+
+			int extendDepth=0;
+
+			if(move==searchStack[depthFromRoot].excludeMove){
+				if(searchStack[depthFromRoot].excludeTTmove==true)
+					continue;
+			}
+
+			// if(move==ttMove)
+			// 	extendDepth+=extendTTmove;
 
 			bool isMoveInteresting=(
 				moveGenerator.isInCheck(board,oppositeColor)|| // checking move
@@ -333,6 +392,8 @@ struct Worker{
 				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
 			board.makeMove(move);
+
+			// transpositionTable.prefetch(board.getZobristKey());
 
 			int newStaticEval=evaluator.evaluatePosition(board,color);
 
@@ -355,9 +416,22 @@ struct Worker{
 				continue;
 			}
 
+
+			int seeMargin[4]={0,2,4,9};
+
+			if(movesSearched>0 &&
+				!isPvNode &&
+				!isMovingSideInCheck &&
+				!inCheck &&
+				depth<=3 &&
+				sseEval<=-seeMargin[depth]){
+
+				board=boardCopy;
+				continue;
+			}
+
 			int historyValue=historyHelper.getScore(color,move)-historyHelper.maxHistoryScore;
 
-			int extendDepth=0;
 			if(moveGenerator.isInCheck(board,oppositeColor)) // if in check, search deeper for 1 ply
 				extendDepth++;
 
@@ -380,13 +454,22 @@ struct Worker{
 				// 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<' '<<float(historyValue)/historyHelper.maxHistoryScore<<'\n';
 				// }
 
+				// Late move pruning
+				if(!isMovingSideInCheck &&
+					!isMoveInteresting &&
+					LMR_DEPTH_REDUCTION>=depth){
+					board=boardCopy;
+					continue;
+				}
+
 				if(movesSearched>=LMR_FULL_MOVES && 
 					!isMovingSideInCheck &&
 					depth>=LMR_MIN_DEPTH && 
 					!isMoveInteresting // don't do LMR with interesting moves
 					// historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
-					)
+					){
 					score=-search(board,oppositeColor,depth-1-LMR_DEPTH_REDUCTION,0,-(alpha+1),-alpha,depthFromRoot+1);
+				}
 				else
 					score=alpha+1; // if LMR is restricted, do this to do PVS
 
@@ -401,6 +484,8 @@ struct Worker{
 
 			board=boardCopy;
 			movesSearched++;
+			if(!isMoveInteresting)
+				quietMovesSearched++;
 
 			if(stopSearch)
 				return 0;
@@ -409,6 +494,7 @@ struct Worker{
 					type=EXACT;
 				maxEvaluation=score;
 				bestHashMove=move;
+				searchStack[depthFromRoot].bestMove=move;
 				if(isRoot){
 					bestMove=move;
 					rootScore=score;
@@ -481,81 +567,22 @@ struct Worker{
 	Move pvLine[256];
 	int pvLineSize;
 
-	// void getPvLine(int color){
-	// 	ull currentZobristKey=board.getZobristKey();
+	void getPvLine(Board& board,int color){
+		ull currentZobristKey=board.getZobristKey();
 
-	// 	if(transpositionTable.getNodeType(currentZobristKey)!=EXACT)
-	// 		return;
+		if(transpositionTable.getNodeType(currentZobristKey)!=EXACT)
+			return;
 
-	// 	auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(currentZobristKey,0,0,0);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,0,0,0,0);
 
-	// 	if(bestHashMove!=Move()){
-	// 		pvLine[pvLineSize++]=bestHashMove;
-	// 		Board boardCopy=board;
-	// 		board.makeMove(bestHashMove);
-	// 		getPvLine((color==WHITE)?BLACK:WHITE);
-	// 		board=boardCopy;
-	// 	}
-	// }
-
-	// void iterativeDeepeningSearch(int color,int maxDepth){
-	// 	// for(int i=0;i<maxDepth;i++)
-	// 	// 	for(int j=0;j<killMovesNumber;j++){
-	// 	// 		killerMovesTable[i][j]=Move();
-	// 	// 		killerMovesTable[i][j]=0;
-	// 	// 		killerMovesAge[i][j]=0;
-	// 	// 	}
-	// 	historyHelper.clear();
-	// 	nodes=0;
-	// 	boardCurrentAge=mainBoard.age;
- //        searchStartTime = std::chrono::steady_clock::now();
- //        bestMove=Move();
- //        int lastScore;
- //        const int aspirationWindow=25;
-	// 	for(int depth=1;depth<=maxDepth;depth++){
-	// 		int alpha=-inf*2,beta=inf*2;
-	// 		// if(depth>1){
-	// 		// 	alpha=lastScore-aspirationWindow;
-	// 		// 	beta=lastScore+aspirationWindow;
-	// 		// }
-	// 		int score=search(mainBoard,color,depth,1,alpha,beta,0);
-	// 		// if(depth>1&&(score<=alpha)||(score>=beta)){
-	// 		// 	if(score<=alpha)
-	// 		// 		alpha=-inf*2;
-	// 		// 	else
-	// 		// 		beta=inf*2;
-	// 		// 	score=search(color,depth,1,alpha,beta,0);
-	// 		// }
-	// 		if(stopSearch)
-	// 			return;
-	//         std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
-	//         ll timeThinked=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - searchStartTime).count();
-	//         pvLineSize=0;
-	// 		lastScore=score;
-	//         // getPvLine(color);
-	// 		if(UCIout){
-	// 			cout<<"info depth "<<depth<<
-	// 			" score ";
-	// 			if(abs(MATE_SCORE-score)>maxDepth)
-	// 				cout<<"cp "<<score;
-	// 			else{
-	// 				cout<<"mate ";
-	// 				if(score>0)
-	// 					cout<<(MATE_SCORE-score);
-	// 				else
-	// 					cout<<(-MATE_SCORE-score);
-	// 			}
-	// 			cout<<" nodes "<<nodes<<
-	// 			" nps "<<(nodes*1000)/(timeThinked+1)<<
-	// 			" time "<<timeThinked<<
-	// 			" pv "<<bestMove.convertToUCI()<<' ';
-	// 			// for(int i=1;i<pvLineSize;i++)
-	// 			// 	cout<<pvLine[i].convertToUCI()<<' ';
-
-	// 			cout<<endl;
-	// 		}
-	// 	}
-	// }
+		if(bestHashMove!=Move()){
+			pvLine[pvLineSize++]=bestHashMove;
+			Board boardCopy=board;
+			board.makeMove(bestHashMove);
+			getPvLine(board,(color==WHITE)?BLACK:WHITE);
+			board=boardCopy;
+		}
+	}
 
 	Worker(){
 		historyHelper.clear();
@@ -599,8 +626,10 @@ struct Searcher{
 		int color=mainBoard.boardColor;
 		vector<thread>threadPool(threadNumber);
 		vector<Board>boards(threadNumber,mainBoard);
-		for(int i=0;i<threadNumber;i++)
+		for(int i=0;i<threadNumber;i++){
+			workers[i].nodes=0;
 			workers[i].stopSearch=false;
+		}
         std::chrono::steady_clock::time_point searchStartTime = std::chrono::steady_clock::now();
         thread waitThread(&Searcher::waitAndEndSearch,this,thinkTime);
 		Move bestMove;
@@ -615,6 +644,8 @@ struct Searcher{
 				nodes=workers[0].nodes;
 				for(int i=1;i<threadNumber;i++)
 					workers[i].bestMove=bestMove;
+				workers[0].pvLineSize=0;
+				// workers[0].getPvLine(mainBoard,mainBoard.boardColor);
 			}else{
 				for(int i=0;i<threadNumber;i++){
 					workers[i].doneSearch=false;
@@ -623,7 +654,9 @@ struct Searcher{
 					// threadPool[i]=thread(&Worker::search,&workers[i],ref(boards[i]),boards[i].boardColor,depth,1,alpha,beta,0);
 				}
 
-				int firstFinishedThread;
+				int firstFinishedThread=0;
+				// threadPool[0].join();
+				// stopSearch();
 				while(true){
 					bool stopped=false;
 					for(int i=0;i<threadNumber;i++)
@@ -646,12 +679,19 @@ struct Searcher{
 				score=workers[firstFinishedThread].rootScore;
 				bestMove=workers[firstFinishedThread].bestMove;
 
+
+				// for(int i=0;i<threadNumber;i++){
+				// 	if(score<workers[i].rootScore){
+				// 		score=workers[i].rootScore;
+				// 		bestMove=workers[i].bestMove;
+				// 	}
+				// }
+				// cout<<firstFinishedThread<<'\n';
 				for(int i=0;i<threadNumber;i++){
+					// cout<<workers[i].rootScore<<' '<<workers[i].bestMove.convertToUCI()<<' '<<workers[i].nodes<<'\n';
 					nodes+=workers[i].nodes;
-					// if(score<workers[i].rootScore){
-					// 	score=workers[i].rootScore;
-					// 	bestMove=workers[i].bestMove;
-					// }
+					// cout<<workers[i].nodes<<'\n';
+					// workers[i].bestMove=bestMove;
 				}
 			}
 	        std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
@@ -659,7 +699,7 @@ struct Searcher{
 
 			cout<<"info depth "<<depth<<
 			" score ";
-			if(abs(MATE_SCORE-score)>maxDepth)
+			if(MATE_SCORE-abs(score)>maxDepth)
 				cout<<"cp "<<score;
 			else{
 				cout<<"mate ";
@@ -668,10 +708,15 @@ struct Searcher{
 				else
 					cout<<(-MATE_SCORE-score);
 			}
+			// cout<<" sing_extended "<<workers[0].singularExtended;
 			cout<<" nodes "<<nodes<<
 			" nps "<<(nodes*(long long)(1000))/(timeThinked+1)<<
 			" time "<<timeThinked<<
 			" pv "<<bestMove.convertToUCI()<<' ';
+
+			// for(int i=1;i<workers[0].pvLineSize;i++)
+			// 	cout<<workers[0].pvLine[i].convertToUCI()<<' ';
+
 			cout<<endl;
 			if(stopIDsearch)
 				break;

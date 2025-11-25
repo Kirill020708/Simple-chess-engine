@@ -49,7 +49,7 @@ OccuredPositionsHelper occuredPositionsHelper;
 
 int material[8]={0,0,3,3,5,10,0};
 
-struct Board{
+struct alignas(64) Board{
 	char boardColor;
 	int materialCount;
 	int evaluation;
@@ -321,6 +321,48 @@ struct Board{
 			if(occupancy(square)!=EMPTY)
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
 		initZobristKey();
+	}
+
+	string generateFEN(){
+		char pieceChar[7]={'.','p','n','b','r','q','k'};
+		string fen;
+		int emptySq=0;
+		for(int i=0;i<64;i++){
+			int color=occupancy(i);
+			int piece=occupancyPiece(i);
+			if(color==EMPTY)
+				emptySq++;
+			if(color!=EMPTY||i%8==7){
+				if(emptySq)
+					fen+=to_string(emptySq);
+				emptySq=0;
+			}
+			if(color!=EMPTY){
+				char pc=pieceChar[piece];
+				if(color==WHITE)
+					pc+='A'-'a';
+				fen.push_back(pc);
+			}
+			if(i%8==7&&i<63)
+				fen+="/";
+		}
+		if(boardColor==WHITE)
+			fen+=" w";
+		else
+			fen+=" b";
+		string cst;
+		if(!castlingWhiteKingsideBroke)
+			cst+="K";
+		if(!castlingWhiteQueensideBroke)
+			cst+="Q";
+		if(!castlingBlackKingsideBroke)
+			cst+="k";
+		if(!castlingBlackQueensideBroke)
+			cst+="q";
+		if(cst=="")
+			cst="-";
+		fen+=" "+cst;
+		return fen;
 	}
 
 	Board(){

@@ -98,8 +98,8 @@ struct TexelTuner{
 	void checkData(){
 
 		int nmb=0;
-		ifstream in("/Users/Apple/Desktop/projects/chessEngv2/texelBigData.txt");
-		ofstream out("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
+		ifstream in("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
+		ofstream out("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData50.txt");
 		string pos;
 		int numberOfPositions=0;
 		Worker worker;
@@ -118,7 +118,7 @@ struct TexelTuner{
 
 			int staticEval=evaluator.evaluatePosition(mainBoard);
 			int qEval=worker.texelSearch(mainBoard,mainBoard.boardColor,-inf*10,inf*10,0);
-			if(abs(qEval-staticEval)>=100)
+			if(abs(qEval-staticEval)>50)
 				continue;
 			nmb++;
 
@@ -149,12 +149,12 @@ struct TexelTuner{
 				databaseValid.push_back({pos,stof(evalS)});
 		}
 
-		string file="/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew.txt";
+		string file="/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew1.txt";
 
 		vector<float>weights=evaluator.writeToVector();
 		int n=weights.size();
-		needsRecalc.resize(n,0);
-		needsRecalc[n-2]=needsRecalc[n-1]=1;
+		needsRecalc.resize(n,1);
+		// needsRecalc[n-2]=needsRecalc[n-1]=1;
 
 		vector<float>errors,errValid;
 
@@ -253,8 +253,12 @@ struct TexelTuner{
 				}
 				// cout<<'\n';
 				evaluator.initFromVector(weights);
-				if(numberOfPositions%100'00==0)
+				if(numberOfPositions%100'00==0){
 					cout<<numberOfPositions<<' '<<(err/numberOfPositions)<<' '<<grad[5]*rate<<'\n';
+					for(auto it:grad)
+						cout<<it*rate<<' ';
+					cout<<'\n';
+				}
 				// evaluator.writeToFile(file);
 			}
 			cout<<(err/numberOfPositions)<<'\n';

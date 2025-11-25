@@ -33,6 +33,10 @@ struct BoardHelper{
 		return square>>3;
 	}
 
+	inline Bitboard getRow(int rowNumber){
+		return Bitboard(ull(0b11111111)<<((7-rowNumber)<<3));
+	}
+
 	inline Bitboard getColumn(int columnNuber){
 		return Bitboard(ull(0b0000000100000001000000010000000100000001000000010000000100000001)<<columnNuber);
 	}

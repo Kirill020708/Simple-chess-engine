@@ -47,7 +47,7 @@
 #endif /* HISTORY */
 
 
-const int maxDepth=256,maxListSize=256;
+const int maxListSize=256;
 
 //score: 10 bits for history (or see) < 2 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
 

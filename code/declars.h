@@ -41,14 +41,22 @@ const ld eps = 1e-9, pi = 3.1415926;
 // mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
 mt19937_64 rng(1898129380);
 
+const int maxDepth=256;
+
 const int EMPTY=-1,WHITE=0,BLACK=1,ERROR=-2;
 const int NOPIECE=0,PAWN=1,KNIGHT=2,BISHOP=3,ROOK=4,QUEEN=5,KING=6;
 const int DONT_SORT=0,DO_SORT=1;
 const int ALL_MOVES=0,ONLY_CAPTURES=1;
 const int NO_EN_PASSANT=10;
 
+
 const int LOWER_BOUND=0,EXACT=1,UPPER_BOUND=2,NONE=3;
 const int NO_EVAL=inf*10; // return if we can't use evaluation from the transposition table
+
+
+const int NONE_SCORE=inf-10; // score which never occures
+const int MATE_SCORE=inf/10,DRAW_SCORE=0;
+
 
 #define memoryUsageMB 64
 

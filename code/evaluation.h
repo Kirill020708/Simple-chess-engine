@@ -24,9 +24,8 @@
 
 #endif /* PIECESQTABLE */
 
-const int NONE_SCORE=inf-10; // score which never occures
-const int MATE_SCORE=inf/10,DRAW_SCORE=0;
-const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
+
+// const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
 
 // Transposition table
 
@@ -68,6 +67,11 @@ struct EvaluationTranspositionTable{
 			return NO_EVAL;
 		return table[index].evaluation;
 	}
+
+	inline void prefetch(ull key){
+		int index=key%tableSize;
+		__builtin_prefetch(&table[index]);
+	}
 };
 
 EvaluationTranspositionTable evaluationTranspositionTable;
@@ -103,6 +107,8 @@ struct Evaluator{
 
 	float uncatchablePassedPawnScore[5]={0,0,100,200};
 
+	float openKingMainFilePenalty=30,openKingNearFilePenalty=10;
+
 	void initFromVector(vector<float>weights){
 		int iter=0;
 		for(int i=0;i<8;i++)
@@ -129,13 +135,16 @@ struct Evaluator{
 		pawnIslandPenaltyMg=weights[iter++];
 		pawnIslandPenaltyEg=weights[iter++];
 
-		for(int i=0;i<8;i++)
-			pawnDistancePenalty[i]=weights[iter++];
+		// for(int i=1;i<8;i++)
+		// 	pawnDistancePenalty[i]=weights[iter++];
 
 		tempoScore=weights[iter++];
 
 		bishopPairMg=weights[iter++];
 		bishopPairEg=weights[iter++];
+
+		// openKingMainFilePenalty=weights[iter++];
+		// openKingNearFilePenalty=weights[iter++];
 	}
 
 	vector<float>writeToVector(){
@@ -165,13 +174,16 @@ struct Evaluator{
 		weights.push_back(pawnIslandPenaltyMg);
 		weights.push_back(pawnIslandPenaltyEg);
 
-		for(int i=0;i<8;i++)
-			weights.push_back(pawnDistancePenalty[i]);
+		// for(int i=1;i<8;i++)
+		// 	weights.push_back(pawnDistancePenalty[i]);
 
 		weights.push_back(tempoScore);
 
 		weights.push_back(bishopPairMg);
 		weights.push_back(bishopPairEg);
+
+		// weights.push_back(openKingMainFilePenalty);
+		// weights.push_back(openKingNearFilePenalty);
 
 		return weights;
 	}
@@ -236,13 +248,13 @@ struct Evaluator{
 		out<<"bishop pair mg: "<<bishopPairMg<<endl;
 		out<<"bishop pair eg: "<<bishopPairEg<<endl;
 
+		out<<"open king main file: "<<openKingMainFilePenalty<<endl;
+		out<<"open king near file: "<<openKingNearFilePenalty<<endl;
+
 	}
 
-
-	void initFromFile(string path){
-		ifstream in(path);
-		string inp;
-		while(getline(in,inp)){
+	void init(vector<string>strs){
+		for(auto inp:strs){
 			string type;
 			vector<string>strEvals;
 			for(int i=0;i<inp.length();i++)
@@ -311,7 +323,21 @@ struct Evaluator{
 				bishopPairMg=evals[0];
 			if(type=="bishop pair eg")
 				bishopPairEg=evals[0];
+
+			// if(type=="open king main file")
+			// 	openKingMainFilePenalty=evals[0];
+			// if(type=="open king near file")
+			// 	openKingNearFilePenalty=evals[0];
 		}
+	}
+
+	void initFromFile(string path){
+		ifstream in(path);
+		string inp;
+		vector<string>strs;
+		while(getline(in,inp))
+			strs.push_back(inp);
+		init(strs);
 	}
 
 	inline float evaluateKingShield(Board& board){
@@ -420,6 +446,51 @@ struct Evaluator{
 
 		return evaluation;
 
+	}
+
+	float evaluateOpenKingFiles(Board& board){
+		float evaluation=0;
+
+		float endgameWeight=board.endgameWeight();
+
+		int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
+		int col=boardHelper.getColumnNumber(whiteKingPos);
+		Bitboard mainColumn=boardHelper.getColumn(col);
+
+		if((mainColumn&board.whitePieces).popcnt()==1)
+			evaluation-=openKingMainFilePenalty;
+
+		if(col>0){
+			if((boardHelper.getColumn(col-1)&board.whitePieces).popcnt()==0)
+				evaluation-=openKingNearFilePenalty;
+		}
+
+		if(col<7){
+			if((boardHelper.getColumn(col+1)&board.whitePieces).popcnt()==0)
+				evaluation-=openKingNearFilePenalty;
+		}
+
+
+		int blackKingPos=(board.kings&board.blackPieces).getFirstBitNumber();
+		col=boardHelper.getColumnNumber(blackKingPos);
+		mainColumn=boardHelper.getColumn(col);
+
+		if((mainColumn&board.blackPieces).popcnt()==1)
+			evaluation+=openKingMainFilePenalty;
+
+		if(col>0){
+			if((boardHelper.getColumn(col-1)&board.blackPieces).popcnt()==0)
+				evaluation+=openKingNearFilePenalty;
+		}
+
+		if(col<7){
+			if((boardHelper.getColumn(col+1)&board.blackPieces).popcnt()==0)
+				evaluation+=openKingNearFilePenalty;
+		}
+
+		evaluation*=(1-endgameWeight);
+
+		return evaluation;
 	}
 
 	float evaluateBishopPair(Board& board){
@@ -650,6 +721,7 @@ struct Evaluator{
 			tempoEval-=tempoScore; // tempo
 
 		// float kingShieldEvaluation=evaluateKingShield(board);
+		// float openKingFilePenalty=evaluateOpenKingFiles(board);
 
 		evaluation+=PSTevaluation;
 		evaluation+=mobilityEvaluation;
@@ -660,6 +732,7 @@ struct Evaluator{
 		evaluation+=pawnIslandsEvaluation;
 		evaluation+=tempoEval;
 		// evaluation+=kingShieldEvaluation;
+		// evaluation+=openKingFilePenalty;
 		evaluation+=evaluateBishopPair(board);
 
 		if(showInfo==true){
@@ -667,6 +740,7 @@ struct Evaluator{
 			cout<<"Mobility: "<<mobilityEvaluation<<" cp"<<endl;
 			cout<<"King attackers: "<<kingAttackersEvaluation<<" cp"<<endl;
 			// cout<<"King shield: "<<kingShieldEvaluation<<" cp"<<endl;
+			// cout<<"Open king file: "<<openKingFilePenalty<<" cp"<<endl;
 			cout<<"Isolated pawns: "<<isolatedPawnEvaluation<<" cp"<<endl;
 			cout<<"Doubled pawns: "<<doubledPawnEvaluation<<" cp"<<endl;
 			cout<<"Passed pawns: "<<passedPawnsEvaluation<<" cp"<<endl;
