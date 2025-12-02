@@ -25,7 +25,7 @@ struct Magics{
 
     void initRook(ll f){
         unordered_map<ull,ll>mp;
-        for(ull msk=0;msk<(1ll<<rookPrunedNmb[f]);msk++){
+        for(ull msk=0;msk<(1ull<<rookPrunedNmb[f]);msk++){
             ull walls=0;
             ll it=0;
             ull pc=msk;
@@ -66,7 +66,7 @@ struct Magics{
     }
 
     void initBishop(ll f){
-        for(ull msk=0;msk<(1ll<<bishopPrunedNmb[f]);msk++){
+        for(ull msk=0;msk<(1ull<<bishopPrunedNmb[f]);msk++){
             ull walls=0;
             ll it=0;
             ull pc=msk;
@@ -107,7 +107,7 @@ struct Magics{
 
     Magics(){
         for(ll i=0;i<64;i++)
-            for(ll j=0;j<(1ull<<14);j++){
+            for(ll j=0;j<(1ll<<14);j++){
                 rookCaptures[i][j]=-1;
                 bishopCaptures[i][j]=-1;
             }
@@ -134,38 +134,38 @@ struct Magics{
                         if(abs(i-i1)==abs(j-j1))
                             bishopAttack[f]|=(1ull<<f2);
                     }
-                    rookAttackPruned[f]=rookAttack[f];
-                    if(i!=0)
-                        rookAttackPruned[f]&=(ull(-1)-edgeL);
-                    if(i!=7)
-                        rookAttackPruned[f]&=(ull(-1)-edgeR);
-                    if(j!=0)
-                        rookAttackPruned[f]&=(ull(-1)-edgeU);
-                    if(j!=7)
-                        rookAttackPruned[f]&=(ull(-1)-edgeD);
-                    rookAttackPruned[f]&=(ull(-1)-(1ull<<f));
-                    ll itt=0;
-                    for(ll i1=0;i1<20;i1++)
-                        rookPrunedIndex[f][i1]=-1;
-                    for(ll i1=0;i1<64;i1++)
-                        if(rookAttackPruned[f]&(1ull<<i1)){
-                            rookPrunedNmb[f]++;
-                            rookPrunedIndex[f][itt]=i1;
-                            itt++;
-                        }
+                rookAttackPruned[f]=rookAttack[f];
+                if(i!=0)
+                    rookAttackPruned[f]&=(ull(-1)-edgeL);
+                if(i!=7)
+                    rookAttackPruned[f]&=(ull(-1)-edgeR);
+                if(j!=0)
+                    rookAttackPruned[f]&=(ull(-1)-edgeU);
+                if(j!=7)
+                    rookAttackPruned[f]&=(ull(-1)-edgeD);
+                rookAttackPruned[f]&=(ull(-1)-(1ull<<f));
+                ll itt=0;
+                for(ll i1=0;i1<20;i1++)
+                    rookPrunedIndex[f][i1]=-1;
+                for(ll i1=0;i1<64;i1++)
+                    if(rookAttackPruned[f]&(1ull<<i1)){
+                        rookPrunedNmb[f]++;
+                        rookPrunedIndex[f][itt]=i1;
+                        itt++;
+                    }
 
-                    bishopAttackPruned[f]=bishopAttack[f];
-                    bishopAttackPruned[f]&=(ull(-1)-(edgeU|edgeD|edgeL|edgeR));
-                    bishopAttackPruned[f]&=(ull(-1)-(1ull<<f));
-                    itt=0;
-                    for(ll i1=0;i1<20;i1++)
-                        bishopPrunedIndex[f][i1]=-1;
-                    for(ll i1=0;i1<64;i1++)
-                        if(bishopAttackPruned[f]&(1ull<<i1)){
-                            bishopPrunedNmb[f]++;
-                            bishopPrunedIndex[f][itt]=i1;
-                            itt++;
-                        }
+                bishopAttackPruned[f]=bishopAttack[f];
+                bishopAttackPruned[f]&=(ull(-1)-(edgeU|edgeD|edgeL|edgeR));
+                bishopAttackPruned[f]&=(ull(-1)-(1ull<<f));
+                itt=0;
+                for(ll i1=0;i1<20;i1++)
+                    bishopPrunedIndex[f][i1]=-1;
+                for(ll i1=0;i1<64;i1++)
+                    if(bishopAttackPruned[f]&(1ull<<i1)){
+                        bishopPrunedNmb[f]++;
+                        bishopPrunedIndex[f][itt]=i1;
+                        itt++;
+                    }
 
             }
         for(ll i=0;i<64;i++){

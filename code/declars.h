@@ -28,7 +28,7 @@ using namespace std;
  
 typedef long long ll;
 typedef unsigned long long ull;
-typedef __int128 lll;
+// typedef __int128 lll;
 typedef long double ld;
 const ll mod = 1e9+7, inf = 1e8 + 1;
 const ll noneCode=inf/173;
