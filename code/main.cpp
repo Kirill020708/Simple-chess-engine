@@ -34,14 +34,11 @@ string squareToString(int square){
 }
 
 int main(){
-	string evaluationWeights=
-	"mobility mg: 0 0 1.66818 2.58412 3.0677 -1.76086 -11.6306 0 |mobility eg: 0 0 9.26372 12.6373 11.9937 12.1001 1.48715 0 |king attack mg: 0 8 19.217 20.5776 23.8801 29.4941 20.3715 0 |king attack eg: 0 0 0.165305 1.76775 0.501133 9.75261 2.38228 0 |doubled mg: 12|doubled eg: 7|isolated mg: 0.746226 13.8841 20.3863 24.1883 25.1588 21.9609 14.1906 15.8822 |isolated eg: -0.731248 3.71009 14.0723 10.6767 15.1742 10.7892 5.82794 4.35728 |passed mg: 0 4.17851 6.7106 15.9533 31.5766 57.2377 98.5963 0 |passed eg: 0 12.5789 20.5657 44.247 71.6173 112.118 183.411 0 |islands mg: 8.69405|islands eg: -11.4291|shield dist: 0 0 0 5 10 15 20 25 |tempo: 1.98761|bishop pair mg: 37.7756|bishop pair eg: 64.6135";
-	evaluator.init(splitStr(evaluationWeights,"|"));
 	// texelTuner.checkData();
 	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
-	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalnew1.txt");
-	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/evaluationWeights.txt");
-	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData50.txt");
+	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
+	evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/evaluationWeights.txt");
+	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
 	// for(ll depth=1;depth<=15;depth++){
 		// cout<<depth<<": ";
 		// for(ll j=1;j<=40;j++)
@@ -107,8 +104,8 @@ go movetime 100
             -srand 5895699939700649196 -resign movecount=3 score=600\
             -draw movenumber=34 movecount=8 score=20 -variant standard -concurrency 2\
             -openings file=8moves_v3.pgn format=pgn order=random\
-            -engine name=New tc=10+0.1 cmd=./apps/appV41_RFP restart=on dir=.\
-            -engine name=Base tc=10+0.1 cmd=./apps/appV40_CHR restart=on dir=.\
+            -engine name=New tc=10+0.1 cmd=./apps/appV30_BSHP restart=on dir=.\
+            -engine name=Base tc=10+0.1 cmd=./apps/appV29_PST restart=on dir=.\
             -each proto=uci -pgnout result.pgn -sprt elo0=0 elo1=10 alpha=0.05 beta=0.05
 
 

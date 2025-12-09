@@ -109,7 +109,7 @@ struct Worker{
 
 
 		ull currentZobristKey=board.getZobristKey();
-		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(board,currentZobristKey,0,alpha,beta,depthFromRoot);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTableQuiescent.get(board,currentZobristKey,0,alpha,beta);
 		int nodeType=transpositionTableQuiescent.getNodeType(currentZobristKey);
 		if(hashTableEvaluation!=NO_EVAL){
 			return hashTableEvaluation;
@@ -235,7 +235,7 @@ struct Worker{
 		}
 
 
-		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,depth,alpha,beta,depthFromRoot);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,depth,alpha,beta);
 		if(hashTableEvaluation!=NO_EVAL){
 			if(!isPvNode)
 				return hashTableEvaluation;
@@ -330,8 +330,17 @@ struct Worker{
 		// 	depth>=6 &&
 		// 	isPvNode &&
 		// 	ttMove==Move()){
-		// 	search(board,color,depth-3,0,alpha,beta,depthFromRoot+1);
+
+		// 	search(board,color,depth/2,0,alpha,beta,depthFromRoot+1);
 		// 	moveListGenerator.hashMove=searchStack[depthFromRoot+1].bestMove;
+		// }
+
+		// if(
+		// 	depth>=6 &&
+		// 	isPvNode &&
+		// 	ttMove==Move()){
+
+		// 	depth--;
 		// }
 
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
@@ -443,7 +452,8 @@ struct Worker{
 				const int LMR_MIN_DEPTH=3; // don't reduct depth if it's more or equal to this value
 				int LMR_DEPTH_REDUCTION=floor(log(float(depth)) * log(float(movesSearched)) / 3+
 										0.5*(!isPvNode)-0.5*(isPvNode)-
-										float(historyValue)/historyHelper.maxHistoryScore); // reduction of depth
+										1.5*float(historyValue)/historyHelper.maxHistoryScore+
+										0.5*(!improving)); // reduction of depth
 
 				if(ttMove!=Move()&&!board.isQuietMove(ttMove))
 					LMR_DEPTH_REDUCTION++;
@@ -454,7 +464,23 @@ struct Worker{
 				// 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<' '<<float(historyValue)/historyHelper.maxHistoryScore<<'\n';
 				// }
 
-				// Late move pruning
+
+				// const int LMP_MIN_DEPTH=4;
+				// const int LMP_FULL_MOVES=6;
+				// // Late move pruning
+				// if(
+				// 	!isPvNode &&
+				// 	!isMovingSideInCheck &&
+				// 	!isMoveInteresting &&
+				// 	depth>=LMP_MIN_DEPTH &&
+				// 	movesSearched>=LMP_FULL_MOVES &&
+				// 	historyValue<0){
+
+				// 	board=boardCopy;
+				// 	continue;
+				// }
+
+
 				if(!isMovingSideInCheck &&
 					!isMoveInteresting &&
 					LMR_DEPTH_REDUCTION>=depth){
@@ -573,7 +599,7 @@ struct Worker{
 		if(transpositionTable.getNodeType(currentZobristKey)!=EXACT)
 			return;
 
-		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,0,0,0,0);
+		auto [hashTableEvaluation, bestHashMove]=transpositionTable.get(board,currentZobristKey,0,0,0);
 
 		if(bestHashMove!=Move()){
 			pvLine[pvLineSize++]=bestHashMove;

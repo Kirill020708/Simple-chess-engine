@@ -18,6 +18,7 @@ struct BoardHelper{
 	Bitboard neighborColumns[64],columns[64];
 
 	Bitboard possiblePawnDefendersWhite[64],possiblePawnDefendersBlack[64]; // squares for checking for passed pawn
+	Bitboard possibleOutpostDefendersWhite[64],possibleOutpostDefendersBlack[64]; // squares for checking for outpost
 
 	Bitboard updatedSquares[64];
 
@@ -89,6 +90,9 @@ struct BoardHelper{
 					if(j+1<8)
 						possiblePawnDefendersBlack[s]|=(1ull<<(s1+1));
 				}
+
+				possibleOutpostDefendersWhite[s]=possiblePawnDefendersWhite[s]^columnUp[s];
+				possibleOutpostDefendersBlack[s]=possiblePawnDefendersBlack[s]^columnDown[s];
 
 
 				for(int i1=0;i1<8;i1++)

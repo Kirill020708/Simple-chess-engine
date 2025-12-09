@@ -24,9 +24,6 @@
 
 #endif /* PIECESQTABLE */
 
-
-// const int KING_DIST_EDGE_SCORE=10; // score for evaluation EDGE_EVAL
-
 // Transposition table
 
 #pragma once
@@ -67,11 +64,6 @@ struct EvaluationTranspositionTable{
 			return NO_EVAL;
 		return table[index].evaluation;
 	}
-
-	inline void prefetch(ull key){
-		int index=key%tableSize;
-		__builtin_prefetch(&table[index]);
-	}
 };
 
 EvaluationTranspositionTable evaluationTranspositionTable;
@@ -105,9 +97,11 @@ struct Evaluator{
 
 	float bishopPairMg=30,bishopPairEg=60;
 
-	float uncatchablePassedPawnScore[5]={0,0,100,200};
+	float uncatchablePassedPawnScore[5]={0,100,200,300};
 
-	float openKingMainFilePenalty=30,openKingNearFilePenalty=10;
+	float rookOnOpenFileScore=15;
+
+	float knightOutpostScore=20,bishopOutpostScore=14;
 
 	void initFromVector(vector<float>weights){
 		int iter=0;
@@ -135,16 +129,13 @@ struct Evaluator{
 		pawnIslandPenaltyMg=weights[iter++];
 		pawnIslandPenaltyEg=weights[iter++];
 
-		// for(int i=1;i<8;i++)
-		// 	pawnDistancePenalty[i]=weights[iter++];
+		for(int i=0;i<8;i++)
+			pawnDistancePenalty[i]=weights[iter++];
 
 		tempoScore=weights[iter++];
 
 		bishopPairMg=weights[iter++];
 		bishopPairEg=weights[iter++];
-
-		// openKingMainFilePenalty=weights[iter++];
-		// openKingNearFilePenalty=weights[iter++];
 	}
 
 	vector<float>writeToVector(){
@@ -174,16 +165,13 @@ struct Evaluator{
 		weights.push_back(pawnIslandPenaltyMg);
 		weights.push_back(pawnIslandPenaltyEg);
 
-		// for(int i=1;i<8;i++)
-		// 	weights.push_back(pawnDistancePenalty[i]);
+		for(int i=0;i<8;i++)
+			weights.push_back(pawnDistancePenalty[i]);
 
 		weights.push_back(tempoScore);
 
 		weights.push_back(bishopPairMg);
 		weights.push_back(bishopPairEg);
-
-		// weights.push_back(openKingMainFilePenalty);
-		// weights.push_back(openKingNearFilePenalty);
 
 		return weights;
 	}
@@ -248,13 +236,13 @@ struct Evaluator{
 		out<<"bishop pair mg: "<<bishopPairMg<<endl;
 		out<<"bishop pair eg: "<<bishopPairEg<<endl;
 
-		out<<"open king main file: "<<openKingMainFilePenalty<<endl;
-		out<<"open king near file: "<<openKingNearFilePenalty<<endl;
-
 	}
 
-	void init(vector<string>strs){
-		for(auto inp:strs){
+
+	void initFromFile(string path){
+		ifstream in(path);
+		string inp;
+		while(getline(in,inp)){
 			string type;
 			vector<string>strEvals;
 			for(int i=0;i<inp.length();i++)
@@ -323,21 +311,7 @@ struct Evaluator{
 				bishopPairMg=evals[0];
 			if(type=="bishop pair eg")
 				bishopPairEg=evals[0];
-
-			// if(type=="open king main file")
-			// 	openKingMainFilePenalty=evals[0];
-			// if(type=="open king near file")
-			// 	openKingNearFilePenalty=evals[0];
 		}
-	}
-
-	void initFromFile(string path){
-		ifstream in(path);
-		string inp;
-		vector<string>strs;
-		while(getline(in,inp))
-			strs.push_back(inp);
-		init(strs);
 	}
 
 	inline float evaluateKingShield(Board& board){
@@ -448,51 +422,6 @@ struct Evaluator{
 
 	}
 
-	float evaluateOpenKingFiles(Board& board){
-		float evaluation=0;
-
-		float endgameWeight=board.endgameWeight();
-
-		int whiteKingPos=(board.kings&board.whitePieces).getFirstBitNumber();
-		int col=boardHelper.getColumnNumber(whiteKingPos);
-		Bitboard mainColumn=boardHelper.getColumn(col);
-
-		if((mainColumn&board.whitePieces).popcnt()==1)
-			evaluation-=openKingMainFilePenalty;
-
-		if(col>0){
-			if((boardHelper.getColumn(col-1)&board.whitePieces).popcnt()==0)
-				evaluation-=openKingNearFilePenalty;
-		}
-
-		if(col<7){
-			if((boardHelper.getColumn(col+1)&board.whitePieces).popcnt()==0)
-				evaluation-=openKingNearFilePenalty;
-		}
-
-
-		int blackKingPos=(board.kings&board.blackPieces).getFirstBitNumber();
-		col=boardHelper.getColumnNumber(blackKingPos);
-		mainColumn=boardHelper.getColumn(col);
-
-		if((mainColumn&board.blackPieces).popcnt()==1)
-			evaluation+=openKingMainFilePenalty;
-
-		if(col>0){
-			if((boardHelper.getColumn(col-1)&board.blackPieces).popcnt()==0)
-				evaluation+=openKingNearFilePenalty;
-		}
-
-		if(col<7){
-			if((boardHelper.getColumn(col+1)&board.blackPieces).popcnt()==0)
-				evaluation+=openKingNearFilePenalty;
-		}
-
-		evaluation*=(1-endgameWeight);
-
-		return evaluation;
-	}
-
 	float evaluateBishopPair(Board& board){
 		float endgameWeight=board.endgameWeight();
 		float evaluation=0;
@@ -522,11 +451,18 @@ struct Evaluator{
 
 		float mobilityEvaluation=0;
 		float kingAttackersEvaluation=0;
+
+		float rookOnOpenFileEvaluation=0;
 		
+		float outpostEvaluation=0;
 
 		int opponentKing=(board.kings&board.blackPieces).getFirstBitNumber();
 		Bitboard kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
 		Bitboard pieces=board.whitePieces&(~board.pawns);
+
+		Bitboard friendPawns=board.pawns&board.whitePieces;
+		Bitboard opponentPawns=board.pawns&board.blackPieces;
+
 		while(pieces>0){
 			int square=pieces.getFirstBitNumberAndExclude();
 			int pieceType=board.occupancyPiece(square);
@@ -540,11 +476,39 @@ struct Evaluator{
 
 			int numberOfAttacks=(moves&kingArea).popcnt();
 			kingAttackersEvaluation+=numberOfAttacks*(kingAttackersWeightMg[pieceType]*(1-endgameWeight)+kingAttackersWeightEg[pieceType]*endgameWeight);
+
+			if(pieceType==ROOK){
+				Bitboard column=boardHelper.columns[square];
+				if((column&friendPawns)==0)
+					rookOnOpenFileEvaluation+=rookOnOpenFileScore;
+			}
+
+			if(pieceType==KNIGHT){
+				if(boardHelper.getRowNumber(square)<=3 && (opponentPawns&boardHelper.possibleOutpostDefendersWhite[square])==0){
+					if(friendPawns&boardHelper.pawnCaptures[BLACK][square])
+						outpostEvaluation+=knightOutpostScore;
+					else
+						outpostEvaluation+=knightOutpostScore/2;
+				}
+			}
+
+			// if(pieceType==BISHOP){
+			// 	if(boardHelper.getRowNumber(square)<=3 && (opponentPawns&boardHelper.possibleOutpostDefendersWhite[square])==0){
+			// 		if(friendPawns&boardHelper.pawnCaptures[BLACK][square])
+			// 			outpostEvaluation+=bishopOutpostScore;
+			// 		else
+			// 			outpostEvaluation+=bishopOutpostScore/2;
+			// 	}
+			// }
 		}
 
 		opponentKing=(board.kings&board.whitePieces).getFirstBitNumber();
 		kingArea=(boardHelper.kingMoves[opponentKing]|(1ull<<opponentKing));
 		pieces=board.blackPieces&(~board.pawns);
+
+		friendPawns=board.pawns&board.blackPieces;
+		opponentPawns=board.pawns&board.whitePieces;
+
 		while(pieces>0){
 			int square=pieces.getFirstBitNumberAndExclude();
 			int pieceType=board.occupancyPiece(square);
@@ -558,18 +522,43 @@ struct Evaluator{
 
 			int numberOfAttacks=(moves&kingArea).popcnt();
 			kingAttackersEvaluation-=numberOfAttacks*(kingAttackersWeightMg[pieceType]*(1-endgameWeight)+kingAttackersWeightEg[pieceType]*endgameWeight);
+
+			if(pieceType==ROOK){
+				Bitboard column=boardHelper.columns[square];
+				if((column&friendPawns)==0)
+					rookOnOpenFileEvaluation-=rookOnOpenFileScore;
+			}
+
+			if(pieceType==KNIGHT){
+				if(boardHelper.getRowNumber(square)>=4 && (opponentPawns&boardHelper.possibleOutpostDefendersBlack[square])==0){
+					if(friendPawns&boardHelper.pawnCaptures[WHITE][square])
+						outpostEvaluation-=knightOutpostScore;
+					else
+						outpostEvaluation-=knightOutpostScore/2;
+				}
+			}
+
+			// if(pieceType==BISHOP){
+			// 	if(boardHelper.getRowNumber(square)>=4 && (opponentPawns&boardHelper.possibleOutpostDefendersBlack[square])==0){
+			// 		if(friendPawns&boardHelper.pawnCaptures[WHITE][square])
+			// 			outpostEvaluation-=bishopOutpostScore;
+			// 		else
+			// 			outpostEvaluation-=bishopOutpostScore/2;
+			// 	}
+			// }
 		}
 
+		rookOnOpenFileEvaluation*=(1-endgameWeight);
 
-
+		outpostEvaluation*=(1-endgameWeight);
 
 		float isolatedPawnEvaluation=0;
 		float passedPawnsEvaluation=0;
-		int whiteUncatchablePawn=10;
+		int whiteUncatchablePawn=10,whitePosPas=10;
 
 		Bitboard pawns=board.pawns&board.whitePieces;
-		Bitboard friendPawns=board.pawns&board.whitePieces;
-		Bitboard opponentPawns=board.pawns&board.blackPieces;
+		friendPawns=board.pawns&board.whitePieces;
+		opponentPawns=board.pawns&board.blackPieces;
 
 		int friendKing=(board.kings&board.whitePieces).getFirstBitNumber();
 		opponentKing=(board.kings&board.blackPieces).getFirstBitNumber();
@@ -595,13 +584,23 @@ struct Evaluator{
 			if((boardHelper.possiblePawnDefendersWhite[square]&opponentPawns)==0){
 				passedPawnsEvaluation+=(passedPawnScoreMg[dst]*(1-endgameWeight)+passedPawnScoreEg[dst]*endgameWeight);
 
-				int nmbOfMovesToCatch=max(7-boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				int nmbOfMovesToCatch=max(boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
 				if(boardHelper.columnUp[square]&(1ull<<friendKing))
 					dstToPass++;
 				if(board.boardColor==BLACK)
 					nmbOfMovesToCatch--;
 				if(nmbOfMovesToCatch>dstToPass)
 					whiteUncatchablePawn=min(whiteUncatchablePawn,dstToPass);
+			}
+
+			if((boardHelper.columnUp[square]&opponentPawns)==0){
+				int nmbOfMovesToCatch=max(boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				if(boardHelper.columnUp[square]&(1ull<<friendKing))
+					dstToPass++;
+				if(board.boardColor==BLACK)
+					nmbOfMovesToCatch--;
+				if(nmbOfMovesToCatch>dstToPass)
+					whitePosPas=min(whitePosPas,dstToPass);
 			}
 
 
@@ -612,7 +611,7 @@ struct Evaluator{
 		}
 
 
-		int blackUncatchablePawn=10;
+		int blackUncatchablePawn=10,blackPosPas=10;
 
 		pawns=board.pawns&board.blackPieces;
 		friendPawns=board.pawns&board.blackPieces;
@@ -640,17 +639,29 @@ struct Evaluator{
 			Bitboard column=boardHelper.columns[square],nbColumns=boardHelper.neighborColumns[square];
 
 			if((boardHelper.possiblePawnDefendersBlack[square]&opponentPawns)==0){
+				// cout<<square<<'\n';
 				passedPawnsEvaluation-=(passedPawnScoreMg[dst]*(1-endgameWeight)+passedPawnScoreEg[dst]*endgameWeight);
 
-				int nmbOfMovesToCatch=max(boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				int nmbOfMovesToCatch=max(7-boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
+				if(boardHelper.columnUp[square]&(1ull<<friendKing))
+					dstToPass--;
+				if(board.boardColor==WHITE)
+					nmbOfMovesToCatch--;
+				// cout<<dstToPass<<' '<<boardHelper.getRowNumber(opponentKing)<<'\n';
+				if(nmbOfMovesToCatch>dstToPass)
+					blackUncatchablePawn=min(blackUncatchablePawn,dstToPass);
+			}
+
+
+			if((boardHelper.columnDown[square]&opponentPawns)==0){
+				int nmbOfMovesToCatch=max(7-boardHelper.getRowNumber(opponentKing),abs(col-boardHelper.getColumnNumber(opponentKing)));
 				if(boardHelper.columnUp[square]&(1ull<<friendKing))
 					dstToPass--;
 				if(board.boardColor==WHITE)
 					nmbOfMovesToCatch--;
 				if(nmbOfMovesToCatch>dstToPass)
-					blackUncatchablePawn=min(blackUncatchablePawn,dstToPass);
+					blackPosPas=min(blackPosPas,dstToPass);
 			}
-
 
 
 			Bitboard moves=moveGenerator.moves(board,square);
@@ -658,14 +669,25 @@ struct Evaluator{
 			// kingAttackersEvaluation-=numberOfAttacks*(kingAttackersWeightMg[PAWN]*(1-endgameWeight)+kingAttackersWeightEg[PAWN]*endgameWeight);
 		}
 
-		if(board.boardColor==BLACK)
-			blackUncatchablePawn--;
+		if(board.boardColor==BLACK){
+			if(blackUncatchablePawn<10)
+				blackUncatchablePawn--;
+			if(blackPosPas<10)
+				blackPosPas--;
+		}
 
 		bool onlyPawnsEndgame=false;
 		if((board.whitePieces|board.blackPieces)==(board.pawns|board.kings))
-			onlyPawnsEndgame=false;
+			onlyPawnsEndgame=true;
 
-		if(onlyPawnsEndgame){
+		if(0){
+			// cout<<whiteUncatchablePawn<<' '<<whitePosPas<<' '<<blackUncatchablePawn<<' '<<blackPosPas<<'\n';
+			// if(whiteUncatchablePawn<blackPosPas)
+			// 	passedPawnsEvaluation+=uncatchablePassedPawnScore[min(blackPosPas-whiteUncatchablePawn,3)];
+
+			// if(blackUncatchablePawn<whitePosPas)
+			// 	passedPawnsEvaluation-=uncatchablePassedPawnScore[min(whitePosPas-blackUncatchablePawn,3)];
+			
 			int diff=abs(whiteUncatchablePawn-blackUncatchablePawn);
 			if(diff>3)
 				diff=3;
@@ -721,7 +743,6 @@ struct Evaluator{
 			tempoEval-=tempoScore; // tempo
 
 		// float kingShieldEvaluation=evaluateKingShield(board);
-		// float openKingFilePenalty=evaluateOpenKingFiles(board);
 
 		evaluation+=PSTevaluation;
 		evaluation+=mobilityEvaluation;
@@ -732,15 +753,15 @@ struct Evaluator{
 		evaluation+=pawnIslandsEvaluation;
 		evaluation+=tempoEval;
 		// evaluation+=kingShieldEvaluation;
-		// evaluation+=openKingFilePenalty;
 		evaluation+=evaluateBishopPair(board);
+		evaluation+=rookOnOpenFileEvaluation;
+		evaluation+=outpostEvaluation;
 
 		if(showInfo==true){
 			cout<<"Material and piece-square tables: "<<PSTevaluation<<" cp"<<endl;
 			cout<<"Mobility: "<<mobilityEvaluation<<" cp"<<endl;
 			cout<<"King attackers: "<<kingAttackersEvaluation<<" cp"<<endl;
 			// cout<<"King shield: "<<kingShieldEvaluation<<" cp"<<endl;
-			// cout<<"Open king file: "<<openKingFilePenalty<<" cp"<<endl;
 			cout<<"Isolated pawns: "<<isolatedPawnEvaluation<<" cp"<<endl;
 			cout<<"Doubled pawns: "<<doubledPawnEvaluation<<" cp"<<endl;
 			cout<<"Passed pawns: "<<passedPawnsEvaluation<<" cp"<<endl;
@@ -791,7 +812,6 @@ struct Evaluator{
 };
 
 Evaluator evaluator;
-
 
 
 
