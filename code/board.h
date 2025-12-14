@@ -49,7 +49,7 @@ OccuredPositionsHelper occuredPositionsHelper;
 
 int material[8]={0,0,3,3,5,10,0};
 
-struct Board{
+struct alignas(64) Board{
 	char boardColor;
 	int materialCount;
 	int evaluation;

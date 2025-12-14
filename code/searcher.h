@@ -47,7 +47,7 @@ struct StackState{
 	Move bestMove;
 };
 
-struct Worker{
+struct alignas(64) Worker{
 	bool stopSearch;
 	bool doneSearch;
 
@@ -58,10 +58,10 @@ struct Worker{
 
 	ll nodes=0,singularExtended=0;
 
-	MoveListGenerator moveListGenerator;
-	HistoryHelper historyHelper;
+	alignas(64) MoveListGenerator moveListGenerator;
+	alignas(64) HistoryHelper historyHelper;
 
-	StackState searchStack[maxDepth];
+	alignas(64) StackState searchStack[maxDepth];
 
 	std::chrono::steady_clock::time_point searchStartTime;
 
@@ -125,6 +125,11 @@ struct Worker{
 			staticEval=evaluator.evaluateStalledPosition(board,color,depthFromRoot);
 		else
 			staticEval=evaluator.evaluatePosition(board,color);
+
+
+		auto ttEntry=transpositionTableQuiescent.getEntry(board,currentZobristKey);
+		if(ttEntry.evaluation!=NO_EVAL)
+			staticEval=ttEntry.evaluation;
 
 		int maxEvaluation=staticEval;
 
@@ -242,6 +247,9 @@ struct Worker{
 
 			staticEval=hashTableEvaluation;
 		}
+		auto ttEntry=transpositionTable.getEntry(board,currentZobristKey);
+		if(ttEntry.evaluation!=NO_EVAL)
+			staticEval=ttEntry.evaluation;
 
 		// occuredPositions[board.age]=currentZobristKey;
 
@@ -620,7 +628,7 @@ struct Worker{
 };
 
 struct Searcher{
-	int threadNumber=2;
+	int threadNumber=1;
 	vector<Worker>workers;
 	bool stopIDsearch;
 	bool stopWaitingThread;
@@ -647,7 +655,7 @@ struct Searcher{
 		stopSearch();
 	}
 
-	void iterativeDeepeningSearch(int maxDepth,int thinkTime){
+	void iterativeDeepeningSearch(int maxDepth,int softBound,int hardBound){
 		stopIDsearch=false;
 		int color=mainBoard.boardColor;
 		vector<thread>threadPool(threadNumber);
@@ -657,7 +665,8 @@ struct Searcher{
 			workers[i].stopSearch=false;
 		}
         std::chrono::steady_clock::time_point searchStartTime = std::chrono::steady_clock::now();
-        thread waitThread(&Searcher::waitAndEndSearch,this,thinkTime);
+        thread waitThread(&Searcher::waitAndEndSearch,this,hardBound);
+        Move bestMoves[257];
 		Move bestMove;
 		for(int depth=1;depth<=maxDepth;depth++){
 			int alpha=-inf*2,beta=inf*2;
@@ -676,42 +685,42 @@ struct Searcher{
 				for(int i=0;i<threadNumber;i++){
 					workers[i].doneSearch=false;
 					workers[i].stopSearch=false;
-					threadPool[i]=thread(&Worker::startSearch,&workers[i],ref(boards[i]),depth+(i&1),alpha,beta);
+					threadPool[i]=thread(&Worker::startSearch,&workers[i],ref(boards[i]),depth,alpha,beta);
 					// threadPool[i]=thread(&Worker::search,&workers[i],ref(boards[i]),boards[i].boardColor,depth,1,alpha,beta,0);
 				}
 
 				int firstFinishedThread=0;
 				// threadPool[0].join();
 				// stopSearch();
-				while(true){
-					bool stopped=false;
-					for(int i=0;i<threadNumber;i++)
-						if(workers[i].doneSearch){
-							stopped=true;
-							firstFinishedThread=i;
-							stopSearch();
-							break;
-						}
-					if(stopped)
-						break;
-					std::this_thread::sleep_for(std::chrono::milliseconds(1));
-				}
+				// while(true){
+				// 	bool stopped=false;
+				// 	for(int i=0;i<threadNumber;i++)
+				// 		if(workers[i].doneSearch){
+				// 			stopped=true;
+				// 			firstFinishedThread=i;
+				// 			stopSearch();
+				// 			break;
+				// 		}
+				// 	if(stopped)
+				// 		break;
+				// 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				// }
 
 				for(int i=0;i<threadNumber;i++)
 					threadPool[i].join();
 
 				score=-inf;
 
-				score=workers[firstFinishedThread].rootScore;
-				bestMove=workers[firstFinishedThread].bestMove;
+				// score=workers[firstFinishedThread].rootScore;
+				// bestMove=workers[firstFinishedThread].bestMove;
 
 
-				// for(int i=0;i<threadNumber;i++){
-				// 	if(score<workers[i].rootScore){
-				// 		score=workers[i].rootScore;
-				// 		bestMove=workers[i].bestMove;
-				// 	}
-				// }
+				for(int i=0;i<threadNumber;i++){
+					if(score<workers[i].rootScore){
+						score=workers[i].rootScore;
+						bestMove=workers[i].bestMove;
+					}
+				}
 				// cout<<firstFinishedThread<<'\n';
 				for(int i=0;i<threadNumber;i++){
 					// cout<<workers[i].rootScore<<' '<<workers[i].bestMove.convertToUCI()<<' '<<workers[i].nodes<<'\n';
@@ -740,12 +749,23 @@ struct Searcher{
 			" time "<<timeThinked<<
 			" pv "<<bestMove.convertToUCI()<<' ';
 
+			bestMoves[depth]=bestMove;
+
 			// for(int i=1;i<workers[0].pvLineSize;i++)
 			// 	cout<<workers[0].pvLine[i].convertToUCI()<<' ';
 
 			cout<<endl;
 			if(stopIDsearch)
 				break;
+	        if(timeThinked>=softBound){
+	        	if(depth>=3){
+	        		if(bestMoves[depth]==bestMoves[depth-1]&&bestMoves[depth]==bestMoves[depth-2]){
+	        			stopWaitingThread=true;
+	        			break;
+	        		}
+	        	}
+	        }
+
 		}
 		cout<<"bestmove "<<bestMove.convertToUCI()<<endl;
 		if(waitThread.joinable())

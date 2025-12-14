@@ -12,7 +12,7 @@
 
 struct TableEntry{
 	ull key;
-	int evaluation;
+	int evaluation=NO_EVAL;
 	char depth,type=NONE;
 	int age;
 	Move bestMove;
@@ -33,7 +33,7 @@ struct TranspositionTable{
 	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);
 	TableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(TableEntry)];
 
-	mutex TTmutex;
+	// mutex TTmutex;
 
 	inline void write(Board& board,ull key,int evaluation,int depth,int type,int age,Move bestMove){
 		int index=key%tableSize;
@@ -48,9 +48,9 @@ struct TranspositionTable{
 					return;
 			}
 		}
-		TTmutex.lock();
+		// TTmutex.lock();
 		table[index]={key,evaluation,char(depth),char(type),(age),bestMove};
-		TTmutex.unlock();
+		// TTmutex.unlock();
 	}
 
 	inline pair<int,Move> get(Board& board,ull key,int depth,int alpha,int beta){

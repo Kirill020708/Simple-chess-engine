@@ -37,10 +37,10 @@
 
 void waitAndEndSearch(int timeToThink){
 	// searcher.stopSearch=false;
-	thread th(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
-	this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
+	// thread th(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
+	// this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
 	// searcher.stopSearch=true;
-	th.join();
+	// th.join();
 }
 // position startpos moves b1c3 b8c6 g1f3 d7d5 e2e3 e7e6 f1b5 c8d7 d2d4 g8f6 b5c6 d7c6 f3e5 f8d6 e5c6 b7c6 e1g1 e8g8 d1f3 e6e5 c1d2 e5e4 f3f5 d8b8 a1b1 b8c8 f5c8 a8c8 f2f3 c6c5 f3e4 d5e4 c3b5 a7a6 b5d6 c7d6 b1c1 f8e8 f1e1 d6d5 a2a3 c5c4 d2c3 c8d8 c1d1 d8b8 a3a4 b8d8 c3b4 d8a8 b4c3 a8d8 a4a5 d8a8 d1d2 a8d8 d2f2 d8a8 f2d2
 
@@ -77,7 +77,7 @@ struct UCIcommunicationHepler{
 
 	void waitAndEndSearch(int timeToThink){
 		// searcher.stopSearch=false;
-		searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
+		// searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
 		// sleepCond(timeToThink);
 		this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
 		// searcher.stopSearch=true;
@@ -174,20 +174,24 @@ struct UCIcommunicationHepler{
 					depth=stoi(tokens[i+1]);
 			}
 			int timeToThink=1e9;
+			int basetime=0;
 			if(mainBoard.boardColor==WHITE && wtime!=-1){
 				timeToThink=wtime*0.025+winc;
-				if(timeToThink>=wtime-100)
-					timeToThink=wtime-100;
+				basetime=wtime;
 			}
 			if(mainBoard.boardColor==BLACK && btime!=-1){
 				timeToThink=btime*0.025+binc;
-				if(timeToThink>=btime-100)
-					timeToThink=btime-100;
+				basetime=btime;
 			}
 			if(movetime!=-1)
 				timeToThink=movetime;
 			// cout<<timeToThink<<'\n';
-			searcher.iterativeDeepeningSearch(256,timeToThink);
+			int softBound=inf,hardBound=inf;
+			if(wtime!=-1){
+				softBound=timeToThink*0.75;
+				hardBound=min(int(timeToThink*2),basetime-100);
+			}
+			searcher.iterativeDeepeningSearch(256,softBound,hardBound);
 			// waitAndEndSearch(timeToThink);
 			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
 		}
