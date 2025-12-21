@@ -50,6 +50,7 @@ struct StackState{
 struct Worker{
 	bool stopSearch;
 	bool doneSearch;
+	int nodesLim=1e9;
 
 	int boardCurrentAge;
 
@@ -103,7 +104,7 @@ struct Worker{
 	}
 
 	int quiescentSearch(Board& board,int color,int alpha,int beta,int depthFromRoot){
-		if(stopSearch)
+		if(stopSearch||nodes>=nodesLim)
 			return 0;
 		nodes++;
 
@@ -205,7 +206,7 @@ struct Worker{
 	int staticEvaluationHistory[maxDepth];
 
 	int search(Board& board,int color,int depth,int isRoot,int alpha,int beta,int depthFromRoot){
-		if(stopSearch)
+		if(stopSearch||nodes>=nodesLim)
 			return 0;
 		bool isPvNode=((beta-alpha)>1);
 		nodes++;
@@ -656,7 +657,8 @@ struct Searcher{
 		stopSearch();
 	}
 
-	void iterativeDeepeningSearch(int maxDepth,int softBound,int hardBound,int nodesLimit){
+	void iterativeDeepeningSearch(int maxDepth,int softBound,int hardBound,int nodesLimit,int nodesH){
+		workers[0].nodesLim=nodesH;
 		stopIDsearch=false;
 		int color=mainBoard.boardColor;
 		vector<thread>threadPool(threadNumber);
@@ -776,7 +778,7 @@ struct Searcher{
 			if(stopIDsearch)
 				break;
 
-			if(nodes>=nodesLimit){
+			if(nodes>=min(nodesLimit,nodesH)){
 	        	stopWaitingThread=true;
 				break;
 			}

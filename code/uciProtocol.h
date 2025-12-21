@@ -158,6 +158,7 @@ struct UCIcommunicationHepler{
 			int movetime=-1;
 			int depth=256;
 			int nodes=1e9;
+			int nodesh=1e9;
 			for(int i=1;i<tokens.size();i++){
 				if(tokens[i]=="wtime")
 					wtime=stoi(tokens[i+1]);
@@ -176,6 +177,9 @@ struct UCIcommunicationHepler{
 
 				if(tokens[i]=="nodes")
 					nodes=stoi(tokens[i+1]);
+
+				if(tokens[i]=="nodesh")
+					nodesh=stoi(tokens[i+1]);
 			}
 			int timeToThink=1e9;
 			int basetime=0;
@@ -199,7 +203,7 @@ struct UCIcommunicationHepler{
 				softBound=hardBound=timeToThink=movetime;
 
 			}
-			searcher.iterativeDeepeningSearch(256,softBound,hardBound,nodes);
+			searcher.iterativeDeepeningSearch(256,softBound,hardBound,nodes,nodesh);
 			// waitAndEndSearch(timeToThink);
 			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
 		}
