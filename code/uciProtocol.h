@@ -103,6 +103,7 @@ struct UCIcommunicationHepler{
 		}
 		if(mainCommand=="uci"){
 			cout<<"option name HardNodesLimit type spin default 1000000000 min 1 max 1000000000"<<endl;
+			cout<<"option name Minimal type check default false"<<endl;
 			cout<<"uciok"<<endl;
 			return;
 		}
@@ -220,6 +221,12 @@ struct UCIcommunicationHepler{
 		if(mainCommand=="setoption"){
 			if(tokens[2]=="HardNodesLimit"){
 				hardNodesOpt=stoi(tokens[4]);
+			}
+			if(tokens[2]=="Minimal"){
+				if(tokens[4]=="true")
+					searcher.minimal=true;
+				else
+					searcher.minimal=false;
 			}
 			// if(tokens[3]=="Threads"){
 			// 	int thn=stoi(tokens[3]);

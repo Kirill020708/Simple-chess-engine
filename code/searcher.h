@@ -634,6 +634,7 @@ struct Searcher{
 	vector<Worker>workers;
 	bool stopIDsearch;
 	bool stopWaitingThread;
+	bool minimal=false;
 
 	Searcher(){
 		workers.resize(threadNumber);
@@ -747,22 +748,7 @@ struct Searcher{
 	        std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
 	        ll timeThinked=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - searchStartTime).count();
 
-			cout<<"info depth "<<depth<<
-			" score ";
-			if(MATE_SCORE-abs(score)>maxDepth)
-				cout<<"cp "<<score;
-			else{
-				cout<<"mate ";
-				if(score>0)
-					cout<<(MATE_SCORE-score);
-				else
-					cout<<(-MATE_SCORE-score);
-			}
-			// cout<<" sing_extended "<<workers[0].singularExtended;
-			cout<<" nodes "<<nodes<<
-			" nps "<<(nodes*(long long)(1000))/(timeThinked+1)<<
-			" time "<<timeThinked<<
-			" pv "<<bestMove.convertToUCI()<<' ';
+			
 
 			scores[depth]=score;
 			bestMoves[depth]=bestMove;
@@ -774,13 +760,9 @@ struct Searcher{
 			// for(int i=1;i<workers[0].pvLineSize;i++)
 			// 	cout<<workers[0].pvLine[i].convertToUCI()<<' ';
 
-			cout<<endl;
-			if(stopIDsearch)
-				break;
-
 			if(nodes>=min(nodesLimit,nodesH)){
 	        	stopWaitingThread=true;
-				break;
+	        	stopIDsearch=true;
 			}
 
 			int timeUntilHardBound=hardBound-timeThinked;
@@ -794,14 +776,36 @@ struct Searcher{
 	        	if(depth>=3){
 	        		if(bestMoves[depth]==bestMoves[depth-1]&&bestMoves[depth]==bestMoves[depth-2]){ // if best move is stable, abort the search
 	        			stopWaitingThread=true;
-	        			break;
+	        			stopIDsearch=true;
 	        		}
 	        		if(timeUntilHardBound<estimatedTimeForNextDepth){
 	        			stopWaitingThread=true;
-	        			break;
+	        			stopIDsearch=true;
 	        		}
 	        	}
 	        }
+
+	        if(!minimal||stopIDsearch){
+				cout<<"info depth "<<depth<<
+				" score ";
+				if(MATE_SCORE-abs(score)>maxDepth)
+					cout<<"cp "<<score;
+				else{
+					cout<<"mate ";
+					if(score>0)
+						cout<<(MATE_SCORE-score);
+					else
+						cout<<(-MATE_SCORE-score);
+				}
+				// cout<<" sing_extended "<<workers[0].singularExtended;
+				cout<<" nodes "<<nodes<<
+				" nps "<<(nodes*(long long)(1000))/(timeThinked+1)<<
+				" time "<<timeThinked<<
+				" pv "<<bestMove.convertToUCI()<<' ';
+				cout<<endl;
+	        }
+			if(stopIDsearch)
+				break;
 
 		}
 		cout<<"bestmove "<<bestMove.convertToUCI()<<endl;
