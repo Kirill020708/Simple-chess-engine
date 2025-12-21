@@ -218,8 +218,13 @@ struct UCIcommunicationHepler{
 		}
 		if(mainCommand=="setoption"){
 			if(tokens[2]=="HardNodesLimit"){
-				hardNodesOpt=stoi(tokens[3]);
+				hardNodesOpt=stoi(tokens[4]);
 			}
+			// if(tokens[3]=="Threads"){
+			// 	int thn=stoi(tokens[3]);
+			// 	searcher.threadNumber=thn;
+			// 	searcher.workers.resize(thn);
+			// }
 		}
 	}
 
