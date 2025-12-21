@@ -102,6 +102,7 @@ struct UCIcommunicationHepler{
 			return;
 		}
 		if(mainCommand=="uci"){
+			cout<<"option name HardNodesLimit type spin default 1000000000 min 1 max 1000000000"<<endl;
 			cout<<"uciok"<<endl;
 			return;
 		}
