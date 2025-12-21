@@ -64,6 +64,7 @@ struct UCIcommunicationHepler{
 
 	thread waitingThread;
 	bool stopWaitingThread;
+	int hardNodesOpt=1e9;
 
 	void sleepCond(int ms){
 		stopWaitingThread=0;
@@ -203,7 +204,7 @@ struct UCIcommunicationHepler{
 				softBound=hardBound=timeToThink=movetime;
 
 			}
-			searcher.iterativeDeepeningSearch(256,softBound,hardBound,nodes,nodesh);
+			searcher.iterativeDeepeningSearch(256,softBound,hardBound,nodes,hardNodesOpt);
 			// waitAndEndSearch(timeToThink);
 			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
 		}
@@ -214,6 +215,11 @@ struct UCIcommunicationHepler{
 			stopWaitingThread=1;
 			if(waitingThread.joinable())
 				waitingThread.join();
+		}
+		if(mainCommand=="setoption"){
+			if(tokens[2]=="HardNodesLimit"){
+				hardNodesOpt=stoi(tokens[3]);
+			}
 		}
 	}
 
