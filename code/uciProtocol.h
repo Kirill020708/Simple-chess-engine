@@ -90,7 +90,7 @@ struct UCIcommunicationHepler{
 		int TTEntrySize=sizeof(TableEntry);
 		int EvEntrySize=sizeof(EvalTableEntry);
 		long long sz=bSize/(TTEntrySize*2+EvEntrySize);
-		
+
 		transpositionTable.table.resize(bSize/3/TTEntrySize);
 		transpositionTable.tableSize=bSize/3/TTEntrySize;
 
@@ -99,6 +99,14 @@ struct UCIcommunicationHepler{
 
 		evaluationTranspositionTable.table.resize(bSize/3/EvEntrySize);
 		evaluationTranspositionTable.tableSize=bSize/3/EvEntrySize;
+	}
+
+	void clearHash(){
+		transpositionTable.table=vector<TableEntry>(transpositionTable.table.size());
+
+		transpositionTableQuiescent.table=vector<TableEntry>(transpositionTableQuiescent.table.size());
+
+		evaluationTranspositionTable.table=vector<EvalTableEntry>(evaluationTranspositionTable.table.size());
 	}
 
 	void parseCommand(string command){
@@ -255,6 +263,9 @@ struct UCIcommunicationHepler{
 				int sz=stoi(tokens[4]);
 				reallocateHashMemory(sz);
 			}
+		}
+		if(mainCommand=="ucinewgame"){
+			clearHash();
 		}
 	}
 
