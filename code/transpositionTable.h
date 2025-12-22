@@ -30,12 +30,14 @@ struct TableEntry{
 };
 
 struct TranspositionTable{
-	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(TableEntry);
-	TableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(TableEntry)];
+	ll tableSize=0;
+	vector<TableEntry> table;
 
-	mutex TTmutex;
+	// mutex TTmutex;
 
 	inline void write(Board& board,ull key,int evaluation,int depth,int type,int age,Move bestMove){
+		if(tableSize==0)
+			return;
 		int index=key%tableSize;
 		if(table[index].type!=NONE){
 			if(table[index].key!=key){
@@ -48,12 +50,14 @@ struct TranspositionTable{
 					return;
 			}
 		}
-		TTmutex.lock();
+		// TTmutex.lock();
 		table[index]={key,evaluation,char(depth),char(type),(age),bestMove};
-		TTmutex.unlock();
+		// TTmutex.unlock();
 	}
 
 	inline pair<int,Move> get(Board& board,ull key,int depth,int alpha,int beta){
+		if(tableSize==0)
+			return {NO_EVAL,Move()};
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return {NO_EVAL,Move()};
@@ -76,6 +80,8 @@ struct TranspositionTable{
 	}
 
 	inline TableEntry getEntry(Board& board,ull key){
+		if(tableSize==0)
+			return TableEntry();
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return TableEntry();
@@ -86,6 +92,8 @@ struct TranspositionTable{
 	}
 
 	inline int getDepth(Board& board,ull key){
+		if(tableSize==0)
+			return -10;
 		int index=key%tableSize;
 		if(table[index].type==NONE)
 			return -10;
@@ -98,6 +106,8 @@ struct TranspositionTable{
 	}
 
 	inline int getNodeType(ull key){
+		if(tableSize==0)
+			return NONE;
 		int index=key%tableSize;
 		if(table[index].key!=key)
 			return NONE;

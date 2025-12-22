@@ -630,7 +630,7 @@ struct Worker{
 };
 
 struct Searcher{
-	int threadNumber=3;
+	int threadNumber=1;
 	vector<Worker>workers;
 	bool stopIDsearch;
 	bool stopWaitingThread;
@@ -688,7 +688,7 @@ struct Searcher{
 			int alpha=-inf*2,beta=inf*2;
 			int score;
 			int nodes=0;
-			if(depth){
+			if(depth==1){
 				workers[0].search(mainBoard,mainBoard.boardColor,depth,1,alpha,beta,0);
 				score=workers[0].rootScore;
 				bestMove=workers[0].bestMove;

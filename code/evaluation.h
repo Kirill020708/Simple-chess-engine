@@ -50,15 +50,19 @@ struct EvalTableEntry{
 
 
 struct EvaluationTranspositionTable{
-	const ll tableSize=ll(memoryUsageMB)*1024*1024/sizeof(EvalTableEntry);
-	EvalTableEntry table[ll(memoryUsageMB)*1024*1024/sizeof(EvalTableEntry)];
+	ll tableSize=0;
+	vector<EvalTableEntry> table;
 
 	inline void write(ull key,int evaluation){
+		if(tableSize==0)
+			return;
 		int index=key%tableSize;
 		table[index]={key,evaluation};
 	}
 
 	inline int get(ull key){
+		if(tableSize==0)
+			return NO_EVAL;
 		int index=key%tableSize;
 		if(table[index].key!=key)
 			return NO_EVAL;
@@ -239,10 +243,8 @@ struct Evaluator{
 	}
 
 
-	void initFromFile(string path){
-		ifstream in(path);
-		string inp;
-		while(getline(in,inp)){
+		void init(vector<string>strs){
+		for(auto inp:strs){
 			string type;
 			vector<string>strEvals;
 			for(int i=0;i<inp.length();i++)
@@ -311,7 +313,21 @@ struct Evaluator{
 				bishopPairMg=evals[0];
 			if(type=="bishop pair eg")
 				bishopPairEg=evals[0];
+
+			// if(type=="open king main file")
+			// 	openKingMainFilePenalty=evals[0];
+			// if(type=="open king near file")
+			// 	openKingNearFilePenalty=evals[0];
 		}
+	}
+
+	void initFromFile(string path){
+		ifstream in(path);
+		string inp;
+		vector<string>strs;
+		while(getline(in,inp))
+			strs.push_back(inp);
+		init(strs);
 	}
 
 	inline float evaluateKingShield(Board& board){

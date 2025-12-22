@@ -85,6 +85,22 @@ struct UCIcommunicationHepler{
 		searcherThread.join();
 	}
 
+	void reallocateHashMemory(int MBsize){
+		long long bSize=ll(MBsize)*1024*1024;
+		int TTEntrySize=sizeof(TableEntry);
+		int EvEntrySize=sizeof(EvalTableEntry);
+		long long sz=bSize/(TTEntrySize*2+EvEntrySize);
+		
+		transpositionTable.table.resize(bSize/3/TTEntrySize);
+		transpositionTable.tableSize=bSize/3/TTEntrySize;
+
+		transpositionTableQuiescent.table.resize(bSize/3/TTEntrySize);
+		transpositionTableQuiescent.tableSize=bSize/3/TTEntrySize;
+
+		evaluationTranspositionTable.table.resize(bSize/3/EvEntrySize);
+		evaluationTranspositionTable.tableSize=bSize/3/EvEntrySize;
+	}
+
 	void parseCommand(string command){
 		if(command=="")
 			return;
@@ -103,6 +119,8 @@ struct UCIcommunicationHepler{
 		}
 		if(mainCommand=="uci"){
 			cout<<"option name HardNodesLimit type spin default 1000000000 min 1 max 1000000000"<<endl;
+			cout<<"option name Threads type spin default 1 min 1 max 1024"<<endl;
+			cout<<"option name Hash type spin default 16 min 1 max 33554432"<<endl;
 			cout<<"option name Minimal type check default false"<<endl;
 			cout<<"uciok"<<endl;
 			return;
@@ -228,11 +246,15 @@ struct UCIcommunicationHepler{
 				else
 					searcher.minimal=false;
 			}
-			// if(tokens[3]=="Threads"){
-			// 	int thn=stoi(tokens[3]);
-			// 	searcher.threadNumber=thn;
-			// 	searcher.workers.resize(thn);
-			// }
+			if(tokens[2]=="Threads"){
+				int thn=stoi(tokens[4]);
+				searcher.threadNumber=thn;
+				searcher.workers.resize(thn);
+			}
+			if(tokens[2]=="Hash"){
+				int sz=stoi(tokens[4]);
+				reallocateHashMemory(sz);
+			}
 		}
 	}
 
