@@ -69,11 +69,13 @@ vector<string>splitStr(string s,string c){//splits a string by (c) substrings (f
 	string t;
 	for(auto i:s){
 		t.push_back(i);
-		if(t.length()>=c.length()&&t.substr(t.length()-c.length(),c.length())==c){
-			t=t.substr(0,t.length()-c.length());
-			if(t!="")
-				an.push_back(t);
-			t="";
+		if(t.length()>=c.length()){
+			if(t.substr(t.length()-c.length(),c.length())==c){
+				t=t.substr(0,t.length()-c.length());
+				if(t!="")
+					an.push_back(t);
+				t="";
+			}
 		}
 	}
 	return an;
