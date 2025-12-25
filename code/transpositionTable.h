@@ -17,7 +17,14 @@ struct TableEntry{
 	int age=-1;
 	Move bestMove=Move();
 
-	TableEntry(){}
+	TableEntry(){
+		key=0;
+		evaluation=NO_EVAL;
+		depth=0;
+		type=NONE;
+		age=-1;
+		bestMove=Move();
+	}
 
 	TableEntry(ull key_,int evaluation_,char depth_,char type_,int age_,Move bestMove_){
 		key=key_;
