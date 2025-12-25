@@ -49,7 +49,7 @@
 
 
 struct EvalTableEntry{
-	ull key;
+	ull key=0;
 	int evaluation=NO_EVAL;
 
 	EvalTableEntry(){}

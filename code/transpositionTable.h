@@ -11,11 +11,11 @@
 #endif /* DECLARS */
 
 struct TableEntry{
-	ull key;
+	ull key=0;
 	int evaluation=NO_EVAL;
-	char depth,type=NONE;
-	int age;
-	Move bestMove;
+	char depth=0,type=NONE;
+	int age=-1;
+	Move bestMove=Move();
 
 	TableEntry(){}
 
