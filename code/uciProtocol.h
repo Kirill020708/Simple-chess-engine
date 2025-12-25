@@ -310,7 +310,7 @@ struct UCIcommunicationHepler{
 				if(tokens[i]=="threads")
 					dataGenerator.threadNumber=stoi(tokens[i+1]);
 				if(tokens[i]=="file")
-					dataGenerator.outputPath=stoi(tokens[i+1]);
+					dataGenerator.outputPath=tokens[i+1];
 				if(tokens[i]=="games")
 					gamesNumber=stoi(tokens[i+1]);
 			}
