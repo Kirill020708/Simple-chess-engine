@@ -162,7 +162,7 @@ struct MoveListGenerator{
 			}
 		}
 		if(doSort)
-			sort(moveList[depth],moveList[depth]+moveListSize[depth]);
+			stable_sort(moveList[depth],moveList[depth]+moveListSize[depth]);
 	}
 
 
