@@ -10,172 +10,172 @@
 
 #endif /* DECLARS */
 
-struct Bitboard{
-	ull bitboard=0;
+struct Bitboard {
+    ull bitboard = 0;
 
-	Bitboard(){}
+    constexpr Bitboard() {}
 
-	Bitboard(ull bitboard_){
-		bitboard=bitboard_;
-	}
+    constexpr Bitboard(ull bitboard_) {
+        bitboard = bitboard_;
+    }
 
-	inline bool getBit(ll i){
-		return (bitboard&(1ull<<i))>0;
-	}
+    constexpr inline bool getBit(ll i) const {
+        return (bitboard & (1ull << i)) > 0;
+    }
 
-	inline int getLastBitNumber(){//returns the number of first enabled bit
-		if(!bitboard)
-			return -1;
-		return 63-__builtin_clzll(bitboard);
-	}
+    constexpr inline int getLastBitNumber() const { //returns the number of first enabled bit
+        if (!bitboard)
+            return -1;
+        return 63 - __builtin_clzll(bitboard);
+    }
 
-	inline int getFirstBitNumber(){//returns the number of first enabled bit
-		if(!bitboard)
-			return -1;
-		return __builtin_ctzll(bitboard);
-	}
+    constexpr inline int getFirstBitNumber() const { //returns the number of first enabled bit
+        if (!bitboard)
+            return -1;
+        return __builtin_ctzll(bitboard);
+    }
 
-	inline int getFirstBitNumberAndExclude(){//returns the number of first enabled bit and disables it
-		if(!bitboard)
-			return -1;
-		int b=__builtin_ctzll(bitboard);
-		bitboard^=(1ull<<b);
-		return b;
-	}
+    constexpr inline int getFirstBitNumberAndExclude() { //returns the number of first enabled bit and disables it
+        if (!bitboard)
+            return -1;
+        int b = __builtin_ctzll(bitboard);
+        bitboard ^= (1ull << b);
+        return b;
+    }
 
-	inline int popcnt(){
-		return __builtin_popcountll(bitboard);
-	}
+    constexpr inline int popcnt() const {
+        return __builtin_popcountll(bitboard);
+    }
 
-	operator ull(){
-		return bitboard;
-	}
+    constexpr operator ull() const {
+        return bitboard;
+    }
 
-	Bitboard operator=(ull x){
-		bitboard=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator=(ull x) {
+        bitboard = x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator&=(ull x){
-		bitboard&=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator&=(ull x) {
+        bitboard &= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator|=(ull x){
-		bitboard|=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator|=(ull x) {
+        bitboard |= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator^=(ull x){
-		bitboard^=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator^=(ull x) {
+        bitboard ^= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator>>=(ull x){
-		bitboard>>=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator>>=(ull x) {
+        bitboard >>= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator<<=(ull x){
-		bitboard<<=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator<<=(ull x) {
+        bitboard <<= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator>>=(int x){
-		bitboard>>=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator>>=(int x) {
+        bitboard >>= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator<<=(int x){
-		bitboard<<=x;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator<<=(int x) {
+        bitboard <<= x;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator=(Bitboard x){
-		bitboard=x.bitboard;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator=(Bitboard x) {
+        bitboard = x.bitboard;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator&=(Bitboard x){
-		bitboard&=x.bitboard;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator&=(Bitboard x) {
+        bitboard &= x.bitboard;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator|=(Bitboard x){
-		bitboard|=x.bitboard;
-		return Bitboard(bitboard);
-	}
+    constexpr Bitboard operator|=(Bitboard x) {
+        bitboard |= x.bitboard;
+        return Bitboard(bitboard);
+    }
 
-	Bitboard operator^=(Bitboard x){
-		bitboard^=x.bitboard;
-		return Bitboard(bitboard);
-	}
+    Bitboard operator^=(Bitboard x) {
+        bitboard ^= x.bitboard;
+        return Bitboard(bitboard);
+    }
 };
 
-Bitboard operator&(Bitboard x,Bitboard y){
-	return Bitboard(x.bitboard&y.bitboard);
+constexpr Bitboard operator&(Bitboard x, Bitboard y) {
+    return Bitboard(x.bitboard & y.bitboard);
 }
 
-Bitboard operator|(Bitboard x,Bitboard y){
-	return Bitboard(x.bitboard|y.bitboard);
+constexpr Bitboard operator|(Bitboard x, Bitboard y) {
+    return Bitboard(x.bitboard | y.bitboard);
 }
 
-Bitboard operator^(Bitboard x,Bitboard y){
-	return Bitboard(x.bitboard^y.bitboard);
+constexpr Bitboard operator^(Bitboard x, Bitboard y) {
+    return Bitboard(x.bitboard ^ y.bitboard);
 }
 
-Bitboard operator~(Bitboard x){
-	return Bitboard(~x.bitboard);
+constexpr Bitboard operator~(Bitboard x) {
+    return Bitboard(~x.bitboard);
 }
 
-Bitboard operator&(Bitboard x,ull y){
-	return Bitboard(x.bitboard&y);
+constexpr Bitboard operator&(Bitboard x, ull y) {
+    return Bitboard(x.bitboard & y);
 }
 
-Bitboard operator|(Bitboard x,ull y){
-	return Bitboard(x.bitboard|y);
+constexpr Bitboard operator|(Bitboard x, ull y) {
+    return Bitboard(x.bitboard | y);
 }
 
-Bitboard operator^(Bitboard x,ull y){
-	return Bitboard(x.bitboard^y);
+constexpr Bitboard operator^(Bitboard x, ull y) {
+    return Bitboard(x.bitboard ^ y);
 }
 
-Bitboard operator>>(Bitboard x,ull y){
-	return Bitboard(x.bitboard>>y);
+constexpr Bitboard operator>>(Bitboard x, ull y) {
+    return Bitboard(x.bitboard >> y);
 }
 
-Bitboard operator<<(Bitboard x,ull y){
-	return Bitboard(x.bitboard<<y);
+constexpr Bitboard operator<<(Bitboard x, ull y) {
+    return Bitboard(x.bitboard << y);
 }
 
-Bitboard operator>>(Bitboard x,int y){
-	return Bitboard(x.bitboard>>y);
+constexpr Bitboard operator>>(Bitboard x, int y) {
+    return Bitboard(x.bitboard >> y);
 }
 
-Bitboard operator<<(Bitboard x,int y){
-	return Bitboard(x.bitboard<<y);
+constexpr Bitboard operator<<(Bitboard x, int y) {
+    return Bitboard(x.bitboard << y);
 }
 
-bool operator!=(Bitboard x,Bitboard y){
-	return (x.bitboard!=y.bitboard);
+constexpr bool operator!=(Bitboard x, Bitboard y) {
+    return (x.bitboard != y.bitboard);
 }
 
-bool operator==(Bitboard x,Bitboard y){
-	return (x.bitboard==y.bitboard);
+constexpr bool operator==(Bitboard x, Bitboard y) {
+    return (x.bitboard == y.bitboard);
 }
 
-bool operator!=(Bitboard x,ull y){
-	return (x.bitboard!=y);
+constexpr bool operator!=(Bitboard x, ull y) {
+    return (x.bitboard != y);
 }
 
-bool operator!=(Bitboard x,int y){
-	return (x.bitboard!=y);
+constexpr bool operator!=(Bitboard x, int y) {
+    return (x.bitboard != y);
 }
 
-bool operator==(Bitboard x,ull y){
-	return (x.bitboard==y);
+constexpr bool operator==(Bitboard x, ull y) {
+    return (x.bitboard == y);
 }
 
-bool operator==(Bitboard x,int y){
-	return (x.bitboard==y);
+constexpr bool operator==(Bitboard x, int y) {
+    return (x.bitboard == y);
 }
