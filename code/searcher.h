@@ -106,8 +106,10 @@ struct Worker{
 	}
 
 	int quiescentSearch(Board& board,int color,int alpha,int beta,int depthFromRoot){
-		if(stopSearch||nodes>=nodesLim)
+		if(stopSearch||nodes>=nodesLim){
+			stopSearch=true;
 			return 0;
+		}
 		nodes++;
 
 
@@ -247,8 +249,10 @@ struct Worker{
 	int staticEvaluationHistory[maxDepth];
 
 	int search(Board& board,int color,int depth,int isRoot,int alpha,int beta,int depthFromRoot){
-		if(stopSearch||nodes>=nodesLim)
+		if(stopSearch||nodes>=nodesLim){
+			stopSearch=true;
 			return 0;
+		}
 		bool isPvNode=((beta-alpha)>1);
 		nodes++;
 
@@ -629,6 +633,7 @@ struct Worker{
 
 			if(stopSearch)
 				return 0;
+			
 			if(maxEvaluation<score){
 				if(score>alpha)
 					type=EXACT;
@@ -730,6 +735,29 @@ struct Worker{
 
 	void init(){
 		historyHelper.clear();
+	}
+
+	void IDsearch(Board& board,int maxDepth,int nodesLimit,int nodesH){
+		nodesLim=nodesH;
+		nodes=0;
+
+		int color=board.boardColor;
+
+		stopSearch=false;
+
+		for(int depth=1;depth<=maxDepth;depth++){
+			// workers[0].nnueEvaluator.printAccum();
+			// cout<<'\n';
+			int alpha=-inf*2,beta=inf*2;
+
+			search(board,board.boardColor,depth,1,alpha,beta,0);
+
+			// cout<<"depth "<<depth<<" score "<<rootScore<<' '<<bestMove.convertToUCI()<<'\n';
+
+			if(nodes>=min(nodesLimit,nodesH))
+				break;
+		}
+		stopSearch=true;
 	}
 };
 

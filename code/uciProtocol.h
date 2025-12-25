@@ -43,6 +43,14 @@
 #endif /* NNUE */
 
 
+#ifndef DATAGEN
+#define DATAGEN
+
+#include "datagen.h"
+
+#endif /* DATAGEN */
+
+
 void waitAndEndSearch(int timeToThink){
 	// searcher.stopSearch=false;
 	// thread th(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
@@ -157,18 +165,20 @@ struct UCIcommunicationHepler{
 			if(waitingThread.joinable())
 				waitingThread.join();
 
-			mainBoard.doNNUEupdates=true;
 			mainBoard.makeMove(Move(tokens[1]));
-			mainBoard.doNNUEupdates=false;
 			return;
 		}
 		if(mainCommand=="eval"){
 			cout<<"endgame weight: "<<mainBoard.endgameWeight()<<'\n';
-			if(tokens[1]=="info")
+			if(tokens.size()>1&&tokens[1]=="info")
 				evaluator.showInfo=true;
 			evaluator.uciOutput=true;
-			cout<<evaluator.evaluatePosition(mainBoard)<<" cp (white's perspective)"<<endl;
-			// cout<<nnueEvaluator.evaluate(mainBoard.boardColor)<<' '<<evaluator.evaluatePosition(mainBoard,WHITE)<<' '<<evaluator.evaluatePosition(mainBoard,BLACK)<<" cp (NNUE, stm)"<<endl;
+			cout<<evaluator.evaluatePositionDeterministic(mainBoard)<<" cp (white's perspective)"<<endl;
+			mainBoard.initNNUE(mainNnueEvaluator);
+			int nnueEval=mainNnueEvaluator.evaluate(mainBoard.boardColor);
+			if(mainBoard.boardColor==BLACK)
+				nnueEval=-nnueEval;
+			cout<<nnueEval<<" cp (NNUE, white's perspective)"<<endl;
 			evaluator.showInfo=false;
 			evaluator.uciOutput=false;
 			return;
@@ -194,11 +204,9 @@ struct UCIcommunicationHepler{
 				}
 				mainBoard.initFromFEN(fen);
 			}
-			mainBoard.doNNUEupdates=true;
 			for(;movesIter<tokens.size();movesIter++){
 				mainBoard.makeMove(Move(tokens[movesIter]));
 			}
-			mainBoard.doNNUEupdates=false;
 		}
 		if(mainCommand=="go"){
 			stopWaitingThread=1;
@@ -288,6 +296,25 @@ struct UCIcommunicationHepler{
 		}
 		if(mainCommand=="ucinewgame"){
 			clearHash();
+		}
+		if(mainCommand=="d"){
+			cout<<mainBoard.generateFEN()<<endl;
+		}
+		if(mainCommand=="datagen"){
+			int gamesNumber=1;
+			for(int i=1;i<tokens.size();i++){
+				if(tokens[i]=="softnodes")
+					dataGenerator.softNodesLimit=stoi(tokens[i+1]);
+				if(tokens[i]=="hardnodes")
+					dataGenerator.hardNodesLimit=stoi(tokens[i+1]);
+				if(tokens[i]=="threads")
+					dataGenerator.threadNumber=stoi(tokens[i+1]);
+				if(tokens[i]=="file")
+					dataGenerator.outputPath=stoi(tokens[i+1]);
+				if(tokens[i]=="games")
+					gamesNumber=stoi(tokens[i+1]);
+			}
+			dataGenerator.generateData(gamesNumber);
 		}
 	}
 

@@ -461,10 +461,12 @@ struct alignas(64) Board{
 			if(i%8==7&&i<63)
 				fen+="/";
 		}
+
 		if(boardColor==WHITE)
 			fen+=" w";
 		else
 			fen+=" b";
+
 		string cst;
 		if(!castlingWhiteKingsideBroke)
 			cst+="K";
@@ -477,6 +479,22 @@ struct alignas(64) Board{
 		if(cst=="")
 			cst="-";
 		fen+=" "+cst;
+
+		string enp="-";
+		if(enPassantColumn!=NO_EN_PASSANT){
+			int row=3,col=enPassantColumn;
+			if(boardColor==WHITE)
+				row=6;
+			enp="";
+			enp.push_back(char(col+'a'));
+			enp.push_back(char(row+'0'));
+		}
+		fen+=" "+enp;
+
+		fen+=" "+to_string(age-lastIrreversibleMoveAge-1);
+
+		fen+=" "+to_string(age/2+1);
+
 		return fen;
 	}
 

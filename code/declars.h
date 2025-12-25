@@ -39,7 +39,7 @@ const ld eps = 1e-9, pi = 3.1415926;
 #define F first
 #define S second
 
-// mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
+mt19937_64 rngT(chrono::steady_clock::now().time_since_epoch().count());
 mt19937_64 rng(1898129380);
 
 const int maxDepth=256;

@@ -36,6 +36,8 @@ struct TableEntry{
 	}
 };
 
+bool alwaysReplace=false;
+
 struct TranspositionTable{
 	ll tableSize=0;
 	vector<TableEntry> table;
@@ -48,7 +50,7 @@ struct TranspositionTable{
 		int index=key%tableSize;
 		if(table[index].type!=NONE){
 			if(table[index].key!=key){
-				if(table[index].age>=board.age)
+				if(table[index].age>=board.age&&alwaysReplace==false)
 					return;
 			}else{
 				if(table[index].depth>depth)
