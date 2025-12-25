@@ -62,6 +62,8 @@ struct Worker{
 	MoveListGenerator moveListGenerator;
 	HistoryHelper historyHelper;
 
+	NNUEevaluator nnueEvaluator;
+
 	StackState searchStack[maxDepth];
 
 	std::chrono::steady_clock::time_point searchStartTime;
@@ -125,7 +127,7 @@ struct Worker{
 		if(moveListGenerator.isStalled(board,color) || evaluator.insufficientMaterialDraw(board))
 			staticEval=evaluator.evaluateStalledPosition(board,color,depthFromRoot);
 		else
-			staticEval=evaluator.evaluatePosition(board,color);
+			staticEval=evaluator.evaluatePosition(board,color,nnueEvaluator);
 
 
 		auto ttEntry=transpositionTableQuiescent.getEntry(board,currentZobristKey);
@@ -150,10 +152,17 @@ struct Worker{
 		Board boardCopy=board;
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
-		int accumW[hiddenLayerSize],accumB[hiddenLayerSize];
-		for(int i=0;i<hiddenLayerSize;i++){
-			accumW[i]=nnueEvaluator.hlSumW[i];
-			accumB[i]=nnueEvaluator.hlSumB[i];
+		__int16_t accumW[hiddenLayerSize],accumB[hiddenLayerSize];
+		for(int i=0;i<hiddenLayerSize;i+=16){
+
+			_mm256_storeu_si256((__m256i*)&accumW[i],
+								 _mm256_loadu_si256((__m256i*)&nnueEvaluator.hlSumW[i]));
+
+			_mm256_storeu_si256((__m256i*)&accumB[i],
+								 _mm256_loadu_si256((__m256i*)&nnueEvaluator.hlSumB[i]));
+
+			// accumW[i]=nnueEvaluator.hlSumW[i];
+			// accumB[i]=nnueEvaluator.hlSumB[i];
 		}
 
 		int oppositeColor=(color==WHITE)?BLACK:WHITE;
@@ -169,11 +178,9 @@ struct Worker{
 			// 	cout<<board.occupancyPiece(move.getStartSquare())<<' '<<board.occupancyPiece(move.getTargetSquare())<<'\n';
 			// 	exit(0);
 			// }
-			board.doNNUEupdates=true;
-			board.makeMove(move);
-			board.doNNUEupdates=false;
+			board.makeMove(move,nnueEvaluator);
 			// transpositionTableQuiescent.prefetch(board.getZobristKey());
-			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor);
+			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor,nnueEvaluator);
 			int deltaPruningMargin=200;
 			// if(sseScore<=-1)
 			// 	deltaPruningMargin-=sseScore*100;
@@ -181,11 +188,18 @@ struct Worker{
 			if(((numOfPiecesOnBoard-1)>=6 && newStaticEval+deltaPruningMargin<alpha) || sseScore<=-1){
 				board=boardCopy;
 
-				for(int i=0;i<hiddenLayerSize;i++){
-					nnueEvaluator.hlSumW[i]=accumW[i];
-					nnueEvaluator.hlSumB[i]=accumB[i];
+				for(int i=0;i<hiddenLayerSize;i+=16){
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+										 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+										 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+					// nnueEvaluator.hlSumW[i]=accumW[i];
+					// nnueEvaluator.hlSumB[i]=accumB[i];
 				}
-				
+
 				continue;
 			}
 
@@ -193,9 +207,16 @@ struct Worker{
 
 			board=boardCopy;
 
-			for(int i=0;i<hiddenLayerSize;i++){
-				nnueEvaluator.hlSumW[i]=accumW[i];
-				nnueEvaluator.hlSumB[i]=accumB[i];
+			for(int i=0;i<hiddenLayerSize;i+=16){
+
+				_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+									 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+				_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+									 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+				// nnueEvaluator.hlSumW[i]=accumW[i];
+				// nnueEvaluator.hlSumB[i]=accumB[i];
 			}
 
 			isFirstMove=0;
@@ -245,7 +266,7 @@ struct Worker{
 			return evaluator.evaluateStalledPosition(board,color,depthFromRoot);
 
 
-		int staticEval=evaluator.evaluatePosition(board,color);
+		int staticEval=evaluator.evaluatePosition(board,color,nnueEvaluator);
 		// cout<<board.generateFEN()<<' '<<staticEval<<'\n';
 		bool improving=false;
 		bool isMovingSideInCheck=moveGenerator.isInCheck(board,color);
@@ -408,10 +429,17 @@ struct Worker{
 		bestHashMove=Move();
 		int numberOfMoves=moveListGenerator.moveListSize[depthFromRoot];
 
-		int accumW[hiddenLayerSize],accumB[hiddenLayerSize];
-		for(int i=0;i<hiddenLayerSize;i++){
-			accumW[i]=nnueEvaluator.hlSumW[i];
-			accumB[i]=nnueEvaluator.hlSumB[i];
+		__int16_t accumW[hiddenLayerSize],accumB[hiddenLayerSize];
+		for(int i=0;i<hiddenLayerSize;i+=16){
+
+			_mm256_storeu_si256((__m256i*)&accumW[i],
+								 _mm256_loadu_si256((__m256i*)&nnueEvaluator.hlSumW[i]));
+
+			_mm256_storeu_si256((__m256i*)&accumB[i],
+								 _mm256_loadu_si256((__m256i*)&nnueEvaluator.hlSumB[i]));
+
+			// accumW[i]=nnueEvaluator.hlSumW[i];
+			// accumB[i]=nnueEvaluator.hlSumB[i];
 		}
 
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
@@ -438,13 +466,11 @@ struct Worker{
 			if(isCapture)
 				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
-			board.doNNUEupdates=true;
-			board.makeMove(move);
-			board.doNNUEupdates=false;
+			board.makeMove(move,nnueEvaluator);
 
 			// transpositionTable.prefetch(board.getZobristKey());
 
-			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor);
+			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor,nnueEvaluator);
 
 			// cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
@@ -463,9 +489,16 @@ struct Worker{
 				
 				){
 
-				for(int i=0;i<hiddenLayerSize;i++){
-					nnueEvaluator.hlSumW[i]=accumW[i];
-					nnueEvaluator.hlSumB[i]=accumB[i];
+				for(int i=0;i<hiddenLayerSize;i+=16){
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+										 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+										 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+					// nnueEvaluator.hlSumW[i]=accumW[i];
+					// nnueEvaluator.hlSumB[i]=accumB[i];
 				}
 				board=boardCopy;
 				continue;
@@ -481,9 +514,16 @@ struct Worker{
 				depth<=3 &&
 				sseEval<=-seeMargin[depth]){
 
-				for(int i=0;i<hiddenLayerSize;i++){
-					nnueEvaluator.hlSumW[i]=accumW[i];
-					nnueEvaluator.hlSumB[i]=accumB[i];
+				for(int i=0;i<hiddenLayerSize;i+=16){
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+										 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+										 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+					// nnueEvaluator.hlSumW[i]=accumW[i];
+					// nnueEvaluator.hlSumB[i]=accumB[i];
 				}
 				board=boardCopy;
 				continue;
@@ -535,9 +575,16 @@ struct Worker{
 					!isMoveInteresting &&
 					LMR_DEPTH_REDUCTION>=depth){
 					board=boardCopy;
-					for(int i=0;i<hiddenLayerSize;i++){
-						nnueEvaluator.hlSumW[i]=accumW[i];
-						nnueEvaluator.hlSumB[i]=accumB[i];
+					for(int i=0;i<hiddenLayerSize;i+=16){
+
+						_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+											 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+						_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+											 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+						// nnueEvaluator.hlSumW[i]=accumW[i];
+						// nnueEvaluator.hlSumB[i]=accumB[i];
 					}
 					continue;
 				}
@@ -564,9 +611,16 @@ struct Worker{
 
 			board=boardCopy;
 
-			for(int i=0;i<hiddenLayerSize;i++){
-				nnueEvaluator.hlSumW[i]=accumW[i];
-				nnueEvaluator.hlSumB[i]=accumB[i];
+			for(int i=0;i<hiddenLayerSize;i+=16){
+
+				_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+									 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+				_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+									 _mm256_loadu_si256((__m256i*)&accumB[i]));
+
+				// nnueEvaluator.hlSumW[i]=accumW[i];
+				// nnueEvaluator.hlSumB[i]=accumB[i];
 			}
 
 			movesSearched++;
@@ -717,6 +771,8 @@ struct Searcher{
 		for(int i=0;i<threadNumber;i++){
 			workers[i].nodes=0;
 			workers[i].stopSearch=false;
+			workers[i].nnueEvaluator=mainNnueEvaluator;
+			mainBoard.initNNUE(workers[i].nnueEvaluator);
 			for(ll j=0;j<256;j++){
 				for(ll j1=0;j1<2;j1++){
 					workers[i].killerMovesTable[j][j1]=Move();
@@ -735,7 +791,7 @@ struct Searcher{
         float branchFactor=2;
 		Move bestMove;
 		for(int depth=1;depth<=maxDepth;depth++){
-			// nnueEvaluator.printAccum();
+			// workers[0].nnueEvaluator.printAccum();
 			// cout<<'\n';
 			int alpha=-inf*2,beta=inf*2;
 			int score;

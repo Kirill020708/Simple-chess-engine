@@ -172,11 +172,6 @@ struct alignas(64) Board{
 		int piece=occupancyPiece(square);
 		int pieceColor=occupancy(square);
 
-		if(doNNUEupdates){
-			if(pieceColor!=EMPTY)
-				nnueEvaluator.set0(getNNUEidx(square,piece,pieceColor));
-		}
-
 		if(pieceColor!=EMPTY){
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 			materialCount-=material[piece];
@@ -193,10 +188,17 @@ struct alignas(64) Board{
 		kings&=(~(1ull<<square));
 	}
 
+	inline void clearPosition(int square, NNUEevaluator& nnueEvaluator){
+		int piece=occupancyPiece(square);
+		int pieceColor=occupancy(square);
+
+		if(pieceColor!=EMPTY)
+			nnueEvaluator.set0(getNNUEidx(square,piece,pieceColor));	
+
+		clearPosition(square);
+	}
+
 	inline void putPiece(int square,int color,int pieceType){
-		if(doNNUEupdates){
-			nnueEvaluator.set1(getNNUEidx(square,pieceType,color));
-		}
 
 		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,endgameWeight());
 		materialCount+=material[pieceType];
@@ -221,12 +223,26 @@ struct alignas(64) Board{
 			zobristKey^=zobristKeys.pieceKeys[square][color][pieceType];
 	}
 
+	inline void putPiece(int square,int color,int pieceType,NNUEevaluator& nnueEvaluator){
+		nnueEvaluator.set1(getNNUEidx(square,pieceType,color));
+
+		putPiece(square,color,pieceType);
+	}
+
 	inline void movePiece(int startSquare,int targetSquare){
 		int color=occupancy(startSquare);
 		int movingPiece=occupancyPiece(startSquare);
 		clearPosition(startSquare);
 		clearPosition(targetSquare);
 		putPiece(targetSquare,color,movingPiece);
+	}
+
+	inline void movePiece(int startSquare,int targetSquare,NNUEevaluator& nnueEvaluator){
+		int color=occupancy(startSquare);
+		int movingPiece=occupancyPiece(startSquare);
+		clearPosition(startSquare,nnueEvaluator);
+		clearPosition(targetSquare,nnueEvaluator);
+		putPiece(targetSquare,color,movingPiece,nnueEvaluator);
 	}
 
 	inline int makeNullMove(){
@@ -288,7 +304,59 @@ struct alignas(64) Board{
 			castlingBlackKingsideBroke=1;
 	}
 
-	void initNNUE(){
+	inline void makeMove(Move move,NNUEevaluator& nnueEvaluator){
+		if((whitePieces|blackPieces).getBit(move.getTargetSquare())||pawns.getBit(move.getStartSquare())) // check if move is irreversible
+			lastIrreversibleMoveAge=age;
+
+		occuredPositionsHelper.occuredPositions[age++]=getZobristKey();
+		boardColor=(boardColor==WHITE)?BLACK:WHITE;
+		int startSquare=move.getStartSquare();
+		int targetSquare=move.getTargetSquare();
+		int color=occupancy(startSquare);
+		int movingPiece=occupancyPiece(startSquare);
+		enPassantColumn=NO_EN_PASSANT;
+		if(movingPiece==PAWN){
+			if((abs(targetSquare-startSquare)&1)&&occupancy(targetSquare)==EMPTY){//enPassant capture
+				if(color==WHITE)
+					clearPosition(targetSquare+8,nnueEvaluator);
+				if(color==BLACK)
+					clearPosition(targetSquare-8,nnueEvaluator);
+			}
+			clearPosition(startSquare,nnueEvaluator);
+			clearPosition(targetSquare,nnueEvaluator);
+			if(move.getPromotionFlag()!=NOPIECE)
+				movingPiece=move.getPromotionFlag();
+			putPiece(targetSquare,color,movingPiece,nnueEvaluator);
+			if(abs(targetSquare-startSquare)==16)//updEnPassant
+				enPassantColumn=boardHelper.getColumnNumber(startSquare);
+		}else if(movingPiece==KING){
+			movePiece(startSquare,targetSquare,nnueEvaluator);
+			if(startSquare==60&&targetSquare==58)//white left castling
+				movePiece(56,59,nnueEvaluator);
+			if(startSquare==60&&targetSquare==62)//white right castling
+				movePiece(63,61,nnueEvaluator);
+			if(startSquare==4&&targetSquare==2)//black left castling
+				movePiece(0,3,nnueEvaluator);
+			if(startSquare==4&&targetSquare==6)//black right castling
+				movePiece(7,5,nnueEvaluator);
+			if(color==WHITE)
+				castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=1;
+			if(color==BLACK)
+				castlingBlackQueensideBroke=castlingBlackKingsideBroke=1;
+		}else{
+			movePiece(startSquare,targetSquare,nnueEvaluator);
+		}
+		if(startSquare==56||targetSquare==56)
+			castlingWhiteQueensideBroke=1;
+		if(startSquare==63||targetSquare==63)
+			castlingWhiteKingsideBroke=1;
+		if(startSquare==0||targetSquare==0)
+			castlingBlackQueensideBroke=1;
+		if(startSquare==7||targetSquare==7)
+			castlingBlackKingsideBroke=1;
+	}
+
+	void initNNUE(NNUEevaluator& nnueEvaluator){
 		nnueEvaluator.clear();
 		for(int square=0;square<64;square++){
 			int piece=occupancyPiece(square);
@@ -363,7 +431,11 @@ struct alignas(64) Board{
 			if(occupancy(square)!=EMPTY)
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
 		initZobristKey();
-		initNNUE();
+	}
+
+	void initFromFEN(string fen,NNUEevaluator& nnueEvaluator){
+		initFromFEN(fen);
+		initNNUE(nnueEvaluator);
 	}
 
 	string generateFEN(){
@@ -429,7 +501,6 @@ struct alignas(64) Board{
 			if(occupancy(square)!=EMPTY)
 				materialCount+=material[occupancyPiece(square)];
 
-		initNNUE();
 	}
 };
 

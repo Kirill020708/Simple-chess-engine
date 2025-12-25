@@ -829,7 +829,7 @@ struct Evaluator{
 		return evaluation;
 	}
 
-	int evaluatePosition(Board& board,int color){ // board evaluation with NNUE
+	int evaluatePosition(Board& board,int color,NNUEevaluator& nnueEvaluator){ // board evaluation with NNUE
 		if(insufficientMaterialDraw(board))
 			return DRAW_SCORE;
 
@@ -844,7 +844,7 @@ struct Evaluator{
 		return evaluation;
 	}
 
-	int evaluatePositionNNUE(Board& board,int color){ // board evaluation with (color)'s perspective
+	int evaluatePosition1(Board& board,int color){ // board evaluation with (color)'s perspective
 		return evaluatePosition(board)*((color==WHITE)?1:-1);
 	}
 

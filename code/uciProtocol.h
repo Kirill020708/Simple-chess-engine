@@ -134,7 +134,7 @@ struct UCIcommunicationHepler{
 				// cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
 			// inline int sseEval(int square,int color,int firstAttacker){
 			// cout<<evaluator.evaluateDoubledPawns()<<'\n';
-			nnueEvaluator.printAccum();
+			// nnueEvaluator.printAccum();
 			// return;
 		}
 		if(mainCommand=="uci"){
@@ -168,7 +168,7 @@ struct UCIcommunicationHepler{
 				evaluator.showInfo=true;
 			evaluator.uciOutput=true;
 			cout<<evaluator.evaluatePosition(mainBoard)<<" cp (white's perspective)"<<endl;
-			cout<<nnueEvaluator.evaluate(mainBoard.boardColor)<<' '<<evaluator.evaluatePosition(mainBoard,WHITE)<<' '<<evaluator.evaluatePosition(mainBoard,BLACK)<<" cp (NNUE, stm)"<<endl;
+			// cout<<nnueEvaluator.evaluate(mainBoard.boardColor)<<' '<<evaluator.evaluatePosition(mainBoard,WHITE)<<' '<<evaluator.evaluatePosition(mainBoard,BLACK)<<" cp (NNUE, stm)"<<endl;
 			evaluator.showInfo=false;
 			evaluator.uciOutput=false;
 			return;
