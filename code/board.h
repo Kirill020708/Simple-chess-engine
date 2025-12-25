@@ -136,6 +136,7 @@ struct alignas(64) Board{
 	}
 
 	void initZobristKey(){
+		zobristKey=0;
 		for(int square=0;square<64;square++){
 			int piece=occupancyPiece(square);
 			int pieceColor=occupancy(square);
