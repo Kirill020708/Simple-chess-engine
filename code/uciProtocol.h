@@ -35,6 +35,14 @@
 #endif /* PERFT */
 
 
+#ifndef NNUE
+#define NNUE
+
+#include "nnue.h"
+
+#endif /* NNUE */
+
+
 void waitAndEndSearch(int timeToThink){
 	// searcher.stopSearch=false;
 	// thread th(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
@@ -92,12 +100,15 @@ struct UCIcommunicationHepler{
 		long long sz=bSize/(TTEntrySize*2+EvEntrySize);
 
 		transpositionTable.table.resize(bSize/3/TTEntrySize);
+		transpositionTable.table.shrink_to_fit();
 		transpositionTable.tableSize=bSize/3/TTEntrySize;
 
 		transpositionTableQuiescent.table.resize(bSize/3/TTEntrySize);
+		transpositionTableQuiescent.table.shrink_to_fit();
 		transpositionTableQuiescent.tableSize=bSize/3/TTEntrySize;
 
 		evaluationTranspositionTable.table.resize(bSize/3/EvEntrySize);
+		evaluationTranspositionTable.table.shrink_to_fit();
 		evaluationTranspositionTable.tableSize=bSize/3/EvEntrySize;
 	}
 
@@ -123,9 +134,13 @@ struct UCIcommunicationHepler{
 				// cout<<occuredPositionsHelper.occuredPositions[i]<<'\n';
 			// inline int sseEval(int square,int color,int firstAttacker){
 			// cout<<evaluator.evaluateDoubledPawns()<<'\n';
-			return;
+			nnueEvaluator.printAccum();
+			// return;
 		}
 		if(mainCommand=="uci"){
+			cout<<"id name Simpler 1"<<endl;
+			cout<<"id author Kirill020708\n"<<endl;
+
 			cout<<"option name HardNodesLimit type spin default 1000000000 min 1 max 1000000000"<<endl;
 			cout<<"option name Threads type spin default 1 min 1 max 1024"<<endl;
 			cout<<"option name Hash type spin default 256 min 1 max 33554432"<<endl;
@@ -142,15 +157,20 @@ struct UCIcommunicationHepler{
 			if(waitingThread.joinable())
 				waitingThread.join();
 
+			mainBoard.doNNUEupdates=true;
 			mainBoard.makeMove(Move(tokens[1]));
+			mainBoard.doNNUEupdates=false;
 			return;
 		}
 		if(mainCommand=="eval"){
 			cout<<"endgame weight: "<<mainBoard.endgameWeight()<<'\n';
 			if(tokens[1]=="info")
 				evaluator.showInfo=true;
+			evaluator.uciOutput=true;
 			cout<<evaluator.evaluatePosition(mainBoard)<<" cp (white's perspective)"<<endl;
+			cout<<nnueEvaluator.evaluate(mainBoard.boardColor)<<' '<<evaluator.evaluatePosition(mainBoard,WHITE)<<' '<<evaluator.evaluatePosition(mainBoard,BLACK)<<" cp (NNUE, stm)"<<endl;
 			evaluator.showInfo=false;
+			evaluator.uciOutput=false;
 			return;
 		}
 		if(mainCommand=="position"){
@@ -174,9 +194,11 @@ struct UCIcommunicationHepler{
 				}
 				mainBoard.initFromFEN(fen);
 			}
+			mainBoard.doNNUEupdates=true;
 			for(;movesIter<tokens.size();movesIter++){
 				mainBoard.makeMove(Move(tokens[movesIter]));
 			}
+			mainBoard.doNNUEupdates=false;
 		}
 		if(mainCommand=="go"){
 			stopWaitingThread=1;
@@ -232,7 +254,7 @@ struct UCIcommunicationHepler{
 				softBound=hardBound=timeToThink=movetime;
 
 			}
-			searcher.iterativeDeepeningSearch(256,softBound,hardBound,nodes,hardNodesOpt);
+			searcher.iterativeDeepeningSearch(depth,softBound,hardBound,nodes,hardNodesOpt);
 			// waitAndEndSearch(timeToThink);
 			// waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
 		}

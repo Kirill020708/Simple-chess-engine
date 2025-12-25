@@ -23,6 +23,7 @@
 #include <future>
 #include <atomic>
 #include <condition_variable>
+#include <immintrin.h>
 
 using namespace std;
  

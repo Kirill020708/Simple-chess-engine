@@ -24,17 +24,29 @@
 
 #endif /* PIECESQTABLE */
 
-// Transposition table
-
-#pragma once
-
-
 #ifndef DECLARS
 #define DECLARS
 
 #include "declars.h"
 
 #endif /* DECLARS */
+
+
+#ifndef TRANSPOSTABLE
+#define TRANSPOSTABLE
+
+#include "transpositionTable.h"
+
+#endif /* TRANSPOSTABLE */
+
+
+#ifndef NNUE
+#define NNUE
+
+#include "nnue.h"
+
+#endif /* NNUE */
+
 
 struct EvalTableEntry{
 	ull key;
@@ -77,6 +89,7 @@ EvaluationTranspositionTable evaluationTranspositionTable;
 struct Evaluator{
 
 	bool showInfo=false;
+	bool uciOutput=false;
 
 	
 	float mobilityScoreMg[8] = {0, 0, 1, 2, 1, 0, -1,0};
@@ -803,7 +816,7 @@ struct Evaluator{
 			return DRAW_SCORE;
 
 		ull key=board.getZobristKey();
-		if(showInfo==false){
+		if(showInfo==false&&uciOutput==false){
 			int TTevaluation=evaluationTranspositionTable.get(key);
 			if(TTevaluation!=NO_EVAL)
 				return TTevaluation;
@@ -813,9 +826,25 @@ struct Evaluator{
 		return evaluation;
 	}
 
-	int evaluatePosition(Board& board,int color){ // board evaluation witb (color)'s perspective
+	int evaluatePosition(Board& board,int color){ // board evaluation with NNUE
+		if(insufficientMaterialDraw(board))
+			return DRAW_SCORE;
+
+		ull key=board.getZobristKey();
+		if(showInfo==false&&uciOutput==false){
+			int TTevaluation=evaluationTranspositionTable.get(key);
+			if(TTevaluation!=NO_EVAL)
+				return TTevaluation;
+		}
+		int evaluation=nnueEvaluator.evaluate(color);
+		evaluationTranspositionTable.write(key,int(evaluation));
+		return evaluation;
+	}
+
+	int evaluatePositionNNUE(Board& board,int color){ // board evaluation with (color)'s perspective
 		return evaluatePosition(board)*((color==WHITE)?1:-1);
 	}
+
 
 	int evaluateStalledPosition(Board& board,int color,int depthFromRoot){
 		if(insufficientMaterialDraw(board))

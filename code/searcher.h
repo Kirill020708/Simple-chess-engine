@@ -150,6 +150,13 @@ struct Worker{
 		Board boardCopy=board;
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
+		int accumW[hiddenLayerSize],accumB[hiddenLayerSize];
+		for(int i=0;i<hiddenLayerSize;i++){
+			accumW[i]=nnueEvaluator.hlSumW[i];
+			accumB[i]=nnueEvaluator.hlSumB[i];
+		}
+
+		int oppositeColor=(color==WHITE)?BLACK:WHITE;
 
 		bool isFirstMove=1;
 		char type=UPPER_BOUND;
@@ -162,23 +169,36 @@ struct Worker{
 			// 	cout<<board.occupancyPiece(move.getStartSquare())<<' '<<board.occupancyPiece(move.getTargetSquare())<<'\n';
 			// 	exit(0);
 			// }
+			board.doNNUEupdates=true;
 			board.makeMove(move);
+			board.doNNUEupdates=false;
 			// transpositionTableQuiescent.prefetch(board.getZobristKey());
-			int newStaticEval=evaluator.evaluatePosition(board,color);
+			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor);
 			int deltaPruningMargin=200;
 			// if(sseScore<=-1)
 			// 	deltaPruningMargin-=sseScore*100;
 			// assert(sseScore>=0);
 			if(((numOfPiecesOnBoard-1)>=6 && newStaticEval+deltaPruningMargin<alpha) || sseScore<=-1){
 				board=boardCopy;
+
+				for(int i=0;i<hiddenLayerSize;i++){
+					nnueEvaluator.hlSumW[i]=accumW[i];
+					nnueEvaluator.hlSumB[i]=accumB[i];
+				}
+				
 				continue;
 			}
 
 			int score=-quiescentSearch(board,(color==WHITE)?BLACK:WHITE,-beta,-alpha,depthFromRoot+1);
 
+			board=boardCopy;
+
+			for(int i=0;i<hiddenLayerSize;i++){
+				nnueEvaluator.hlSumW[i]=accumW[i];
+				nnueEvaluator.hlSumB[i]=accumB[i];
+			}
 
 			isFirstMove=0;
-			board=boardCopy;
 			if(stopSearch)
 				return 0;
 			if(maxEvaluation<score){
@@ -226,6 +246,7 @@ struct Worker{
 
 
 		int staticEval=evaluator.evaluatePosition(board,color);
+		// cout<<board.generateFEN()<<' '<<staticEval<<'\n';
 		bool improving=false;
 		bool isMovingSideInCheck=moveGenerator.isInCheck(board,color);
 
@@ -386,6 +407,13 @@ struct Worker{
 		int quietMovesSearched=0;
 		bestHashMove=Move();
 		int numberOfMoves=moveListGenerator.moveListSize[depthFromRoot];
+
+		int accumW[hiddenLayerSize],accumB[hiddenLayerSize];
+		for(int i=0;i<hiddenLayerSize;i++){
+			accumW[i]=nnueEvaluator.hlSumW[i];
+			accumB[i]=nnueEvaluator.hlSumB[i];
+		}
+
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
 
@@ -410,11 +438,15 @@ struct Worker{
 			if(isCapture)
 				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
+			board.doNNUEupdates=true;
 			board.makeMove(move);
+			board.doNNUEupdates=false;
 
 			// transpositionTable.prefetch(board.getZobristKey());
 
-			int newStaticEval=evaluator.evaluatePosition(board,color);
+			int newStaticEval=-evaluator.evaluatePosition(board,oppositeColor);
+
+			// cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
 			int futilityMargin=100*depth*depth;
 
@@ -431,6 +463,10 @@ struct Worker{
 				
 				){
 
+				for(int i=0;i<hiddenLayerSize;i++){
+					nnueEvaluator.hlSumW[i]=accumW[i];
+					nnueEvaluator.hlSumB[i]=accumB[i];
+				}
 				board=boardCopy;
 				continue;
 			}
@@ -445,6 +481,10 @@ struct Worker{
 				depth<=3 &&
 				sseEval<=-seeMargin[depth]){
 
+				for(int i=0;i<hiddenLayerSize;i++){
+					nnueEvaluator.hlSumW[i]=accumW[i];
+					nnueEvaluator.hlSumB[i]=accumB[i];
+				}
 				board=boardCopy;
 				continue;
 			}
@@ -495,6 +535,10 @@ struct Worker{
 					!isMoveInteresting &&
 					LMR_DEPTH_REDUCTION>=depth){
 					board=boardCopy;
+					for(int i=0;i<hiddenLayerSize;i++){
+						nnueEvaluator.hlSumW[i]=accumW[i];
+						nnueEvaluator.hlSumB[i]=accumB[i];
+					}
 					continue;
 				}
 
@@ -519,6 +563,12 @@ struct Worker{
 
 
 			board=boardCopy;
+
+			for(int i=0;i<hiddenLayerSize;i++){
+				nnueEvaluator.hlSumW[i]=accumW[i];
+				nnueEvaluator.hlSumB[i]=accumB[i];
+			}
+
 			movesSearched++;
 			if(!isMoveInteresting)
 				quietMovesSearched++;
@@ -685,6 +735,8 @@ struct Searcher{
         float branchFactor=2;
 		Move bestMove;
 		for(int depth=1;depth<=maxDepth;depth++){
+			// nnueEvaluator.printAccum();
+			// cout<<'\n';
 			int alpha=-inf*2,beta=inf*2;
 			int score;
 			int nodes=0;

@@ -41,6 +41,15 @@
 
 #endif /* ZOBRIST */
 
+
+#ifndef NNUE
+#define NNUE
+
+#include "nnue.h"
+
+#endif /* NNUE */
+
+
 struct OccuredPositionsHelper{
 	ull occuredPositions[2560]; // positions occured in current variation; for testing repetition
 };
@@ -49,10 +58,12 @@ OccuredPositionsHelper occuredPositionsHelper;
 
 int material[8]={0,0,3,3,5,10,0};
 
+
 struct alignas(64) Board{
 	char boardColor;
 	int materialCount;
 	int evaluation;
+	bool doNNUEupdates=false;
 
 	Bitboard whitePieces,blackPieces;
 	Bitboard pawns,knights,bishops,rooks,queens,kings;
@@ -146,9 +157,25 @@ struct alignas(64) Board{
 				zobristKeys.enPassant[enPassantColumn];
 	}
 
+	pair<int,int>getNNUEidx(int square,int piece,int pieceColor){
+		int neuronIdxB=64*(piece-1+(!pieceColor)*6)+square;
+
+		int row=(square>>3),col=(square&7);
+		row=7-row;
+		square=(row<<3)+col;
+		int neuronIdxW=64*(piece-1+pieceColor*6)+square;
+		return {neuronIdxW,neuronIdxB};
+	}
+
 	inline void clearPosition(int square){
 		int piece=occupancyPiece(square);
 		int pieceColor=occupancy(square);
+
+		if(doNNUEupdates){
+			if(pieceColor!=EMPTY)
+				nnueEvaluator.set0(getNNUEidx(square,piece,pieceColor));
+		}
+
 		if(pieceColor!=EMPTY){
 			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 			materialCount-=material[piece];
@@ -166,6 +193,10 @@ struct alignas(64) Board{
 	}
 
 	inline void putPiece(int square,int color,int pieceType){
+		if(doNNUEupdates){
+			nnueEvaluator.set1(getNNUEidx(square,pieceType,color));
+		}
+
 		evaluation+=pieceSquareTable.getPieceEval(pieceType,square,color,endgameWeight());
 		materialCount+=material[pieceType];
 		if(color==WHITE)
@@ -256,6 +287,16 @@ struct alignas(64) Board{
 			castlingBlackKingsideBroke=1;
 	}
 
+	void initNNUE(){
+		nnueEvaluator.clear();
+		for(int square=0;square<64;square++){
+			int piece=occupancyPiece(square);
+			int pieceColor=occupancy(square);
+			if(pieceColor!=EMPTY)
+				nnueEvaluator.set1(getNNUEidx(square,piece,pieceColor));
+		}
+	}
+
 	void initFromFEN(string fen){
 		age=0;
 		vector<string>tokens=splitStr(fen," ");
@@ -321,6 +362,7 @@ struct alignas(64) Board{
 			if(occupancy(square)!=EMPTY)
 				evaluation+=pieceSquareTable.getPieceEval(occupancyPiece(square),square,occupancy(square),endgameWeight());
 		initZobristKey();
+		initNNUE();
 	}
 
 	string generateFEN(){
@@ -385,6 +427,8 @@ struct alignas(64) Board{
 		for(int square=0;square<64;square++)
 			if(occupancy(square)!=EMPTY)
 				materialCount+=material[occupancyPiece(square)];
+
+		initNNUE();
 	}
 };
 

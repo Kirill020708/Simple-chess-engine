@@ -98,8 +98,8 @@ struct TexelTuner{
 	void checkData(){
 
 		int nmb=0;
-		ifstream in("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
-		ofstream out("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData50.txt");
+		ifstream in("/Users/Apple/Desktop/projects/chessEngv2/NNUE/bigposdata.txt");
+		ofstream out("/Users/Apple/Desktop/projects/chessEngv2/NNUE/filtereddata100.txt");
 		string pos;
 		int numberOfPositions=0;
 		Worker worker;
@@ -118,7 +118,7 @@ struct TexelTuner{
 
 			int staticEval=evaluator.evaluatePosition(mainBoard);
 			int qEval=worker.texelSearch(mainBoard,mainBoard.boardColor,-inf*10,inf*10,0);
-			if(abs(qEval-staticEval)>50)
+			if(abs(qEval-staticEval)>100)
 				continue;
 			nmb++;
 
