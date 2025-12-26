@@ -41,6 +41,8 @@
 
 #endif /* HISTORY */
 
+ZobristKeys mainZobristKeys;
+
 struct StackState{
 	bool excludeTTmove=false;
 	Move excludeMove;
@@ -633,7 +635,7 @@ struct Worker{
 
 			if(stopSearch)
 				return 0;
-			
+
 			if(maxEvaluation<score){
 				if(score>alpha)
 					type=EXACT;
@@ -796,7 +798,10 @@ struct Searcher{
 		int color=mainBoard.boardColor;
 		vector<thread>threadPool(threadNumber);
 		vector<Board>boards(threadNumber,mainBoard);
+		vector<ZobristKeys>zobrists(threadNumber,mainZobristKeys);
 		for(int i=0;i<threadNumber;i++){
+			boards[i].zobristKeys=&zobrists[i];
+			boards[i].initZobristKey();
 			workers[i].nodes=0;
 			workers[i].stopSearch=false;
 			workers[i].nnueEvaluator=mainNnueEvaluator;

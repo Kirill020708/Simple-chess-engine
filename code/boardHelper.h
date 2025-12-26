@@ -163,4 +163,4 @@ struct BoardHelper {
     }
 };
 
-constexpr BoardHelper boardHelper;
+// constexpr BoardHelper boardHelper;

@@ -176,4 +176,4 @@ struct Magics{
 };
 
 
-Magics magic;
+// Magics magic;

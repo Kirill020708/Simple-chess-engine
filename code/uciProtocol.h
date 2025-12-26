@@ -192,6 +192,8 @@ struct UCIcommunicationHepler{
 			if(tokens[1]=="startpos"){
 				movesIter=3;
 				mainBoard=Board();
+				mainBoard.zobristKeys=&mainZobristKeys;
+				mainBoard.initZobristKey();
 			}
 			if(tokens[1]=="fen"){
 				string fen;
@@ -204,9 +206,8 @@ struct UCIcommunicationHepler{
 				}
 				mainBoard.initFromFEN(fen);
 			}
-			for(;movesIter<tokens.size();movesIter++){
+			for(;movesIter<tokens.size();movesIter++)
 				mainBoard.makeMove(Move(tokens[movesIter]));
-			}
 		}
 		if(mainCommand=="go"){
 			stopWaitingThread=1;
