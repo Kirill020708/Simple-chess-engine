@@ -60,8 +60,6 @@ int main(){
 
 	mainNnueEvaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/quantised.bin");
 	mainBoard=Board();
-	mainBoard.zobristKeys=&mainZobristKeys;
-	mainBoard.initZobristKey();
 	// mainBoard.initNNUE(mainNnueEvaluator);
 	// dataGenerator.generateData(1'000'000);
 	// mainBoard.initFromFEN("k7/8/8/8/8/8/8/K7 w - - 0 1");

@@ -65,10 +65,6 @@ struct alignas(64) Board{
 	int evaluation;
 	bool doNNUEupdates=false;
 
-	ZobristKeys* zobristKeys;
-
-	BoardHelper* boardHelper;
-
 	Bitboard whitePieces,blackPieces;
 	Bitboard pawns,knights,bishops,rooks,queens,kings;
 
@@ -145,21 +141,21 @@ struct alignas(64) Board{
 			int piece=occupancyPiece(square);
 			int pieceColor=occupancy(square);
 			if(pieceColor!=EMPTY)
-				zobristKey^=zobristKeys->pieceKeys[square][pieceColor][piece];
+				zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 		}
 	}
 
 	ull getZobristKey(){
 		return zobristKey^
 		
-				((boardColor==WHITE)?0:zobristKeys->colorKey)^
+				((boardColor==WHITE)?0:zobristKeys.colorKey)^
 
-				zobristKeys->canCastle[castlingWhiteQueensideBroke+
+				zobristKeys.canCastle[castlingWhiteQueensideBroke+
 									(castlingWhiteKingsideBroke<<1)+
 									(castlingBlackQueensideBroke<<2)+
 									(castlingBlackKingsideBroke<<3)]^
 
-				zobristKeys->enPassant[enPassantColumn];
+				zobristKeys.enPassant[enPassantColumn];
 	}
 
 	pair<int,int>getNNUEidx(int square,int piece,int pieceColor){
@@ -177,7 +173,7 @@ struct alignas(64) Board{
 		int pieceColor=occupancy(square);
 
 		if(pieceColor!=EMPTY){
-			zobristKey^=zobristKeys->pieceKeys[square][pieceColor][piece];
+			zobristKey^=zobristKeys.pieceKeys[square][pieceColor][piece];
 			materialCount-=material[piece];
 		}
 
@@ -224,7 +220,7 @@ struct alignas(64) Board{
 			kings|=(1ull<<square);
 
 		if(color!=EMPTY)
-			zobristKey^=zobristKeys->pieceKeys[square][color][pieceType];
+			zobristKey^=zobristKeys.pieceKeys[square][color][pieceType];
 	}
 
 	inline void putPiece(int square,int color,int pieceType,NNUEevaluator& nnueEvaluator){
@@ -280,7 +276,7 @@ struct alignas(64) Board{
 				movingPiece=move.getPromotionFlag();
 			putPiece(targetSquare,color,movingPiece);
 			if(abs(targetSquare-startSquare)==16)//updEnPassant
-				enPassantColumn=boardHelper->getColumnNumber(startSquare);
+				enPassantColumn=boardHelper.getColumnNumber(startSquare);
 		}else if(movingPiece==KING){
 			movePiece(startSquare,targetSquare);
 			if(startSquare==60&&targetSquare==58)//white left castling
@@ -332,7 +328,7 @@ struct alignas(64) Board{
 				movingPiece=move.getPromotionFlag();
 			putPiece(targetSquare,color,movingPiece,nnueEvaluator);
 			if(abs(targetSquare-startSquare)==16)//updEnPassant
-				enPassantColumn=boardHelper->getColumnNumber(startSquare);
+				enPassantColumn=boardHelper.getColumnNumber(startSquare);
 		}else if(movingPiece==KING){
 			movePiece(startSquare,targetSquare,nnueEvaluator);
 			if(startSquare==60&&targetSquare==58)//white left castling
@@ -503,12 +499,11 @@ struct alignas(64) Board{
 	}
 
 	Board(){
-		boardHelper=new BoardHelper();
 		age=0;
 		boardColor=WHITE;
-		whitePieces=boardHelper->generateMask(48,63);
-		blackPieces=boardHelper->generateMask(0,15);
-		pawns=boardHelper->generateMask(8,15)|boardHelper->generateMask(48,55);
+		whitePieces=boardHelper.generateMask(48,63);
+		blackPieces=boardHelper.generateMask(0,15);
+		pawns=boardHelper.generateMask(8,15)|boardHelper.generateMask(48,55);
 		knights=(1ull<<1)|(1ull<<6)|(1ull<<57)|(1ull<<62);
 		bishops=(1ull<<2)|(1ull<<5)|(1ull<<58)|(1ull<<61);
 		rooks=(1ull<<0)|(1ull<<7)|(1ull<<56)|(1ull<<63);
@@ -517,6 +512,7 @@ struct alignas(64) Board{
 		castlingWhiteQueensideBroke=castlingWhiteKingsideBroke=castlingBlackQueensideBroke=castlingBlackKingsideBroke=0;
 		enPassantColumn=NO_EN_PASSANT;
 		evaluation=0;
+		initZobristKey();
 
 		materialCount=0;
 		for(int square=0;square<64;square++)

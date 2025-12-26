@@ -30,4 +30,4 @@ struct ZobristKeys{
     }
 };
 
-// ZobristKeys zobristKeys;
+ZobristKeys zobristKeys;
