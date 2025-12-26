@@ -13,7 +13,7 @@ struct DataGenerator{
 
 	int randomMoveCount=8;
 
-	int resignMoveCount=3,resignScore=600;
+	int resignMoveCount=3,resignScore=1000;
 
 	int drawMoveCount=8,minDrawMoveCount=34,drawScore=20;
 
@@ -154,7 +154,7 @@ struct DataGenerator{
 		for(int i=0;i<threadNumber;i++)
 			threadPool[i]=thread(&DataGenerator::playGame,this,i);
 
-		int curGame=0,positionsNumber=0;
+		long long curGame=0,positionsNumber=0;
 
 
 	    std::chrono::steady_clock::time_point timeStart = std::chrono::steady_clock::now();
@@ -186,7 +186,7 @@ struct DataGenerator{
 			mainBoard.initNNUE(workers[finishedThread].nnueEvaluator);
 
 	        std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
-	        int elapsedTime=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - timeStart).count();
+	        long long elapsedTime=std::chrono::duration_cast<std::chrono::milliseconds> (timeNow - timeStart).count();
 
 	        if(curGame>1){
 	        	cout << "\033[2K";
@@ -208,10 +208,10 @@ struct DataGenerator{
 	        cout<<"Games played: "<<curGame<<endl;
 	        cout<<"Positions saved: "<<positionsNumber<<endl;
 	        cout<<"Positions per game: "<<positionsNumber/curGame<<endl;
-	        int sec=elapsedTime/1000;
-	        int min=sec/60;
+	        long long sec=elapsedTime/1000;
+	        long long min=sec/60;
 	        sec%=60;
-	        int hrs=min/60;
+	        long long hrs=min/60;
 	        min%=60;
 	        cout<<"Total time: "<<hrs<<"h "<<min<<"m "<<sec<<"s"<<endl;
 	        cout<<"Games per sec: "<<fixed<<setprecision(1)<<curGame*1000.0/elapsedTime<<endl;
