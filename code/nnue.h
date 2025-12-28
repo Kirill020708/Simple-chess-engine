@@ -10,8 +10,9 @@
 
 #endif /* DECLARS */
 
+#define INCBIN_SILENCE_BITCODE_WARNING
 #include "incbin.h"
-INCBIN(NETWORK, "code/quantisedv2.bin");
+INCBIN(NETWORK, "/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/quantisedv2.bin");
 
 const int inputSize=64*12,hiddenLayerSize=64;
 const int QA=255,QB=64,SCALE=400;

@@ -8,6 +8,7 @@
 
 struct DataGenerator{
 	string outputPath="/Users/Apple/Desktop/projects/chessEngv2/NNUE/datagen.txt";
+	string outputPathBin="/Users/Apple/Desktop/projects/chessEngv2/NNUE/data.vf";
 	int softNodesLimit=5000,hardNodesLimit=50000;
 	int threadNumber=1;
 
@@ -21,8 +22,15 @@ struct DataGenerator{
 	vector<Board>boards;
 
 	vector<vector<string>>results;
+	vector<vector<char>>resultsBin;
 
 	vector<bool>finished;
+
+	inline int mirroredSquare(int square){
+		int row=7-(square>>3);
+		int col=(square&7);
+		return (row<<3)+col;
+	}
 
 	void playGame(int workerIdx){
 		int curMoveNumber=0;
@@ -37,9 +45,12 @@ struct DataGenerator{
 		if(rng()%2==0)
 			curRandomMoveCount++;
 
+		int resultBinPos=-1;
+
 		while(true){
 			curMoveNumber++;
 			if(curMoveNumber<=curRandomMoveCount){
+
 
 				workers[workerIdx].moveListGenerator.generateMoves(boards[workerIdx],workers[workerIdx].historyHelper,
 																   boards[workerIdx].boardColor,0,DONT_SORT,ALL_MOVES);
@@ -47,14 +58,126 @@ struct DataGenerator{
 				Move randomMove=workers[workerIdx].moveListGenerator.moveList[0][rngT()%movesCount];
 				boards[workerIdx].makeMove(randomMove,workers[workerIdx].nnueEvaluator);
 
+				if(curMoveNumber==curRandomMoveCount){
+					ull board=(boards[workerIdx].whitePieces|boards[workerIdx].blackPieces).bitboard;
+					for(int i=7;i>=0;i--)
+						resultsBin[workerIdx].push_back((board&(ull(0b11111111)<<(i*8)))>>(i*8));
+
+					char prevPiece=-1;
+					int nmbOfPieces=0;
+					for(int row=7;row>=0;row--)
+						for(int col=0;col<8;col++){
+							int square=row*8+col;
+							int color=boards[workerIdx].occupancy(square);
+							int piece=boards[workerIdx].occupancyPiece(square);
+							if(color!=EMPTY){
+								nmbOfPieces++;
+								char code=(piece-1);
+								if(piece==ROOK){
+									if(square==0&&boards[workerIdx].castlingBlackQueensideBroke==false)
+										code=6;
+									if(square==7&&boards[workerIdx].castlingBlackKingsideBroke==false)
+										code=6;
+									if(square==56&&boards[workerIdx].castlingWhiteQueensideBroke==false)
+										code=6;
+									if(square==63&&boards[workerIdx].castlingWhiteKingsideBroke==false)
+										code=6;
+								}
+								if(color==BLACK)
+									code+=(1<<3);
+								if(prevPiece==-1)
+									prevPiece=code;
+								else{
+									code=(prevPiece)+(code<<4);
+									resultsBin[workerIdx].push_back(code);
+									prevPiece=-1;
+								}
+							}
+						}
+					while(nmbOfPieces<32){
+						nmbOfPieces++;
+						int code=0;
+						if(prevPiece==-1)
+							prevPiece=code;
+						else{
+							code=(prevPiece)+(code<<4);
+							resultsBin[workerIdx].push_back(code);
+							prevPiece=-1;
+						}
+					}
+					char enp=64;
+					if(boards[workerIdx].enPassantColumn!=NO_EN_PASSANT){
+						int col=boards[workerIdx].enPassantColumn;
+						int row=5;
+						if(boards[workerIdx].boardColor==BLACK)
+							row=2;
+						enp=row*8+col;
+					}
+					if(boards[workerIdx].boardColor==BLACK)
+						enp+=(1<<7);
+					resultsBin[workerIdx].push_back(enp);
+
+					resultsBin[workerIdx].push_back(0);
+					resultsBin[workerIdx].push_back(0);
+					resultsBin[workerIdx].push_back(0);
+					resultsBin[workerIdx].push_back(0);
+					resultsBin[workerIdx].push_back(0);
+
+					resultBinPos=resultsBin[workerIdx].size();
+
+					resultsBin[workerIdx].push_back(0);
+				}
+
 			}else{
 
 				workers[workerIdx].IDsearch(boards[workerIdx],256,softNodesLimit,hardNodesLimit);
 				int score=workers[workerIdx].rootScore;
 				if(boards[workerIdx].boardColor==BLACK)
 					score=-score;
-				if(abs(score)<=9000)
-					results[workerIdx].push_back(boards[workerIdx].generateFEN()+" | "+to_string(score)+" | ");
+				if(abs(score)<=9000){
+					results[workerIdx].push_back(boards[workerIdx].generateFEN()+" | "+to_string(score)+" | ");	
+				}
+
+				Move bestMove=workers[workerIdx].bestMove;
+				int start=bestMove.getStartSquare();
+				int target=bestMove.getTargetSquare();
+				int prom=bestMove.getPromotionFlag();
+
+				int type=0;
+
+				if(prom!=0){
+					type=3;
+					prom-=2;
+				}
+
+				if(boards[workerIdx].occupancyPiece(start)==PAWN && (start&7)!=(target&7) && boards[workerIdx].occupancyPiece(target)==NOPIECE)
+					type=1; // en-passant
+
+				if(boards[workerIdx].occupancyPiece(start)==KING && abs((start&7)-(target&7))>=2){
+					type=2; // castling
+					if(target==2)
+						target=0;
+					if(target==6)
+						target=7;
+					if(target==58)
+						target=56;
+					if(target==62)
+						target=63;
+				}
+
+				int moveCode=Move(mirroredSquare(start),mirroredSquare(target),prom).move;
+				moveCode+=(type<<14);
+				resultsBin[workerIdx].push_back(moveCode&255);
+				resultsBin[workerIdx].push_back((moveCode>>8)&255);
+
+				if(score>32767)
+					score=32767;
+				if(score<-32768)
+					score=-32768;
+				resultsBin[workerIdx].push_back(score&255);
+				resultsBin[workerIdx].push_back((score>>8)&255);
+
+
 				boards[workerIdx].makeMove(workers[workerIdx].bestMove,workers[workerIdx].nnueEvaluator);
 
 
@@ -124,6 +247,14 @@ struct DataGenerator{
 		if(result==-1)
 			resultStr="0.0";
 
+
+		resultsBin[workerIdx].push_back(0);
+		resultsBin[workerIdx].push_back(0);
+		resultsBin[workerIdx].push_back(0);
+		resultsBin[workerIdx].push_back(0);
+
+		resultsBin[workerIdx].insert(resultsBin[workerIdx].begin()+resultBinPos,char(result+1));
+
 		for(auto &str:results[workerIdx])
 			str+=resultStr;
 		finished[workerIdx]=true;
@@ -134,6 +265,7 @@ struct DataGenerator{
 		workers.resize(threadNumber);
 		boards.resize(threadNumber,mainBoard);
 		results.resize(threadNumber);
+		resultsBin.resize(threadNumber);
 		finished.resize(threadNumber,false);
 		vector<thread>threadPool(threadNumber);
 
@@ -150,6 +282,7 @@ struct DataGenerator{
 		}
 
 		ofstream out(outputPath);
+		ofstream outBin(outputPathBin,ios::binary);
 
 		for(int i=0;i<threadNumber;i++)
 			threadPool[i]=thread(&DataGenerator::playGame,this,i);
@@ -175,11 +308,21 @@ struct DataGenerator{
 			curGame++;
 			threadPool[finishedThread].join();
 			positionsNumber+=results[finishedThread].size();
+
 			for(auto str:results[finishedThread])
 				out<<str<<'\n';
 
+			for(auto bt:resultsBin[finishedThread]){
+				// for(int j=0;j<8;j++)
+				// 	out<<((bt&(1<<j))!=0);
+				// out<<' ';
+				outBin.write(reinterpret_cast<char*>(&bt), sizeof(bt));
+			}
+
+
 			boards[finishedThread]=mainBoard;
 			results[finishedThread]=vector<string>();
+			resultsBin[finishedThread]=vector<char>();
 			finished[finishedThread]=false;
 
 			workers[finishedThread].nnueEvaluator=mainNnueEvaluator;
