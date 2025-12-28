@@ -10,7 +10,7 @@
 
 #endif /* DECLARS */
 
-const int inputSize=64*12,hiddenLayerSize=32;
+const int inputSize=64*12,hiddenLayerSize=64;
 const int QA=255,QB=64,SCALE=400;
 
 struct NNUEevaluator{

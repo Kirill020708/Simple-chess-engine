@@ -762,6 +762,7 @@ struct Worker{
 };
 
 struct Searcher{
+	bool doInfoOutput=true;
 	int threadNumber=1;
 	vector<Worker>workers;
 	bool stopIDsearch;
@@ -921,7 +922,7 @@ struct Searcher{
 	        	}
 	        }
 
-	        if(!minimal||stopIDsearch){
+	        if((!minimal || stopIDsearch) && doInfoOutput){
 				cout<<"info depth "<<depth<<
 				" score ";
 				if(MATE_SCORE-abs(score)>maxDepth)
@@ -944,7 +945,9 @@ struct Searcher{
 				break;
 
 		}
-		cout<<"bestmove "<<bestMove.convertToUCI()<<endl;
+	    stopWaitingThread=true;
+	    if(doInfoOutput)
+			cout<<"bestmove "<<bestMove.convertToUCI()<<endl;
 		if(waitThread.joinable())
 			waitThread.join();
 	}
