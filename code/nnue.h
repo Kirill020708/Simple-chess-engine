@@ -10,6 +10,9 @@
 
 #endif /* DECLARS */
 
+#include "incbin.h"
+INCBIN(NETWORK, "code/quantisedv2.bin");
+
 const int inputSize=64*12,hiddenLayerSize=64;
 const int QA=255,QB=64,SCALE=400;
 
@@ -146,23 +149,25 @@ struct NNUEevaluator{
 	}
 
 	void initFromFile(string path){
-		ifstream file(path,ios::binary);
+		// ifstream file(path,ios::binary);
 
-		if(!file){
-			cout<<"Failed to open NNUE file\n";
-			return;
-		}
+		// if(!file){
+		// 	cout<<"Failed to open NNUE file\n";
+		// 	return;
+		// }
 
 		initialized=true;
 
 		vector<int16_t> data;
-		file.seekg(0, ios::end);
-		size_t file_size = file.tellg();
-		file.seekg(0, ios::beg);
+		size_t file_size = gNETWORKSize;
 		size_t num_elements = file_size / sizeof(int16_t);
-		// cout<<num_elements<<'\n';
+
+		// cout<<num_elements<<endl;
     	data.resize(num_elements);
-    	file.read(reinterpret_cast<char*>(data.data()), file_size);
+    	// file.read(reinterpret_cast<char*>(data.data()), file_size);
+
+	    const int16_t* src_data = reinterpret_cast<const int16_t*>(gNETWORKData);
+	    std::copy(src_data, src_data + num_elements, data.begin());
 
     	int iter=0;
     	for(int i=0;i<inputSize;i++)
