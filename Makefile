@@ -1,3 +1,5 @@
+EXE ?= Simpler
+CXX ?= g++
 all:
-	g++ code/main.cpp -o main -O2 -mavx2
+	$(CXX) code/main.cpp -o $(EXE) -O2 -march=native
 
