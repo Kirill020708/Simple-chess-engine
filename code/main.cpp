@@ -71,13 +71,14 @@ int main(int argc, char* argv[]){
 
 
 	if(argc>=2 && strcmp(argv[1], "bench") == 0){
-		benchmarker.benchmark(6,10000);
+		benchmarker.benchmark(8,10000);
+		exit(0);
 	}
 
 	// mainBoard.initNNUE(mainNnueEvaluator);
 	// dataGenerator.generateData(1'000'000);
 	// mainBoard.initFromFEN("k7/8/8/8/8/8/8/K7 w - - 0 1");
-	// cout<<nnueEvaluator.evaluate(WHITE)<<'\n';
+	// cout<<nnueEvaluator.evaluate(WHITE)<<'\n'; 
 
 	// cout<<'\n';
 	// return 0;
