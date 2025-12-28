@@ -153,6 +153,7 @@ struct UCIcommunicationHepler{
 			cout<<"option name Threads type spin default 1 min 1 max 1024"<<endl;
 			cout<<"option name Hash type spin default 256 min 1 max 33554432"<<endl;
 			cout<<"option name Minimal type check default false"<<endl;
+			cout<<"option name NNUEpath type string default quantisedv2.bin"<<endl;
 			cout<<"uciok"<<endl;
 			return;
 		}
@@ -292,6 +293,9 @@ struct UCIcommunicationHepler{
 			if(tokens[2]=="Hash"){
 				int sz=stoi(tokens[4]);
 				reallocateHashMemory(sz);
+			}
+			if(tokens[2]=="NNUEpath"){
+				mainNnueEvaluator.initFromFile(tokens[4]);
 			}
 		}
 		if(mainCommand=="ucinewgame"){
