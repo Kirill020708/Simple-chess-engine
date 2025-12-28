@@ -24,6 +24,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <immintrin.h>
+#include <cstring>
 
 using namespace std;
  
