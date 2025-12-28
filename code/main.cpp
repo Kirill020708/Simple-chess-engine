@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
 
 
 	if(argc>=2 && strcmp(argv[1], "bench") == 0){
-		benchmarker.benchmark(10,1000/52);
+		benchmarker.benchmark(8,1000);
 	}
 
 	// mainBoard.initNNUE(mainNnueEvaluator);
