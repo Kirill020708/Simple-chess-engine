@@ -4,7 +4,7 @@
 #include "searcher.h"
 
 #endif /* SEARCHER */
-
+ 
 
 #ifndef UCI
 #define UCI
