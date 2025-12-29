@@ -88,3 +88,21 @@ string squareNumberToUCI(int square){
     s.push_back(char('0'+8-(square>>3)));
     return s;
 }
+
+string intTo5symbFormat(int x){ // for eval diagram
+	string s;
+	if(x>=0)
+		s+="+";
+	else
+		s+="-";
+	x=abs(x);
+	s+=to_string(x/100);
+	s.push_back('.');
+	x%=100;
+	if(x<10)
+		s+="0";
+	s+=to_string(x);
+	while(s.size()>5)
+		s.pop_back();
+	return s;
+}

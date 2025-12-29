@@ -180,6 +180,50 @@ struct UCIcommunicationHepler{
 			if(mainBoard.boardColor==BLACK)
 				nnueEval=-nnueEval;
 			cout<<nnueEval<<" cp (NNUE, white's perspective)"<<endl;
+
+			char pieceChar[2][7]=
+			{
+				{' ','P','N','B','R','Q','K'},
+				{' ','p','n','b','r','q','k'}
+			};
+			cout<<"+-------+-------+-------+-------+-------+-------+-------+-------+\n";
+			for(int row=0;row<8;row++){
+				cout<<'|';
+				for(int col=0;col<8;col++){
+					int square=row*8+col;
+					int color=mainBoard.occupancy(square);
+					int piece=mainBoard.occupancyPiece(square);
+					cout<<"   ";
+					if(color==EMPTY)
+						cout<<' ';
+					else
+						cout<<pieceChar[color][piece];
+					cout<<"   |";
+				}
+				cout<<'\n';
+				cout<<'|';
+				for(int col=0;col<8;col++){
+					int square=row*8+col;
+					int color=mainBoard.occupancy(square);
+					int piece=mainBoard.occupancyPiece(square);
+					cout<<" ";
+					if(color==EMPTY)
+						cout<<"     ";
+					else{
+						mainBoard.clearPosition(square,mainNnueEvaluator);
+						int newNnueEval=mainNnueEvaluator.evaluate(mainBoard.boardColor);
+						if(mainBoard.boardColor==BLACK)
+							newNnueEval=-newNnueEval;
+						mainBoard.putPiece(square,color,piece,mainNnueEvaluator);
+						int pieceValue=nnueEval-newNnueEval;
+						cout<<intTo5symbFormat(pieceValue);
+					}
+					cout<<" |";
+				}
+				cout<<"\n+-------+-------+-------+-------+-------+-------+-------+-------+\n";
+			}
+			cout<<endl;
+
 			evaluator.showInfo=false;
 			evaluator.uciOutput=false;
 			return;
