@@ -253,7 +253,10 @@ struct DataGenerator{
 		resultsBin[workerIdx].push_back(0);
 		resultsBin[workerIdx].push_back(0);
 
-		resultsBin[workerIdx].insert(resultsBin[workerIdx].begin()+resultBinPos,char(result+1));
+		if(resultBinPos>=0)
+			resultsBin[workerIdx].insert(resultsBin[workerIdx].begin()+resultBinPos,char(result+1));
+		else
+			resultsBin[workerIdx].clear();
 
 		// for(auto &str:results[workerIdx])
 		// 	str+=resultStr;
@@ -284,8 +287,8 @@ struct DataGenerator{
 		// ofstream out(outputPath);
 		ofstream outBin(outputPathBin,ios::binary);
 
-		for(int i=0;i<threadNumber;i++)
-			threadPool[i]=thread(&DataGenerator::playGame,this,i);
+		// for(int i=0;i<threadNumber;i++)
+		// 	threadPool[i]=thread(&DataGenerator::playGame,this,i);
 
 		long long curGame=0,positionsNumber=0;
 
@@ -295,16 +298,17 @@ struct DataGenerator{
 	    cout<<endl;
 
 		while(true){
-			int finishedThread=-1;
-			for(int i=0;i<threadNumber;i++)
-				if(finished[i]){
-					finishedThread=i;
-					break;
-				}
-			if(finishedThread==-1){
-				std::this_thread::sleep_for(std::chrono::microseconds(100));
-				continue;
-			}
+			int finishedThread=0;
+			playGame(finishedThread);
+			// for(int i=0;i<threadNumber;i++)
+			// 	if(finished[i]){
+			// 		finishedThread=i;
+			// 		break;
+			// 	}
+			// if(finishedThread==-1){
+			// 	std::this_thread::sleep_for(std::chrono::microseconds(100));
+			// 	continue;
+			// }
 			curGame++;
 			threadPool[finishedThread].join();
 			positionsNumber+=results[finishedThread];
