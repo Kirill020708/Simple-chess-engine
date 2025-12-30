@@ -186,7 +186,30 @@ struct UCIcommunicationHepler{
 				{' ','P','N','B','R','Q','K'},
 				{' ','p','n','b','r','q','k'}
 			};
+
+			int materials[6]={0,100,300,300,500,900};
+			int nnueMaterial=0,plainMaterial=0;
+			for(int square=0;square<64;square++){
+				int color=mainBoard.occupancy(square);
+				int piece=mainBoard.occupancyPiece(square);
+				if(color!=EMPTY&&piece!=KING){
+					plainMaterial+=materials[piece];
+
+					mainBoard.clearPosition(square,mainNnueEvaluator);
+					int newNnueEval=mainNnueEvaluator.evaluate(mainBoard.boardColor);
+					if(mainBoard.boardColor==BLACK)
+						newNnueEval=-newNnueEval;
+					mainBoard.putPiece(square,color,piece,mainNnueEvaluator);
+					nnueMaterial+=abs(nnueEval-newNnueEval);
+				}
+			}
+
+			float scale=float(plainMaterial)/nnueMaterial;
+			// cout<<plainMaterial<<' '<<nnueMaterial<<'\n';
+			cout<<int(nnueEval*scale)<<" cp (scaled NNUE, white's perspective)"<<endl;
+
 			cout<<"+-------+-------+-------+-------+-------+-------+-------+-------+\n";
+
 			for(int row=0;row<8;row++){
 				cout<<'|';
 				for(int col=0;col<8;col++){
@@ -216,7 +239,7 @@ struct UCIcommunicationHepler{
 							newNnueEval=-newNnueEval;
 						mainBoard.putPiece(square,color,piece,mainNnueEvaluator);
 						int pieceValue=nnueEval-newNnueEval;
-						cout<<intTo5symbFormat(pieceValue);
+						cout<<intTo5symbFormat(int(pieceValue*scale));
 					}
 					cout<<" |";
 				}
