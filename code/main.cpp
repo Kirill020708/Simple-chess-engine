@@ -56,7 +56,7 @@
 string squareToString(int square){
 	return string(1,char((square&7)+'a'))+string(1,char(7-(square>>3)+'1'));
 } 
-
+ 
 int main(int argc, char* argv[]){ 
 	// texelTuner.checkData();
 	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
