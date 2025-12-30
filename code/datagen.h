@@ -21,7 +21,7 @@ struct DataGenerator{
 	vector<Worker>workers;
 	vector<Board>boards;
 
-	vector<vector<string>>results;
+	vector<int>results;
 	vector<vector<char>>resultsBin;
 
 	vector<bool>finished;
@@ -129,14 +129,14 @@ struct DataGenerator{
 				}
 
 			}else{
-
+				results[workerIdx]++;
 				workers[workerIdx].IDsearch(boards[workerIdx],256,softNodesLimit,hardNodesLimit);
 				int score=workers[workerIdx].rootScore;
 				if(boards[workerIdx].boardColor==BLACK)
 					score=-score;
-				if(abs(score)<=9000){
-					results[workerIdx].push_back(boards[workerIdx].generateFEN()+" | "+to_string(score)+" | ");	
-				}
+				// if(abs(score)<=9000){
+				// 	results[workerIdx].push_back(boards[workerIdx].generateFEN()+" | "+to_string(score)+" | ");	
+				// }
 
 				Move bestMove=workers[workerIdx].bestMove;
 				int start=bestMove.getStartSquare();
@@ -255,8 +255,8 @@ struct DataGenerator{
 
 		resultsBin[workerIdx].insert(resultsBin[workerIdx].begin()+resultBinPos,char(result+1));
 
-		for(auto &str:results[workerIdx])
-			str+=resultStr;
+		// for(auto &str:results[workerIdx])
+		// 	str+=resultStr;
 		finished[workerIdx]=true;
 	}
 
@@ -264,7 +264,7 @@ struct DataGenerator{
 		alwaysReplace=true;
 		workers.resize(threadNumber);
 		boards.resize(threadNumber,mainBoard);
-		results.resize(threadNumber);
+		results.resize(threadNumber,0);
 		resultsBin.resize(threadNumber);
 		finished.resize(threadNumber,false);
 		vector<thread>threadPool(threadNumber);
@@ -281,7 +281,7 @@ struct DataGenerator{
 			}
 		}
 
-		ofstream out(outputPath);
+		// ofstream out(outputPath);
 		ofstream outBin(outputPathBin,ios::binary);
 
 		for(int i=0;i<threadNumber;i++)
@@ -307,10 +307,10 @@ struct DataGenerator{
 			}
 			curGame++;
 			threadPool[finishedThread].join();
-			positionsNumber+=results[finishedThread].size();
+			positionsNumber+=results[finishedThread];
 
-			for(auto str:results[finishedThread])
-				out<<str<<'\n';
+			// for(auto str:results[finishedThread])
+			// 	out<<str<<'\n';
 
 			for(auto bt:resultsBin[finishedThread]){
 				// for(int j=0;j<8;j++)
@@ -321,7 +321,7 @@ struct DataGenerator{
 
 
 			boards[finishedThread]=mainBoard;
-			results[finishedThread]=vector<string>();
+			results[finishedThread]=0;
 			resultsBin[finishedThread]=vector<char>();
 			finished[finishedThread]=false;
 
