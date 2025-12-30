@@ -310,7 +310,7 @@ struct DataGenerator{
 			// 	continue;
 			// }
 			curGame++;
-			threadPool[finishedThread].join();
+			// threadPool[finishedThread].join();
 			positionsNumber+=results[finishedThread];
 
 			// for(auto str:results[finishedThread])
@@ -364,16 +364,16 @@ struct DataGenerator{
 	        cout<<"Games per sec: "<<fixed<<setprecision(1)<<curGame*1000.0/elapsedTime<<endl;
 	        cout<<"Positions per sec: "<<positionsNumber*1000/elapsedTime<<endl;
 	        if(curGame==numberOfGames){
-	        	for(int i=0;i<threadNumber;i++)
-	        		if(i!=finishedThread){
-	        			finished[i]=true;
-	        			threadPool[i].join();
-	        		}
+	        	// for(int i=0;i<threadNumber;i++)
+	        	// 	if(i!=finishedThread){
+	        	// 		finished[i]=true;
+	        	// 		threadPool[i].join();
+	        	// 	}
 
 	        	cout<<"Done!\n"<<endl;
 	        	break;
 	        }
-			threadPool[finishedThread]=thread(&DataGenerator::playGame,this,finishedThread);
+			// threadPool[finishedThread]=thread(&DataGenerator::playGame,this,finishedThread);
 		}
 		alwaysReplace=false;
 	}
