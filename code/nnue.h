@@ -12,7 +12,7 @@
 
 #define INCBIN_SILENCE_BITCODE_WARNING
 #include "incbin.h"
-INCBIN(NETWORK, "code/quantisedfx.bin");
+INCBIN(NETWORK, "code/quantisednw.bin");
 
 const int inputSize=64*12,hiddenLayerSize=64;
 const int QA=255,QB=64,SCALE=400;
