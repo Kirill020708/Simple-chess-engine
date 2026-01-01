@@ -368,18 +368,18 @@ struct Worker{
 		// 	if(killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][bestKillerMove]&&killerMovesCount[depthFromRoot][i]>1)
 		// 		bestKillerMove=i;
 
-		// int killerMove=-1,killerBackup=-1;
+		int killerMove=-1,killerBackup=-1;
 
-		// for(int i=0;i<killMovesNumber;i++){
-		// 	if(killerMove==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerMove]){
-		// 		killerBackup=killerMove;
-		// 		killerMove=i;
-		// 	}
-		// 	else if(killerBackup==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerBackup])
-		// 		killerBackup=i;
-		// }
-		// moveListGenerator.killerMove=killerMovesTable[depthFromRoot][killerMove];
-		// moveListGenerator.killerBackup=killerMovesTable[depthFromRoot][killerBackup];
+		for(int i=0;i<killMovesNumber;i++){
+			if(killerMove==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerMove]){
+				killerBackup=killerMove;
+				killerMove=i;
+			}
+			else if(killerBackup==-1||killerMovesAge[depthFromRoot][i]>killerMovesAge[depthFromRoot][killerBackup])
+				killerBackup=i;
+		}
+		moveListGenerator.killerMove=killerMovesTable[depthFromRoot][killerMove];
+		moveListGenerator.killerBackup=killerMovesTable[depthFromRoot][killerBackup];
 		// cout<<board.generateFEN()<<' '<<moveListGenerator.killerMove.convertToUCI()<<' '<<moveListGenerator.killerBackup.convertToUCI()<<endl;
 
 		// if(
@@ -647,43 +647,43 @@ struct Worker{
 				if(alpha<score)
 					alpha=score;
 				if(alpha>=beta){
-					// if(board.isQuietMove(move)){
-					// 	// update killer move
-					// 	bool killerStored=false; // flag "is killer move stored"
-					// 	int badKiller=-1; // if some killer move has only one storing, it can be replaced
-					// 	for(int i=0;i<killMovesNumber;i++){
-					// 		if(killerMovesTable[depthFromRoot][i]==move){
-					// 			killerMovesCount[depthFromRoot][i]++;
-					// 			killerMovesAge[depthFromRoot][i]=nodes;
-					// 			killerStored=true;
-					// 			break;
-					// 		}
-					// 		// if(killerMovesCount[depthFromRoot][i]==1)
-					// 		// 	badKiller=i;
-					// 	}
-					// 	if(!killerStored){
-					// 		for(int i=0;i<killMovesNumber;i++){
-					// 			if(killerMovesTable[depthFromRoot][i]==Move()){
-					// 				killerMovesTable[depthFromRoot][i]=move;
-					// 				killerMovesCount[depthFromRoot][i]=1;
-					// 				killerMovesAge[depthFromRoot][i]=nodes;
-					// 				killerStored=true;
-					// 				break;
-					// 			}
-					// 		}
-					// 	}
-					// 	if(!killerStored){
-					// 		if(badKiller==-1){
-					// 			// get oldest killer
-					// 			for(int i=0;i<killMovesNumber;i++)
-					// 				if(badKiller==-1||killerMovesAge[depthFromRoot][i]<killerMovesAge[depthFromRoot][badKiller])
-					// 					badKiller=i;
-					// 		}
-					// 		killerMovesTable[depthFromRoot][badKiller]=move;
-					// 		killerMovesCount[depthFromRoot][badKiller]=1;
-					// 		killerMovesAge[depthFromRoot][badKiller]=nodes;
-					// 	}
-					// }
+					if(board.isQuietMove(move)){
+						// update killer move
+						bool killerStored=false; // flag "is killer move stored"
+						int badKiller=-1; // if some killer move has only one storing, it can be replaced
+						for(int i=0;i<killMovesNumber;i++){
+							if(killerMovesTable[depthFromRoot][i]==move){
+								killerMovesCount[depthFromRoot][i]++;
+								killerMovesAge[depthFromRoot][i]=nodes;
+								killerStored=true;
+								break;
+							}
+							// if(killerMovesCount[depthFromRoot][i]==1)
+							// 	badKiller=i;
+						}
+						if(!killerStored){
+							for(int i=0;i<killMovesNumber;i++){
+								if(killerMovesTable[depthFromRoot][i]==Move()){
+									killerMovesTable[depthFromRoot][i]=move;
+									killerMovesCount[depthFromRoot][i]=1;
+									killerMovesAge[depthFromRoot][i]=nodes;
+									killerStored=true;
+									break;
+								}
+							}
+						}
+						if(!killerStored){
+							if(badKiller==-1){
+								// get oldest killer
+								for(int i=0;i<killMovesNumber;i++)
+									if(badKiller==-1||killerMovesAge[depthFromRoot][i]<killerMovesAge[depthFromRoot][badKiller])
+										badKiller=i;
+							}
+							killerMovesTable[depthFromRoot][badKiller]=move;
+							killerMovesCount[depthFromRoot][badKiller]=1;
+							killerMovesAge[depthFromRoot][badKiller]=nodes;
+						}
+					}
 
 					if((board.whitePieces&board.blackPieces).getBit(move.getTargetSquare())==0) // move is not capture
 						historyHelper.update(color,move,depth*depth);

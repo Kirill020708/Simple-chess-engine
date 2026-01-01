@@ -153,10 +153,10 @@ struct MoveListGenerator{
 					}
 					if(move==hashMove)
 						move.score+=(1<<hashMoveShift);
-					// if(move==killerMove)
-					// 	move.score+=(1<<(killerMoveShift+1));
-					// else if(move==killerBackup)
-					// 	move.score+=(1<<killerMoveShift);
+					if(move==killerMove)
+						move.score+=(1<<(killerMoveShift+1));
+					else if(move==killerBackup)
+						move.score+=(1<<killerMoveShift);
 					moveList[depth][moveListSize[depth]++]=move;
 				}
 			}
