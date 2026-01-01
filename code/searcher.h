@@ -704,8 +704,8 @@ struct Worker{
 		return maxEvaluation;
 	}
 
-	void startSearch(Board& board,int depth,int alpha,int beta){
-		search(board,board.boardColor,depth,true,alpha,beta,0);
+	int startSearch(Board& board,int depth,int alpha,int beta){
+		return search(board,board.boardColor,depth,true,alpha,beta,0);
 		doneSearch=true;
 	}
 
@@ -735,6 +735,22 @@ struct Worker{
 
 	void init(){
 		historyHelper.clear();
+	}
+
+	int aspirationSearch(Board& board,int depth,int expectedScore){
+		const int aspirationWindow=25,aspirationWindowMult=2;
+		int alphaWindow=aspirationWindow,betaWindow=aspirationWindow;
+		while(true){
+			int alpha=expectedScore-alphaWindow;
+			int beta=expectedScore+betaWindow;
+			int score=startSearch(board,depth,alpha,beta);
+			if(score<=alpha)
+				alphaWindow*=aspirationWindowMult;
+			else if(score>=beta)
+				betaWindow*=aspirationWindowMult;
+			else
+				return score;
+		}
 	}
 
 	void IDsearch(Board& board,int maxDepth,int nodesLimit,int nodesH){
@@ -838,7 +854,7 @@ struct Searcher{
 				for(int i=0;i<threadNumber;i++){
 					workers[i].doneSearch=false;
 					workers[i].stopSearch=false;
-					threadPool[i]=thread(&Worker::startSearch,&workers[i],ref(boards[i]),depth,alpha,beta);
+					threadPool[i]=thread(&Worker::aspirationSearch,&workers[i],ref(boards[i]),depth,scores[depth-1]);
 					// threadPool[i]=thread(&Worker::search,&workers[i],ref(boards[i]),boards[i].boardColor,depth,1,alpha,beta,0);
 				}
 
