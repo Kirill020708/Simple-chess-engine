@@ -332,9 +332,9 @@ struct Worker{
 			!isPvNode
 			){
 
-			int R=floor(2+
-				depth/6.0+
-				(staticEval-beta)/100.0);
+			int R=floor(4+
+				depth/4.0+
+				min((staticEval-beta)/200.0,3.0));
 			int prevEnPassColumn=board.makeNullMove();
 			int score=-search(board,oppositeColor,depth-1-R,0,-beta,-beta+1,depthFromRoot+1);
 			board.makeNullMove();
