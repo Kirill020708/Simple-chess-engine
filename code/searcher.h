@@ -402,28 +402,29 @@ struct Worker{
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
 
 		int extendTTmove=0;
-		// if(
-		// 	ttMove!=Move() && 
-		// 	depth>=6 && 
-		// 	!searchStack[depthFromRoot].excludeTTmove && 
-		// 	moveListGenerator.moveListSize[depthFromRoot]>1 && 
-		// 	nodeType==LOWER_BOUND
-		// 	){
-		// 	auto ttEntry=transpositionTable.getEntry(board,currentZobristKey);
+		if(
+			ttMove!=Move() && 
+			depth>=6 && 
+			!searchStack[depthFromRoot].excludeTTmove && 
+			moveListGenerator.moveListSize[depthFromRoot]>1 && 
+			nodeType==LOWER_BOUND
+			){
+			auto ttEntry=transpositionTable.getEntry(board,currentZobristKey);
 
-		// 	searchStack[depthFromRoot+1].excludeTTmove=true;
-		// 	searchStack[depthFromRoot+1].excludeMove=ttMove;
-		// 	int margin=80;
-		// 	int singularScore=search(board,color,depth/2,0,ttEntry.evaluation-margin-1,ttEntry.evaluation-margin,depthFromRoot+1);
+			searchStack[depthFromRoot+1].excludeTTmove=true;
+			searchStack[depthFromRoot+1].excludeMove=ttMove;
+			int margin=depth*2;
+			int singBeta=ttEntry.evaluation-margin;
+			int singularScore=search(board,color,depth/2,0,singBeta-1,singBeta,depthFromRoot+1);
 
-		// 	if(singularScore<ttEntry.evaluation-margin){
-		// 		extendTTmove=1;
-		// 		singularExtended++;
-		// 		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
-		// 	}
+			if(singularScore<singBeta){
+				extendTTmove=1;
+				singularExtended++;
+				// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
+			}
 
-		// 	searchStack[depthFromRoot+1].excludeTTmove=false;
-		// }
+			searchStack[depthFromRoot+1].excludeTTmove=false;
+		}
 
 
 		int maxEvaluation=-inf;
