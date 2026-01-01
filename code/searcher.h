@@ -391,13 +391,13 @@ struct Worker{
 		// 	moveListGenerator.hashMove=searchStack[depthFromRoot+1].bestMove;
 		// }
 
-		// if(
-		// 	depth>=6 &&
-		// 	isPvNode &&
-		// 	ttMove==Move()){
+		if(
+			depth>=6 &&
+			isPvNode &&
+			ttMove==Move()){
 
-		// 	depth--;
-		// }
+			depth--;
+		}
 
 		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
 
