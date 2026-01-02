@@ -1,6 +1,5 @@
 // struct for easier work with bitboards
 
-
 #pragma once
 
 #ifndef DECLARS
@@ -23,19 +22,19 @@ struct Bitboard {
         return (bitboard & (1ull << i)) > 0;
     }
 
-    constexpr inline int getLastBitNumber() const { //returns the number of first enabled bit
+    constexpr inline int getLastBitNumber() const { // returns the number of first enabled bit
         if (!bitboard)
             return -1;
         return 63 - __builtin_clzll(bitboard);
     }
 
-    constexpr inline int getFirstBitNumber() const { //returns the number of first enabled bit
+    constexpr inline int getFirstBitNumber() const { // returns the number of first enabled bit
         if (!bitboard)
             return -1;
         return __builtin_ctzll(bitboard);
     }
 
-    constexpr inline int getFirstBitNumberAndExclude() { //returns the number of first enabled bit and disables it
+    constexpr inline int getFirstBitNumberAndExclude() { // returns the number of first enabled bit and disables it
         if (!bitboard)
             return -1;
         int b = __builtin_ctzll(bitboard);

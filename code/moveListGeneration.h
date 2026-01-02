@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #ifndef MOVE
 #define MOVE
 
@@ -38,7 +37,6 @@
 
 #endif /* PIECESQTABLE */
 
-
 #ifndef HISTORY
 #define HISTORY
 
@@ -46,229 +44,227 @@
 
 #endif /* HISTORY */
 
+const int maxListSize = 256;
 
-const int maxListSize=256;
+// score: 10 bits for history (or see) < 2 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
 
-//score: 10 bits for history (or see) < 2 bit for killer < 6 bits for mvv-lva < 1 bit for TT move
+struct MoveListGenerator {
+    const int killerMoveShift = 10, captureShift = 12, hashMoveShift = 18;
 
-struct MoveListGenerator{
-	const int killerMoveShift=10,captureShift=12,hashMoveShift=18;
+    Move moveList[maxDepth][maxListSize];
+    int moveListSize[maxDepth];
 
-	Move moveList[maxDepth][maxListSize];
-	int moveListSize[maxDepth];
+    Move hashMove;
 
-	Move hashMove;
+    Move killerMove, killerBackup;
 
-	Move killerMove,killerBackup;
+    inline void generateMoves(Board &board, HistoryHelper &historyHelper, int color, int depth, bool doSort,
+                              bool onlyCaptures) {
+        Board boardCopy = board;
+        moveListSize[depth] = 0;
 
-	inline void generateMoves(Board& board,HistoryHelper& historyHelper, int color,int depth,bool doSort,bool onlyCaptures){
-		Board boardCopy=board;
-		moveListSize[depth]=0;
+        Bitboard friendPieces, opponentPieces;
 
-		Bitboard friendPieces,opponentPieces;
+        if (color == WHITE) {
+            friendPieces = board.whitePieces;
+            opponentPieces = board.blackPieces;
+        } else {
+            friendPieces = board.blackPieces;
+            opponentPieces = board.whitePieces;
+        }
 
+        Bitboard pieces = friendPieces;
+        int currentEvaluation = board.evaluation;
 
-		if(color==WHITE){
-			friendPieces=board.whitePieces;
-			opponentPieces=board.blackPieces;
-		}else{
-			friendPieces=board.blackPieces;
-			opponentPieces=board.whitePieces;
-		}
+        while (pieces > 0) {
+            int startSquare = pieces.getFirstBitNumberAndExclude();
+            Bitboard moves = moveGenerator.moves(board, startSquare);
+            if (onlyCaptures) {
+                moves &= opponentPieces;
+            }
 
+            while (moves > 0) {
+                int targetSquare = moves.getFirstBitNumberAndExclude();
 
-		Bitboard pieces=friendPieces;
-		int currentEvaluation=board.evaluation;
+                int captureCoeff = 0, isCapture = 0, sseEval;
+                if (opponentPieces.getBit(targetSquare)) {
+                    isCapture = 1;
+                    // cout<<Move(startSquare,targetSquare,0).convertToUCI()<<'
+                    // '<<moveGenerator.sseEval(targetSquare,color,startSquare)<<'\n';
+                    int attackingPiece = board.occupancyPiece(startSquare);
+                    int capturedPiece = board.occupancyPiece(targetSquare);
 
-		while(pieces>0){
-			int startSquare=pieces.getFirstBitNumberAndExclude();
-			Bitboard moves=moveGenerator.moves(board,startSquare);
-			if(onlyCaptures){
-				moves&=opponentPieces;
-			}
+                    int captureEval;
+                    if (attackingPiece > capturedPiece)
+                        captureEval = sseEval = moveGenerator.sseEval(board, targetSquare, color, startSquare);
+                    else
+                        captureEval = sseEval = 1;
 
-			while(moves>0){
-				int targetSquare=moves.getFirstBitNumberAndExclude();
+                    if (captureEval >= -1)
+                        captureCoeff += (1 << 5);
 
-				int captureCoeff=0,isCapture=0,sseEval;
-				if(opponentPieces.getBit(targetSquare)){
-					isCapture=1;
-					// cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<moveGenerator.sseEval(targetSquare,color,startSquare)<<'\n';
-					int attackingPiece=board.occupancyPiece(startSquare);
-					int capturedPiece=board.occupancyPiece(targetSquare);
+                    captureCoeff += (capturedPiece - attackingPiece) + 10;
 
-					int captureEval;
-					if(attackingPiece>capturedPiece)
-						captureEval=sseEval=moveGenerator.sseEval(board,targetSquare,color,startSquare);
-					else
-						captureEval=sseEval=1;
+                    // cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<captureEval<<'\n';
+                } else
+                    captureCoeff =
+                        (1 << 5); // if move isn't capture, make it's value below winning SSE but before loosing
 
-					if(captureEval>=-1)
-						captureCoeff+=(1<<5);
+                if (board.occupancyPiece(startSquare) == PAWN &&
+                    ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
+                    Move promotionMoves[4];
+                    promotionMoves[0] =
+                        Move(startSquare, targetSquare, KNIGHT, (KNIGHT + captureCoeff) << captureShift);
+                    promotionMoves[1] =
+                        Move(startSquare, targetSquare, BISHOP, (BISHOP + captureCoeff) << captureShift);
+                    promotionMoves[2] = Move(startSquare, targetSquare, ROOK, (ROOK + captureCoeff) << captureShift);
+                    promotionMoves[3] = Move(startSquare, targetSquare, QUEEN, (QUEEN + captureCoeff) << captureShift);
+                    // promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
+                    // promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
+                    // promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
+                    // promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
+                    for (int i = 0; i < 4; i++) {
+                        board.makeMove(promotionMoves[i]);
+                        if (moveGenerator.isInCheck(board, color)) {
+                            board = boardCopy;
+                            continue;
+                        }
+                        board = boardCopy;
+                        if (promotionMoves[i] == hashMove)
+                            promotionMoves[i].score += (1 << hashMoveShift);
+                        if (onlyCaptures)
+                            promotionMoves[i].score += (sseEval + 15);
+                        moveList[depth][moveListSize[depth]++] = promotionMoves[i];
+                    }
+                } else {
+                    board.makeMove(Move(startSquare, targetSquare, NOPIECE));
+                    if (moveGenerator.isInCheck(board, color)) {
+                        board = boardCopy;
+                        continue;
+                    }
+                    board = boardCopy;
+                    Move move = Move(startSquare, targetSquare, NOPIECE);
+                    move.score += (captureCoeff << captureShift);
+                    if (!isCapture || !onlyCaptures)
+                        move.score += historyHelper.getScore(color, move);
+                    else {
+                        // cout<<sseEval<<'\n';
+                        move.score += (sseEval + 15);
+                    }
+                    if (move == hashMove)
+                        move.score += (1 << hashMoveShift);
+                    if (move == killerMove)
+                        move.score += (1 << (killerMoveShift + 1));
+                    else if (move == killerBackup)
+                        move.score += (1 << killerMoveShift);
+                    moveList[depth][moveListSize[depth]++] = move;
+                }
+            }
+        }
+        if (doSort)
+            stable_sort(moveList[depth], moveList[depth] + moveListSize[depth]);
+    }
 
-					captureCoeff+=(capturedPiece-attackingPiece)+10;
+    inline void generateMovesForPerft(Board &board, int color, int depth) { // optimized gen without scores
+        Board boardCopy = board;
+        moveListSize[depth] = 0;
 
-					// cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<captureEval<<'\n';
-				}else
-					captureCoeff=(1<<5); // if move isn't capture, make it's value below winning SSE but before loosing
+        Bitboard friendPieces, opponentPieces;
 
-				if(board.occupancyPiece(startSquare)==PAWN&&
-					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
-					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,(KNIGHT+captureCoeff)<<captureShift);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,(BISHOP+captureCoeff)<<captureShift);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,(ROOK+captureCoeff)<<captureShift);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,(QUEEN+captureCoeff)<<captureShift);
-					// promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
-					// promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
-					// promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
-					// promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
-					for(int i=0;i<4;i++){
-						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isInCheck(board,color)){
-							board=boardCopy;
-							continue;
-						}
-						board=boardCopy;
-						if(promotionMoves[i]==hashMove)
-							promotionMoves[i].score+=(1<<hashMoveShift);
-						if(onlyCaptures)
-							promotionMoves[i].score+=(sseEval+15);
-						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
-					}
-				}else{
-					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isInCheck(board,color)){
-						board=boardCopy;
-						continue;
-					}
-					board=boardCopy;
-					Move move=Move(startSquare,targetSquare,NOPIECE);
-					move.score+=(captureCoeff<<captureShift);
-					if(!isCapture||!onlyCaptures)
-						move.score+=historyHelper.getScore(color,move);
-					else{
-						// cout<<sseEval<<'\n';
-						move.score+=(sseEval+15);
-					}
-					if(move==hashMove)
-						move.score+=(1<<hashMoveShift);
-					if(move==killerMove)
-						move.score+=(1<<(killerMoveShift+1));
-					else if(move==killerBackup)
-						move.score+=(1<<killerMoveShift);
-					moveList[depth][moveListSize[depth]++]=move;
-				}
-			}
-		}
-		if(doSort)
-			stable_sort(moveList[depth],moveList[depth]+moveListSize[depth]);
-	}
+        if (color == WHITE) {
+            friendPieces = board.whitePieces;
+            opponentPieces = board.blackPieces;
+        } else {
+            friendPieces = board.blackPieces;
+            opponentPieces = board.whitePieces;
+        }
 
+        Bitboard pieces = friendPieces;
 
-	inline void generateMovesForPerft(Board& board,int color,int depth){ // optimized gen without scores
-		Board boardCopy=board;
-		moveListSize[depth]=0;
+        while (pieces > 0) {
+            int startSquare = pieces.getFirstBitNumberAndExclude();
+            Bitboard moves = moveGenerator.moves(board, startSquare);
 
-		Bitboard friendPieces,opponentPieces;
+            while (moves > 0) {
+                int targetSquare = moves.getFirstBitNumberAndExclude();
 
+                if (board.occupancyPiece(startSquare) == PAWN &&
+                    ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
+                    Move promotionMoves[4];
+                    promotionMoves[0] = Move(startSquare, targetSquare, KNIGHT);
+                    promotionMoves[1] = Move(startSquare, targetSquare, BISHOP);
+                    promotionMoves[2] = Move(startSquare, targetSquare, ROOK);
+                    promotionMoves[3] = Move(startSquare, targetSquare, QUEEN);
+                    for (int i = 0; i < 4; i++) {
+                        board.makeMove(promotionMoves[i]);
+                        if (moveGenerator.isInCheck(board, color)) {
+                            board = boardCopy;
+                            continue;
+                        }
+                        moveList[depth][moveListSize[depth]++] = promotionMoves[i];
+                    }
+                } else {
+                    board.makeMove(Move(startSquare, targetSquare, NOPIECE));
+                    if (moveGenerator.isInCheck(board, color)) {
+                        board = boardCopy;
+                        continue;
+                    }
+                    moveList[depth][moveListSize[depth]++] = Move(startSquare, targetSquare, NOPIECE);
+                }
+                board = boardCopy;
+            }
+        }
+    }
 
-		if(color==WHITE){
-			friendPieces=board.whitePieces;
-			opponentPieces=board.blackPieces;
-		}else{
-			friendPieces=board.blackPieces;
-			opponentPieces=board.whitePieces;
-		}
+    bool isStalled(Board &board, int color) {
+        Board boardCopy = board;
+        Bitboard friendPieces;
 
+        if (color == WHITE)
+            friendPieces = board.whitePieces;
+        else
+            friendPieces = board.blackPieces;
 
-		Bitboard pieces=friendPieces;
+        Bitboard pieces = friendPieces;
 
-		while(pieces>0){
-			int startSquare=pieces.getFirstBitNumberAndExclude();
-			Bitboard moves=moveGenerator.moves(board,startSquare);
+        while (pieces > 0) {
+            int startSquare = pieces.getFirstBitNumberAndExclude();
+            Bitboard moves = moveGenerator.moves(board, startSquare);
 
-			while(moves>0){
-				int targetSquare=moves.getFirstBitNumberAndExclude();
+            while (moves > 0) {
+                int targetSquare = moves.getFirstBitNumberAndExclude();
 
-				if(board.occupancyPiece(startSquare)==PAWN&&
-					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
-					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN);
-					for(int i=0;i<4;i++){
-						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isInCheck(board,color)){
-							board=boardCopy;
-							continue;
-						}
-						moveList[depth][moveListSize[depth]++]=promotionMoves[i];
-					}
-				}else{
-					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isInCheck(board,color)){
-						board=boardCopy;
-						continue;
-					}
-					moveList[depth][moveListSize[depth]++]=Move(startSquare,targetSquare,NOPIECE);
-				}
-				board=boardCopy;
-			}
-		}
-	}
-
-
-
-
-	bool isStalled(Board& board,int color){
-		Board boardCopy=board;
-		Bitboard friendPieces;
-
-
-		if(color==WHITE)
-			friendPieces=board.whitePieces;
-		else
-			friendPieces=board.blackPieces;
-
-
-		Bitboard pieces=friendPieces;
-
-		while(pieces>0){
-			int startSquare=pieces.getFirstBitNumberAndExclude();
-			Bitboard moves=moveGenerator.moves(board,startSquare);
-
-			while(moves>0){
-				int targetSquare=moves.getFirstBitNumberAndExclude();
-
-				if(board.occupancyPiece(startSquare)==PAWN&&
-					((color==WHITE&&targetSquare<8)||(color==BLACK&&targetSquare>=56))){// promotion
-					Move promotionMoves[4];
-					promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
-					promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
-					promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
-					promotionMoves[3]=Move(startSquare,targetSquare,QUEEN,pieceSquareTable.materialEval[QUEEN]<<captureShift);
-					for(int i=0;i<4;i++){
-						board.makeMove(promotionMoves[i]);
-						if(moveGenerator.isInCheck(board,color)){
-							board=boardCopy;
-							continue;
-						}
-						board=boardCopy;
-						return false;
-					}
-				}else{
-					board.makeMove(Move(startSquare,targetSquare,NOPIECE));
-					if(moveGenerator.isInCheck(board,color)){
-						board=boardCopy;
-						continue;
-					}
-					board=boardCopy;
-					return false;
-				}
-			}
-		}
-		return true;
-	}
+                if (board.occupancyPiece(startSquare) == PAWN &&
+                    ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
+                    Move promotionMoves[4];
+                    promotionMoves[0] =
+                        Move(startSquare, targetSquare, KNIGHT, pieceSquareTable.materialEval[KNIGHT] << captureShift);
+                    promotionMoves[1] =
+                        Move(startSquare, targetSquare, BISHOP, pieceSquareTable.materialEval[BISHOP] << captureShift);
+                    promotionMoves[2] =
+                        Move(startSquare, targetSquare, ROOK, pieceSquareTable.materialEval[ROOK] << captureShift);
+                    promotionMoves[3] =
+                        Move(startSquare, targetSquare, QUEEN, pieceSquareTable.materialEval[QUEEN] << captureShift);
+                    for (int i = 0; i < 4; i++) {
+                        board.makeMove(promotionMoves[i]);
+                        if (moveGenerator.isInCheck(board, color)) {
+                            board = boardCopy;
+                            continue;
+                        }
+                        board = boardCopy;
+                        return false;
+                    }
+                } else {
+                    board.makeMove(Move(startSquare, targetSquare, NOPIECE));
+                    if (moveGenerator.isInCheck(board, color)) {
+                        board = boardCopy;
+                        continue;
+                    }
+                    board = boardCopy;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 };
