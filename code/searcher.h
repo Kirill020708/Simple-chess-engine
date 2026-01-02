@@ -928,7 +928,7 @@ struct Searcher {
                 break;
         }
         stopWaitingThread = true;
-        if (doInfoOutput)
+        if (doInfoOutput) 
             cout << "bestmove " << bestMove.convertToUCI() << endl;
         if (waitThread.joinable())
             waitThread.join();
