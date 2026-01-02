@@ -4,7 +4,6 @@
 #include "searcher.h"
 
 #endif /* SEARCHER */
- 
 
 #ifndef UCI
 #define UCI
@@ -13,14 +12,12 @@
 
 #endif /* UCI */
 
-
 #ifndef PERFT
 #define PERFT
 
 #include "perft.h"
 
 #endif /* PERFT */
-
 
 #ifndef TEXEL
 #define TEXEL
@@ -29,14 +26,12 @@
 
 #endif /* TEXEL */
 
-
 #ifndef NNUE
 #define NNUE
 
 #include "nnue.h"
 
 #endif /* NNUE */
-
 
 #ifndef DATAGEN
 #define DATAGEN
@@ -45,7 +40,6 @@
 
 #endif /* DATAGEN */
 
-
 #ifndef BENCH
 #define BENCH
 
@@ -53,77 +47,81 @@
 
 #endif /* BENCH */
 
-string squareToString(int square){
-	return string(1,char((square&7)+'a'))+string(1,char(7-(square>>3)+'1'));
-} 
-
-int main(int argc, char* argv[]){ 
-	// texelTuner.checkData();
-	// evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
-	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
-	// evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/evaluationWeights.txt");
-	string evaluationWeights=
-	"mobility mg: 0 0 1.66818 2.58412 3.0677 -1.76086 -11.6306 0 |mobility eg: 0 0 9.26372 12.6373 11.9937 12.1001 1.48715 0 |king attack mg: 0 8 19.217 20.5776 23.8801 29.4941 20.3715 0 |king attack eg: 0 0 0.165305 1.76775 0.501133 9.75261 2.38228 0 |doubled mg: 12|doubled eg: 7|isolated mg: 0.746226 13.8841 20.3863 24.1883 25.1588 21.9609 14.1906 15.8822 |isolated eg: -0.731248 3.71009 14.0723 10.6767 15.1742 10.7892 5.82794 4.35728 |passed mg: 0 4.17851 6.7106 15.9533 31.5766 57.2377 98.5963 0 |passed eg: 0 12.5789 20.5657 44.247 71.6173 112.118 183.411 0 |islands mg: 8.69405|islands eg: -11.4291|shield dist: 0 0 0 5 10 15 20 25 |tempo: 1.98761|bishop pair mg: 37.7756|bishop pair eg: 64.6135";
-	evaluator.init(splitStr(evaluationWeights,"|"));
-
-	mainNnueEvaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/quantisedv2.bin");
-	mainBoard=Board();
-
-
-	if(argc>=2 && strcmp(argv[1], "bench") == 0){
-		benchmarker.benchmark(8,10000);
-		exit(0);
-	}
- 
-	// mainBoard.initNNUE(mainNnueEvaluator);
-	// dataGenerator.generateData(1'000'000);
-	// mainBoard.initFromFEN("k7/8/8/8/8/8/8/K7 w - - 0 1");
-	// cout<<nnueEvaluator.evaluate(WHITE)<<'\n'; 
-
-	// cout<<'\n';
-	// return 0;
-
-	// texelTuner.checkData();
-	// texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
-	// for(ll depth=1;depth<=15;depth++){
-		// cout<<depth<<": ";
-		// for(ll j=1;j<=40;j++)
-			// cout<<int(floor(log(float(depth)) * log(float(j)) / 3))<<' ';
-		// cout<<'\n';
-	// }
-	// cout<<sizeof(Board)<<'\n';
-	// board.initFromFEN("4rrk1/1pqb1pb1/p2p3p/4pPp1/2P1B1P1/1P3N1P/P3Q3/1R2K2R w K - 5 22");
-
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,52,WHITE,32-3)<<'\n';
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,54,WHITE,32-3)<<'\n';
-	// cout<<pieceSquareTable.getPiecePositionEval(KING,52-8,WHITE,32-3)<<'\n';
-	// cout<<board.numberOfPieces()<<'\n';
-
-	// moveListGenerator.generateMoves(WHITE,0,1,0);
-	// 	for(int currentMove=0;currentMove<moveListGenerator.moveListSize[0];currentMove++){
-	// 		Move move=moveListGenerator.moveList[0][currentMove];
-	// 		cout<<move.convertToUCI()<<' '<<move.score<<'\n';
-	// 		}
-	// cout<<board.evaluation<<'\n';
-	// board.makeMove(Move("a1d1"));
-	// cout<<board.evaluation<<'\n';
-	// cout<<pieceSquareTable.getPieceEval(ROOK,56,WHITE)<<' '<<pieceSquareTable.getPieceEval(ROOK,59,WHITE)<<'\n';
-	// return 0;
-	// board.makeMove(Move("e2e4"));
-	// board.makeMove(Move("e7e5"));
-	// cout<<board.evaluation<<'\n';
-	// cout<<ttt.tableSize<<'\n';
-	// perftester.perfTest(256);
-	// searcher.iterativeDeepeningSearch(WHITE,100);
-	// system("/Users/Apple/Desktop/projects/chesscpp/app");
-	// printDesk01(boardHelper.neighborColumns[34].bitboard);
-	// printDesk01(boardHelper.possiblePawnDefendersBlack[31]);
-	// cout<<boardHelper.distanceColumn(board.pawns&board.whitePieces&boardHelper.getColumn(0),BLACK);
-	uciHelper.reallocateHashMemory(256);
-	uciHelper.listenInput();
-	//64
+string squareToString(int square) {
+    return string(1, char((square & 7) + 'a')) + string(1, char(7 - (square >> 3) + '1'));
 }
 
+int main(int argc, char *argv[]) {
+    // texelTuner.checkData();
+    // evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
+    // evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
+    // evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/evaluationWeights.txt");
+    string evaluationWeights =
+        "mobility mg: 0 0 1.66818 2.58412 3.0677 -1.76086 -11.6306 0 |mobility eg: 0 0 9.26372 12.6373 11.9937 12.1001 "
+        "1.48715 0 |king attack mg: 0 8 19.217 20.5776 23.8801 29.4941 20.3715 0 |king attack eg: 0 0 0.165305 1.76775 "
+        "0.501133 9.75261 2.38228 0 |doubled mg: 12|doubled eg: 7|isolated mg: 0.746226 13.8841 20.3863 24.1883 "
+        "25.1588 21.9609 14.1906 15.8822 |isolated eg: -0.731248 3.71009 14.0723 10.6767 15.1742 10.7892 5.82794 "
+        "4.35728 |passed mg: 0 4.17851 6.7106 15.9533 31.5766 57.2377 98.5963 0 |passed eg: 0 12.5789 20.5657 44.247 "
+        "71.6173 112.118 183.411 0 |islands mg: 8.69405|islands eg: -11.4291|shield dist: 0 0 0 5 10 15 20 25 |tempo: "
+        "1.98761|bishop pair mg: 37.7756|bishop pair eg: 64.6135";
+    evaluator.init(splitStr(evaluationWeights, "|"));
+
+    mainNnueEvaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/quantisedv2.bin");
+    mainBoard = Board();
+
+    if (argc >= 2 && strcmp(argv[1], "bench") == 0) {
+        benchmarker.benchmark(8, 10000);
+        exit(0);
+    }
+
+    // mainBoard.initNNUE(mainNnueEvaluator);
+    // dataGenerator.generateData(1'000'000);
+    // mainBoard.initFromFEN("k7/8/8/8/8/8/8/K7 w - - 0 1");
+    // cout<<nnueEvaluator.evaluate(WHITE)<<'\n';
+
+    // cout<<'\n';
+    // return 0;
+
+    // texelTuner.checkData();
+    // texelTuner.train("/Users/Apple/Desktop/projects/chessEngv2/texelBigGoodData.txt");
+    // for(ll depth=1;depth<=15;depth++){
+    // cout<<depth<<": ";
+    // for(ll j=1;j<=40;j++)
+    // cout<<int(floor(log(float(depth)) * log(float(j)) / 3))<<' ';
+    // cout<<'\n';
+    // }
+    // cout<<sizeof(Board)<<'\n';
+    // board.initFromFEN("4rrk1/1pqb1pb1/p2p3p/4pPp1/2P1B1P1/1P3N1P/P3Q3/1R2K2R w K - 5 22");
+
+    // cout<<pieceSquareTable.getPiecePositionEval(KING,52,WHITE,32-3)<<'\n';
+    // cout<<pieceSquareTable.getPiecePositionEval(KING,54,WHITE,32-3)<<'\n';
+    // cout<<pieceSquareTable.getPiecePositionEval(KING,52-8,WHITE,32-3)<<'\n';
+    // cout<<board.numberOfPieces()<<'\n';
+
+    // moveListGenerator.generateMoves(WHITE,0,1,0);
+    // 	for(int currentMove=0;currentMove<moveListGenerator.moveListSize[0];currentMove++){
+    // 		Move move=moveListGenerator.moveList[0][currentMove];
+    // 		cout<<move.convertToUCI()<<' '<<move.score<<'\n';
+    // 		}
+    // cout<<board.evaluation<<'\n';
+    // board.makeMove(Move("a1d1"));
+    // cout<<board.evaluation<<'\n';
+    // cout<<pieceSquareTable.getPieceEval(ROOK,56,WHITE)<<' '<<pieceSquareTable.getPieceEval(ROOK,59,WHITE)<<'\n';
+    // return 0;
+    // board.makeMove(Move("e2e4"));
+    // board.makeMove(Move("e7e5"));
+    // cout<<board.evaluation<<'\n';
+    // cout<<ttt.tableSize<<'\n';
+    // perftester.perfTest(256);
+    // searcher.iterativeDeepeningSearch(WHITE,100);
+    // system("/Users/Apple/Desktop/projects/chesscpp/app");
+    // printDesk01(boardHelper.neighborColumns[34].bitboard);
+    // printDesk01(boardHelper.possiblePawnDefendersBlack[31]);
+    // cout<<boardHelper.distanceColumn(board.pawns&board.whitePieces&boardHelper.getColumn(0),BLACK);
+    uciHelper.reallocateHashMemory(256);
+    uciHelper.listenInput();
+    // 64
+}
 
 /*
 

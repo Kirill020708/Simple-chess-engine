@@ -1,6 +1,5 @@
 // functions for different board data
 
-
 #pragma once
 
 #ifndef BITBOARD
@@ -17,7 +16,7 @@ struct BoardHelper {
 
     Bitboard neighborColumns[64], columns[64];
 
-    Bitboard possiblePawnDefendersWhite[64], possiblePawnDefendersBlack[64];       // squares for checking for passed pawn
+    Bitboard possiblePawnDefendersWhite[64], possiblePawnDefendersBlack[64]; // squares for checking for passed pawn
     Bitboard possibleOutpostDefendersWhite[64], possibleOutpostDefendersBlack[64]; // squares for checking for outpost
 
     Bitboard updatedSquares[64];
@@ -50,11 +49,12 @@ struct BoardHelper {
         return Bitboard(ull(0b0000000100000001000000010000000100000001000000010000000100000001) << columnNuber);
     }
 
-    constexpr inline Bitboard generateMask(int start, int end) const { //mask with 1-s from start bit to end bit
+    constexpr inline Bitboard generateMask(int start, int end) const { // mask with 1-s from start bit to end bit
         return Bitboard(((1ull << (end - start + 1)) - 1) << start);
     }
 
-    constexpr inline int distanceColumn(Bitboard column, int color) const { // distance for the first piece in this column from color's perspective
+    constexpr inline int distanceColumn(
+        Bitboard column, int color) const { // distance for the first piece in this column from color's perspective
         if (column == 0)
             return 7;
         if (color == WHITE)
@@ -63,20 +63,22 @@ struct BoardHelper {
             return getRowNumber(column.getFirstBitNumber());
     }
 
-    constexpr BoardHelper() : kingMoves{}, knightMoves{}, pawnMoves{}, pawnCaptures{}, pawnCaptureLeft{}, pawnCaptureRight{}, neighborColumns{}, columns{}, possiblePawnDefendersWhite{}, possiblePawnDefendersBlack{}, possibleOutpostDefendersWhite{}, possibleOutpostDefendersBlack{}, updatedSquares{}, columnUp{}, columnDown{}, distanceToEdge{} {
+    constexpr BoardHelper()
+        : kingMoves{}, knightMoves{}, pawnMoves{}, pawnCaptures{}, pawnCaptureLeft{}, pawnCaptureRight{},
+          neighborColumns{}, columns{}, possiblePawnDefendersWhite{}, possiblePawnDefendersBlack{},
+          possibleOutpostDefendersWhite{}, possibleOutpostDefendersBlack{}, updatedSquares{}, columnUp{}, columnDown{},
+          distanceToEdge{} {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++) {
                 int s = i * 8 + j;
 
                 columns[s] = getColumn(j);
 
-
                 neighborColumns[s] = 0;
                 if (j)
                     neighborColumns[s] |= getColumn(j - 1);
                 if (j < 7)
                     neighborColumns[s] |= getColumn(j + 1);
-
 
                 possiblePawnDefendersWhite[s] = 0;
                 for (ll i1 = i - 1; i1 >= 0; i1--) {
@@ -102,7 +104,6 @@ struct BoardHelper {
                 possibleOutpostDefendersWhite[s] = possiblePawnDefendersWhite[s] ^ columnUp[s];
                 possibleOutpostDefendersBlack[s] = possiblePawnDefendersBlack[s] ^ columnDown[s];
 
-
                 for (int i1 = 0; i1 < 8; i1++)
                     for (int j1 = 0; j1 < 8; j1++) {
                         int s1 = i1 * 8 + j1;
@@ -125,7 +126,6 @@ struct BoardHelper {
                     if (i == 1)
                         pawnMoves[BLACK][s] |= (1ull << (s + 16));
                 }
-
 
                 if (i >= 1) {
                     if (j <= 6) {
@@ -156,7 +156,6 @@ struct BoardHelper {
                         if (i1 == i || j1 == j || (c_abs(i - i1) == 1 && c_abs(j - j1) == 1))
                             updatedSquares[s] |= (1ull << s1);
                     }
-
 
                 distanceToEdge[s] = c_min(i, 7 - i) + c_min(j, 7 - j);
             }
