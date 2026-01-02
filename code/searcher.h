@@ -470,6 +470,24 @@ struct Worker{
 			if(isCapture)
 				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
+
+
+
+			int premovefutilityMargin=150*depth*depth;
+			if(movesSearched>0 &&
+				!isMovingSideInCheck &&
+				staticEval<alpha-premovefutilityMargin &&
+				!isMoveInteresting &&
+				abs(MATE_SCORE-beta)>maxDepth && abs(alpha+MATE_SCORE)>maxDepth
+				
+				){
+
+				continue;
+			}
+
+
+
+
 			board.makeMove(move,nnueEvaluator);
 
 			// transpositionTable.prefetch(board.getZobristKey());
