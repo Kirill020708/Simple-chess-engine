@@ -525,6 +525,9 @@ struct Worker {
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
 
+                if(isCapture)
+                	LMR_DEPTH_REDUCTION/=2;
+
                 // if(isRoot){
                 // 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<'
                 // '<<float(historyValue)/historyHelper.maxHistoryScore<<'\n';
@@ -545,7 +548,7 @@ struct Worker {
                 // 	continue;
                 // }
 
-                if (!isMovingSideInCheck && !isMoveInteresting && LMR_DEPTH_REDUCTION >= depth) {
+                if (!isMovingSideInCheck && !inCheck && LMR_DEPTH_REDUCTION >= depth) {
                     board = boardCopy;
                     for (int i = 0; i < hiddenLayerSize; i += 16) {
 
@@ -561,7 +564,7 @@ struct Worker {
                     continue;
                 }
 
-                if (movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
+                if (movesSearched >= LMR_FULL_MOVES && !inCheck && depth >= LMR_MIN_DEPTH &&
                     !isMoveInteresting // don't do LMR with interesting moves
                     // historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
                 ) {
@@ -928,7 +931,7 @@ struct Searcher {
                 break;
         }
         stopWaitingThread = true;
-        if (doInfoOutput) 
+        if (doInfoOutput)
             cout << "bestmove " << bestMove.convertToUCI() << endl;
         if (waitThread.joinable())
             waitThread.join();
