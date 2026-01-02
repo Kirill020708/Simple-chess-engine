@@ -61,6 +61,7 @@ struct Worker{
 
 	MoveListGenerator moveListGenerator;
 	HistoryHelper historyHelper;
+	CounterHistoryHelper counterHistoryHelper;
 
 	NNUEevaluator nnueEvaluator;
 
@@ -85,7 +86,7 @@ struct Worker{
 			return maxEvaluation;
 
 		Board boardCopy=board;
-		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
+		moveListGenerator.generateMoves(board,historyHelper,counterHistoryHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
 		for(int currentMove=0;currentMove<moveListGenerator.moveListSize[depthFromRoot];currentMove++){
 			Move move=moveListGenerator.moveList[depthFromRoot][currentMove];
@@ -152,7 +153,7 @@ struct Worker{
 
 		// moveListGenerator.killerMove=moveListGenerator.hashMove;
 		Board boardCopy=board;
-		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
+		moveListGenerator.generateMoves(board,historyHelper,counterHistoryHelper,color,depthFromRoot,DO_SORT,ONLY_CAPTURES);
 
 		__int16_t accumW[hiddenLayerSize],accumB[hiddenLayerSize];
 		for(int i=0;i<hiddenLayerSize;i+=16){
@@ -399,7 +400,7 @@ struct Worker{
 			depth--;
 		}
 
-		moveListGenerator.generateMoves(board,historyHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
+		moveListGenerator.generateMoves(board,historyHelper,counterHistoryHelper,color,depthFromRoot,DO_SORT,ALL_MOVES);
 
 		int extendTTmove=0;
 		// if(
@@ -470,6 +471,9 @@ struct Worker{
 			if(isCapture)
 				sseEval=moveGenerator.sseEval(board,move.getTargetSquare(),color,move.getStartSquare());
 
+			Move prevMove=counterHistoryHelper.prevMove;
+			counterHistoryHelper.prevMove=move;
+
 			board.makeMove(move,nnueEvaluator);
 
 			// transpositionTable.prefetch(board.getZobristKey());
@@ -504,6 +508,7 @@ struct Worker{
 					// nnueEvaluator.hlSumW[i]=accumW[i];
 					// nnueEvaluator.hlSumB[i]=accumB[i];
 				}
+				counterHistoryHelper.prevMove=prevMove;
 				board=boardCopy;
 				continue;
 			}
@@ -529,6 +534,7 @@ struct Worker{
 					// nnueEvaluator.hlSumW[i]=accumW[i];
 					// nnueEvaluator.hlSumB[i]=accumB[i];
 				}
+				counterHistoryHelper.prevMove=prevMove;
 				board=boardCopy;
 				continue;
 			}
@@ -590,6 +596,7 @@ struct Worker{
 						// nnueEvaluator.hlSumW[i]=accumW[i];
 						// nnueEvaluator.hlSumB[i]=accumB[i];
 					}
+					counterHistoryHelper.prevMove=prevMove;
 					continue;
 				}
 
@@ -626,6 +633,7 @@ struct Worker{
 				// nnueEvaluator.hlSumW[i]=accumW[i];
 				// nnueEvaluator.hlSumB[i]=accumB[i];
 			}
+			counterHistoryHelper.prevMove=prevMove;
 
 			movesSearched++;
 			if(!isMoveInteresting)
@@ -692,6 +700,17 @@ struct Worker{
 						Move prevMove=moveListGenerator.moveList[depthFromRoot][previousMoves];
 						if((board.whitePieces&board.blackPieces).getBit(prevMove.getTargetSquare())==0) // move is not capture
 							historyHelper.update(color,prevMove,-(depth*depth));
+					}
+
+
+
+					if((board.whitePieces&board.blackPieces).getBit(move.getTargetSquare())==0) // move is not capture
+						counterHistoryHelper.update(color,move,depth*depth);
+
+					for(int previousMoves=0;previousMoves<currentMove;previousMoves++){ // negate all searched non-capture moves
+						Move prevMove=moveListGenerator.moveList[depthFromRoot][previousMoves];
+						if((board.whitePieces&board.blackPieces).getBit(prevMove.getTargetSquare())==0) // move is not capture
+							counterHistoryHelper.update(color,prevMove,-(depth*depth));
 					}
 
 					transpositionTable.write(board,currentZobristKey,maxEvaluation,depth,LOWER_BOUND,boardCurrentAge,bestHashMove);

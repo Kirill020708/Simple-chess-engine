@@ -52,8 +52,7 @@ struct DataGenerator{
 			if(curMoveNumber<=curRandomMoveCount){
 
 
-				workers[workerIdx].moveListGenerator.generateMoves(boards[workerIdx],workers[workerIdx].historyHelper,
-																   boards[workerIdx].boardColor,0,DONT_SORT,ALL_MOVES);
+				workers[workerIdx].moveListGenerator.generateMovesForPerft(boards[workerIdx],boards[workerIdx].boardColor,0);
 				int movesCount=workers[workerIdx].moveListGenerator.moveListSize[0];
 				Move randomMove=workers[workerIdx].moveListGenerator.moveList[0][rngT()%movesCount];
 				boards[workerIdx].makeMove(randomMove,workers[workerIdx].nnueEvaluator);

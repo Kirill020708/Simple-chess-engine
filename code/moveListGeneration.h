@@ -61,7 +61,7 @@ struct MoveListGenerator{
 
 	Move killerMove,killerBackup;
 
-	inline void generateMoves(Board& board,HistoryHelper& historyHelper, int color,int depth,bool doSort,bool onlyCaptures){
+	inline void generateMoves(Board& board,HistoryHelper& historyHelper,CounterHistoryHelper& counterHistoryHelper, int color,int depth,bool doSort,bool onlyCaptures){
 		Board boardCopy=board;
 		moveListSize[depth]=0;
 
@@ -145,8 +145,10 @@ struct MoveListGenerator{
 					board=boardCopy;
 					Move move=Move(startSquare,targetSquare,NOPIECE);
 					move.score+=(captureCoeff<<captureShift);
-					if(!isCapture||!onlyCaptures)
+					if(!isCapture||!onlyCaptures){
 						move.score+=historyHelper.getScore(color,move);
+						move.score+=counterHistoryHelper.getScore(color,move);
+					}
 					else{
 						// cout<<sseEval<<'\n';
 						move.score+=(sseEval+15);
