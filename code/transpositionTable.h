@@ -25,7 +25,7 @@ struct TableEntry{
 		age=-1;
 		bestMove=Move();
 	}
-
+  
 	TableEntry(ull key_,int evaluation_,char depth_,char type_,int age_,Move bestMove_){
 		key=key_;
 		evaluation=evaluation_;
@@ -49,10 +49,7 @@ struct TranspositionTable{
 			return;
 		int index=key%tableSize;
 		if(table[index].type!=NONE){
-			if(table[index].key!=key){
-				if(table[index].age>=board.age&&alwaysReplace==false)
-					return;
-			}else{
+			if(table[index].key==key){ 
 				if(table[index].depth>depth)
 					return;
 				if(table[index].depth==depth&&table[index].type==EXACT)
