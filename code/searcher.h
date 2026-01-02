@@ -424,6 +424,10 @@ struct Worker {
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
 
+            int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
+            float historyValueF = (historyHelper.getScore(color, move) - historyHelper.maxHistoryScore)/float(historyHelper.maxHistoryScore);
+
+
             int extendDepth = 0;
 
             if (move == searchStack[depthFromRoot].excludeMove) {
@@ -444,7 +448,7 @@ struct Worker {
             if (isCapture)
                 sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
 
-            int premovefutilityMargin = 150 * depth * depth;
+            int premovefutilityMargin = (150 + historyValueF * 75) * depth * depth;
             if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
 
@@ -503,8 +507,6 @@ struct Worker {
                 board = boardCopy;
                 continue;
             }
-
-            int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
 
             if (moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
                 extendDepth++;
