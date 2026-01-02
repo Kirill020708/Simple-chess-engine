@@ -533,6 +533,24 @@ struct Worker{
 				continue;
 			}
 
+			if(movesSearched>0 &&
+				!isPvNode &&
+				!isMovingSideInCheck &&
+				!inCheck &&
+				movesSearched>floor(depth*depth*1.5)+3){
+
+				for(int i=0;i<hiddenLayerSize;i+=16){
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumW[i],
+										 _mm256_loadu_si256((__m256i*)&accumW[i]));
+
+					_mm256_storeu_si256((__m256i*)&nnueEvaluator.hlSumB[i],
+										 _mm256_loadu_si256((__m256i*)&accumB[i]));
+				}
+				board=boardCopy;
+				continue;
+			}
+
 			int historyValue=historyHelper.getScore(color,move)-historyHelper.maxHistoryScore;
 
 			if(moveGenerator.isInCheck(board,oppositeColor)) // if in check, search deeper for 1 ply
