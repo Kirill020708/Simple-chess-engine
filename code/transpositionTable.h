@@ -25,7 +25,7 @@ struct TableEntry{
 		age=-1;
 		bestMove=Move();
 	}
-  
+   
 	TableEntry(ull key_,int evaluation_,char depth_,char type_,int age_,Move bestMove_){
 		key=key_;
 		evaluation=evaluation_;
