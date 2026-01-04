@@ -297,7 +297,7 @@ struct Worker {
             int margin = (150 - improving * 100) * max(depth, 1);
 
             if (staticEval >= beta + margin)
-                return staticEval;
+                return (staticEval + beta) / 2;
         }
 
         if (depth <= 0)
