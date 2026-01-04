@@ -298,7 +298,7 @@ struct Worker {
             (bestHashMove == Move() || board.isQuietMove(bestHashMove)) && // TT move is null or non-capture
             nodeType != EXACT) {                                           // node type is not PV
 
-            int margin = (150 - improving * 100 - historyValueIntoF * 50) * max(depth, 1);
+            int margin = (150 - improving * 100 + historyValueIntoF * 50) * max(depth, 1);
 
             if (staticEval >= beta + margin)
                 return staticEval;
