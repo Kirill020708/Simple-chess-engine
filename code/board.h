@@ -295,6 +295,8 @@ struct alignas(64) Board {
             pawns.getBit(move.getStartSquare())) // check if move is irreversible
             lastIrreversibleMoveAge = age;
 
+        nnueEvaluator.makeCopy();
+
         occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
         boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         int startSquare = move.getStartSquare();
@@ -341,6 +343,8 @@ struct alignas(64) Board {
             castlingBlackQueensideBroke = 1;
         if (startSquare == 7 || targetSquare == 7)
             castlingBlackKingsideBroke = 1;
+
+        nnueEvaluator.curDepth++;
     }
 
     void initNNUE(NNUEevaluator &nnueEvaluator) {
@@ -349,7 +353,7 @@ struct alignas(64) Board {
             int piece = occupancyPiece(square);
             int pieceColor = occupancy(square);
             if (pieceColor != EMPTY)
-                nnueEvaluator.set1(getNNUEidx(square, piece, pieceColor));
+                nnueEvaluator.set1init(0, getNNUEidx(square, piece, pieceColor).F, getNNUEidx(square, piece, pieceColor).S);
         }
     }
 

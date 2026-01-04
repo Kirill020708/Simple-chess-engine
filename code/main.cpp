@@ -73,6 +73,12 @@ int main(int argc, char *argv[]) {
         benchmarker.benchmark(8, 10000);
         exit(0);
     }
+// auto bb=mainBoard;
+// mainBoard.initNNUE(mainNnueEvaluator);
+//     mainBoard.makeMove(Move("e2e4"), mainNnueEvaluator);
+//     cout<<mainNnueEvaluator.evaluate(BLACK)<<'\n';
+    // cout<<mainNnueEvaluator.evaluate(BLACK);
+    // return 0;
 
     // mainBoard.initNNUE(mainNnueEvaluator);
     // dataGenerator.generateData(1'000'000);

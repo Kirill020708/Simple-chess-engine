@@ -148,16 +148,7 @@ struct Worker {
         Board boardCopy = board;
         moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
 
-        __int16_t accumW[hiddenLayerSize], accumB[hiddenLayerSize];
-        for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-            _mm256_storeu_si256((__m256i *)&accumW[i], _mm256_loadu_si256((__m256i *)&nnueEvaluator.hlSumW[i]));
-
-            _mm256_storeu_si256((__m256i *)&accumB[i], _mm256_loadu_si256((__m256i *)&nnueEvaluator.hlSumB[i]));
-
-            // accumW[i]=nnueEvaluator.hlSumW[i];
-            // accumB[i]=nnueEvaluator.hlSumB[i];
-        }
+        
 
         int oppositeColor = (color == WHITE) ? BLACK : WHITE;
 
@@ -183,15 +174,7 @@ struct Worker {
             if (((numOfPiecesOnBoard - 1) >= 6 && newStaticEval + deltaPruningMargin < alpha) || sseScore <= -1) {
                 board = boardCopy;
 
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
+                nnueEvaluator.curDepth--;
 
                 continue;
             }
@@ -200,15 +183,7 @@ struct Worker {
 
             board = boardCopy;
 
-            for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                // nnueEvaluator.hlSumW[i]=accumW[i];
-                // nnueEvaluator.hlSumB[i]=accumB[i];
-            }
+            nnueEvaluator.curDepth--;
 
             isFirstMove = 0;
             if (stopSearch)
@@ -410,16 +385,7 @@ struct Worker {
         bestHashMove = Move();
         int numberOfMoves = moveListGenerator.moveListSize[depthFromRoot];
 
-        __int16_t accumW[hiddenLayerSize], accumB[hiddenLayerSize];
-        for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-            _mm256_storeu_si256((__m256i *)&accumW[i], _mm256_loadu_si256((__m256i *)&nnueEvaluator.hlSumW[i]));
-
-            _mm256_storeu_si256((__m256i *)&accumB[i], _mm256_loadu_si256((__m256i *)&nnueEvaluator.hlSumB[i]));
-
-            // accumW[i]=nnueEvaluator.hlSumW[i];
-            // accumB[i]=nnueEvaluator.hlSumB[i];
-        }
+        
 
         bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
 
@@ -479,15 +445,7 @@ struct Worker {
 
             ) {
 
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
+                nnueEvaluator.curDepth--;
                 board = boardCopy;
                 continue;
             }
@@ -497,15 +455,7 @@ struct Worker {
             if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth]) {
 
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
+                nnueEvaluator.curDepth--;
                 board = boardCopy;
                 continue;
             }
@@ -551,17 +501,7 @@ struct Worker {
 
                 if (!isMovingSideInCheck && !isMoveInteresting && LMR_DEPTH_REDUCTION >= depth) {
                     board = boardCopy;
-                    for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                        _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i],
-                                            _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                        _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i],
-                                            _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                        // nnueEvaluator.hlSumW[i]=accumW[i];
-                        // nnueEvaluator.hlSumB[i]=accumB[i];
-                    }
+                    nnueEvaluator.curDepth--;
                     continue;
                 }
 
@@ -586,15 +526,7 @@ struct Worker {
 
             board = boardCopy;
 
-            for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                // nnueEvaluator.hlSumW[i]=accumW[i];
-                // nnueEvaluator.hlSumB[i]=accumB[i];
-            }
+            nnueEvaluator.curDepth--;
 
             movesSearched++;
             if (!isMoveInteresting)

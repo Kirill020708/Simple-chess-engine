@@ -24,53 +24,131 @@ struct NNUEevaluator {
 
     __int16_t hlSumW[hiddenLayerSize], hlSumB[hiddenLayerSize];
 
+    __int16_t hlSumWStack[maxDepth][hiddenLayerSize], hlSumBStack[maxDepth][hiddenLayerSize];
+
+    int curDepth = 0, lastCalculatedState = 0;
+
+    int diffsW[maxDepth][4], diffsB[maxDepth][4], diffsIter[maxDepth];
+
     NNUEevaluator() {
+    	curDepth = 0, lastCalculatedState = 0;
+
+        for (int i = 0; i < maxDepth; i++){
+        	diffsIter[i] = 0;
+        	for(int j = 0; j < 4; j++)
+        		diffsW[i][j] = diffsB[i][j] = 0;
+        	for(int j = 0; j < hiddenLayerSize; j++)
+        		hlSumWStack[i][j] = hlSumBStack[i][j] = 0;
+        }
+
         for (int i = 0; i < hiddenLayerSize; i++)
-            hlSumW[i] = hlSumB[i] = b0[i];
+            hlSumW[i] = hlSumB[i] = hlSumWStack[0][i] = hlSumBStack[0][i] = b0[i];
     }
 
     void clear() {
+    	curDepth = 0, lastCalculatedState = 0;
+
+        for (int i = 0; i < maxDepth; i++){
+        	diffsIter[i] = 0;
+        	for(int j = 0; j < 4; j++)
+        		diffsW[i][j] = diffsB[i][j] = 0;
+        	for(int j = 0; j < hiddenLayerSize; j++)
+        		hlSumWStack[i][j] = hlSumBStack[i][j] = 0;
+
         for (int i = 0; i < hiddenLayerSize; i++)
-            hlSumW[i] = hlSumB[i] = b0[i];
+            hlSumW[i] = hlSumB[i] = hlSumWStack[0][i] = hlSumBStack[0][i] = b0[i];
+        }
     }
 
-    void set0(pair<int, int> neuronIdx) {
+    void makeCopy() {
+    	if (lastCalculatedState > curDepth)
+    		lastCalculatedState = curDepth;
+
+    	diffsIter[curDepth + 1] = 0;
+    }
+
+    void makeCopyLayer(int to) {
+
         for (int i = 0; i < hiddenLayerSize; i += 16) {
 
-            _mm256_storeu_si256((__m256i *)&hlSumW[i],
-                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumW[i]),
-                                                 _mm256_loadu_si256((__m256i *)&w0[neuronIdx.F][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[to][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[to - 1][i]));
 
-            _mm256_storeu_si256((__m256i *)&hlSumB[i],
-                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumB[i]),
-                                                 _mm256_loadu_si256((__m256i *)&w0[neuronIdx.S][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[to][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[to - 1][i]));
+        }
+    }
+
+    void set0(pair<int, int> neuronIdx){
+    	int i = diffsIter[curDepth + 1];
+    	diffsW[curDepth + 1][i] = -neuronIdx.F - 1;
+    	diffsB[curDepth + 1][i] = -neuronIdx.S - 1;
+    	diffsIter[curDepth + 1]++;
+    }
+
+    void set1(pair<int, int> neuronIdx){
+    	int i = diffsIter[curDepth + 1];
+    	diffsW[curDepth + 1][i] = neuronIdx.F + 1;
+    	diffsB[curDepth + 1][i] = neuronIdx.S + 1;
+    	diffsIter[curDepth + 1]++;
+    }
+
+    void set0calc(int layerIdx, int idxW, int idxB) {
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW][i])));
+
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB][i])));
 
             // hlSumW[i]-=w0[neuronIdx.F][i];
             // hlSumB[i]-=w0[neuronIdx.S][i];
         }
     }
 
-    void set1(pair<int, int> neuronIdx) {
+    void set1calc(int layerIdx, int idxW, int idxB) {
         // cout<<neuronIdx.F<<' '<<neuronIdx.S<<'\n';
         for (int i = 0; i < hiddenLayerSize; i += 16) {
 
-            _mm256_storeu_si256((__m256i *)&hlSumW[i],
-                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumW[i]),
-                                                 _mm256_loadu_si256((__m256i *)&w0[neuronIdx.F][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW][i])));
 
-            _mm256_storeu_si256((__m256i *)&hlSumB[i],
-                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumB[i]),
-                                                 _mm256_loadu_si256((__m256i *)&w0[neuronIdx.S][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB][i])));
 
             // hlSumW[i]+=w0[neuronIdx.F][i];
             // hlSumB[i]+=w0[neuronIdx.S][i];
         }
-        // for(ll i=0;i<hiddenLayerSize;i++)
-        // 	cout<<hlSumW[i]<<' ';
-        // cout<<'\n';
-        // for(ll i=0;i<hiddenLayerSize;i++)
-        // 	cout<<hlSumB[i]<<' ';
-        // cout<<'\n';
+    }
+
+    void set1init(int layerIdx, int idxW, int idxB) {
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW][i])));
+
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB][i])));
+
+        }
+    }
+
+    void recalculateAccumulators() {
+    	for (int i = lastCalculatedState + 1; i <= curDepth; i++) {
+    		makeCopyLayer(i);
+    		for (int j = 0; j < diffsIter[i]; j++) {
+    			if (diffsW[i][j] < 0)
+    				set0calc(i, -(diffsW[i][j] + 1), -(diffsB[i][j] + 1));
+    			else
+    				set1calc(i, diffsW[i][j] - 1, diffsB[i][j] - 1);
+    		}
+    	}
+    	lastCalculatedState = curDepth;
     }
 
     int screlu(int x) {
@@ -88,6 +166,8 @@ struct NNUEevaluator {
     }
 
     int evaluate(int color) {
+    	recalculateAccumulators();
+
         int output = 0;
 
         __m256i outputV = _mm256_setzero_si256();
@@ -95,8 +175,15 @@ struct NNUEevaluator {
         __m256i zerosm = _mm256_set1_epi16(-1);
         __m256i qas = _mm256_set1_epi16(QA);
 
+        // for(int i=0;i<hiddenLayerSize;i++)
+        // 	cout<<hlSumWStack[curDepth][i]<<' ';
+        // cout<<"\n";
+        // for(int i=0;i<hiddenLayerSize;i++)
+        // 	cout<<hlSumBStack[curDepth][i]<<' ';
+        // cout<<"\n\n";
+
         for (int i = 0; i < hiddenLayerSize; i += 16) {
-            __m256i hl = _mm256_loadu_si256((__m256i *)&hlSumW[i]);
+            __m256i hl = _mm256_loadu_si256((__m256i *)&hlSumWStack[curDepth][i]);
             hl = _mm256_and_si256(hl, _mm256_cmpgt_epi16(hl, zerosm));
             hl = _mm256_blendv_epi8(hl, qas, _mm256_cmpgt_epi16(hl, qas));
             __m256i hl0 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(hl, 0));
@@ -109,7 +196,7 @@ struct NNUEevaluator {
             outputV = _mm256_add_epi32(
                 outputV, _mm256_mullo_epi32(hl1, _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1v, 1))));
 
-            hl = _mm256_loadu_si256((__m256i *)&hlSumB[i]);
+            hl = _mm256_loadu_si256((__m256i *)&hlSumBStack[curDepth][i]);
             hl = _mm256_and_si256(hl, _mm256_cmpgt_epi16(hl, zerosm));
             hl = _mm256_blendv_epi8(hl, qas, _mm256_cmpgt_epi16(hl, qas));
             hl0 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(hl, 0));
@@ -122,9 +209,10 @@ struct NNUEevaluator {
             outputV = _mm256_add_epi32(
                 outputV, _mm256_mullo_epi32(hl1, _mm256_cvtepi16_epi32(_mm256_extracti128_si256(w1v, 1))));
 
-            // output+=screlu(hlSumW[i])*w1[i];
-            // output+=screlu(hlSumB[i])*w1[i+hiddenLayerSize];
+            // output+=screlu(hlSumWStack[curDepth][i])*w1[i];
+            // output+=screlu(hlSumBStack[curDepth][i])*w1[i+hiddenLayerSize];
         }
+
         __m256i hadd1 = _mm256_hadd_epi32(outputV, outputV);
         __m256i hadd2 = _mm256_hadd_epi32(hadd1, hadd1);
         __m128i sum128 = _mm_add_epi32(_mm256_castsi256_si128(hadd2), _mm256_extractf128_si256(hadd2, 1));
