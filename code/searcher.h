@@ -312,10 +312,10 @@ struct Worker {
             staticEval >= beta && // static evaluation >= beta
             !isPvNode) {
 
-            int R = 2;
-            if (depth >= 6)
-                R++;
-            R += (staticEval - beta) / 100;
+            int R = floor(4 +
+            	depth / 5.0 +
+            	min((staticEval - beta) / 200.0, 5.0));
+
             int prevEnPassColumn = board.makeNullMove();
             int score = -search(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1);
             board.makeNullMove();
