@@ -162,14 +162,14 @@ struct NNUEevaluator {
         for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
             _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
-}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+// }       for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxW0][i])));
             _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxB0][i])));
-}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+// }       for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
                                 _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxW1][i])));
@@ -185,21 +185,21 @@ struct NNUEevaluator {
         for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
             _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
-}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+// }       for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxW0][i])));
             _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxB0][i])));
-}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+// }       for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxW00][i])));
             _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
                                 _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxB00][i])));
-}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+// }       for (int i = 0; i < hiddenLayerSize; i += 16) {
             _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
                                 _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
                                                  _mm256_loadu_si256((__m256i *)&w0[idxW1][i])));
