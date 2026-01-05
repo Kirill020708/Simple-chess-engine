@@ -848,7 +848,7 @@ struct Evaluator {
     }
 
     int evaluatePosition(Board &board, int color, NNUEevaluator &nnueEvaluator, CorrHistoryHelper &corrhistHelper) { // board evaluation with corrhist
-    	return evaluatePosition(board, color, nnueEvaluator) + corrhistHelper.getScore(color, board.zobristKeyPawn);
+    	return evaluatePosition(board, color, nnueEvaluator) + corrhistHelper.getScore(color, board);
     }
 
     int evaluatePosition1(Board &board, int color) { // board evaluation with (color)'s perspective

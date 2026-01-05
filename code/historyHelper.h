@@ -45,25 +45,39 @@ struct HistoryHelper {
 
 struct CorrHistoryHelper {
 	const int sznd = (1 << 14) - 1;
-	int corrHistTable[2][1 << 14];
+	int corrHistTablePawn[2][1 << 14];
+	int corrHistTableMinor[2][1 << 14];
 
-	const int maxCorrHistValue=300;
+	const int maxCorrHistValue = 300;
 
     void clear() {
         for (int i = 0; i < 2; i++)
             for (int j = 0; j <= sznd; j++)
-            	corrHistTable[i][j] = 0;
+            	corrHistTablePawn[i][j] = 0;
     }
 
-	inline void update(int color, ull key, int score) {
+	inline void update(int color, Board &board, int score) {
 		score = clamp(score, -maxCorrHistValue, maxCorrHistValue);
-		int index = key & sznd;
-		corrHistTable[color][index] +=
-			score - corrHistTable[color][index] * abs(score) / maxCorrHistValue;
+		int index;
+		
+		index = board.zobristKeyPawn & sznd;
+		corrHistTablePawn[color][index] +=
+			score - corrHistTablePawn[color][index] * abs(score) / maxCorrHistValue;
+		
+		index = board.zobristKeyMinor & sznd;
+		corrHistTableMinor[color][index] +=
+			score - corrHistTableMinor[color][index] * abs(score) / maxCorrHistValue;
 	}
 
-    inline int getScore(int color, ull key) {
-		int index = key & sznd;
-		return (50 * corrHistTable[color][index]) / maxCorrHistValue;
+    inline int getScore(int color, Board &board) {
+    	int index, corrScore = 0;
+
+		index = board.zobristKeyPawn & sznd;
+		corrScore += (50 * corrHistTablePawn[color][index]) / 300;
+
+		index = board.zobristKeyMinor & sznd;
+		corrScore += (50 * corrHistTableMinor[color][index]) / 300;
+
+		return corrScore;
     }
 };
