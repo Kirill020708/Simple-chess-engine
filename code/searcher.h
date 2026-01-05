@@ -459,6 +459,14 @@ struct Worker {
                 continue;
             }
 
+            int seeMargin[4] = {0, 2, 4, 9};
+
+            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+                sseEval <= -seeMargin[depth]) {
+
+                continue;
+            }
+
             board.makeMove(move, nnueEvaluator);
 
             // transpositionTable.prefetch(board.getZobristKey());
@@ -478,24 +486,6 @@ struct Worker {
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
 
             ) {
-
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
-                board = boardCopy;
-                continue;
-            }
-
-            int seeMargin[4] = {0, 2, 4, 9};
-
-            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
-                sseEval <= -seeMargin[depth]) {
 
                 for (int i = 0; i < hiddenLayerSize; i += 16) {
 
