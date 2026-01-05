@@ -138,15 +138,148 @@ struct NNUEevaluator {
         }
     }
 
-    void recalculateAccumulators() {
-    	for (int i = lastCalculatedState + 1; i <= curDepth; i++) {
-    		makeCopyLayer(i);
-    		for (int j = 0; j < diffsIter[i]; j++) {
-    			if (diffsW[i][j] < 0)
-    				set0calc(i, -(diffsW[i][j] + 1), -(diffsB[i][j] + 1));
-    			else
-    				set1calc(i, diffsW[i][j] - 1, diffsB[i][j] - 1);
+    void sortUpdLayer(int i){
+    	for(int j = 1; j < diffsIter[i]; j++) {
+    		int k = j;
+    		while(k >= 1 && diffsW[i][k] < 0 && diffsW[i][k - 1] > 0) {
+    			swap(diffsW[i][k], diffsW[i][k - 1]);
+    			swap(diffsB[i][k], diffsB[i][k - 1]);
+    			k--;
     		}
+    	}
+    }
+
+    void set(int layerIdx) {
+    	
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
+        }
+    }
+
+    void set01(int layerIdx, int idxW0, int idxB0, int idxW1, int idxB1) {
+    	
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
+}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW0][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB0][i])));
+}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW1][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB1][i])));
+
+        }
+    }
+
+    void set001(int layerIdx, int idxW0, int idxB0, int idxW00, int idxB00, int idxW1, int idxB1) {
+    	
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
+}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW0][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB0][i])));
+}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW00][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB00][i])));
+}       for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW1][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB1][i])));
+
+        }
+    }
+
+    void set0011(int layerIdx, int idxW0, int idxB0, int idxW00, int idxB00, int idxW1, int idxB1, int idxW11, int idxB11) {
+    	
+        for (int i = 0; i < hiddenLayerSize; i += 16) {
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx - 1][i]));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i], _mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx - 1][i]));
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW0][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB0][i])));
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW00][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB00][i])));
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW1][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB1][i])));
+
+            _mm256_storeu_si256((__m256i *)&hlSumWStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumWStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxW11][i])));
+            _mm256_storeu_si256((__m256i *)&hlSumBStack[layerIdx][i],
+                                _mm256_add_epi16(_mm256_loadu_si256((__m256i *)&hlSumBStack[layerIdx][i]),
+                                                 _mm256_loadu_si256((__m256i *)&w0[idxB11][i])));
+
+        }
+    }
+
+    void recalculateAccumulators() {
+    	/*
+		Possible upd types (sz = diffsIter[i]):
+		sz == 0: no upd
+		sz == 2: [set0, set1] (simple move)
+		sz == 3: [set0, set0, set1] (capture)
+		sz == 4: [set0, set0, set1, set1] (castling)
+    	*/
+
+    	for (int i = lastCalculatedState + 1; i <= curDepth; i++) {
+    		sortUpdLayer(i);
+
+    		int sz = diffsIter[i];
+
+    		if(sz == 0)
+    			set(i);
+
+    		if(sz == 2)
+    			set01(i, -(diffsW[i][0] + 1), -(diffsB[i][0] + 1), diffsW[i][1] - 1, diffsB[i][1] - 1);
+
+    		if(sz == 3)
+    			set001(i, -(diffsW[i][0] + 1), -(diffsB[i][0] + 1), -(diffsW[i][1] + 1), -(diffsB[i][1] + 1), diffsW[i][2] - 1, diffsB[i][2] - 1);
+
+    		if(sz == 4)
+    			set0011(i, -(diffsW[i][0] + 1), -(diffsB[i][0] + 1), -(diffsW[i][1] + 1), -(diffsB[i][1] + 1), diffsW[i][2] - 1, diffsB[i][2] - 1, diffsW[i][3] - 1, diffsB[i][3] - 1);
+
+    		// makeCopyLayer(i);
+    		// for (int j = 0; j < diffsIter[i]; j++) {
+    		// 	if (diffsW[i][j] < 0)
+    		// 		set0calc(i, -(diffsW[i][j] + 1), -(diffsB[i][j] + 1));
+    		// 	else
+    		// 		set1calc(i, diffsW[i][j] - 1, diffsB[i][j] - 1);
+    		// }
     	}
     	lastCalculatedState = curDepth;
     }
