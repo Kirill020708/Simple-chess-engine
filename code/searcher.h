@@ -870,7 +870,7 @@ struct Searcher {
                     }
                 }
                 // cout<<firstFinishedThread<<'\n';
-                for (int i = 0; i < threadNumber; i++) {
+                for (int i = 0; i < threadNumber; i++) { 
                     // cout<<workers[i].rootScore<<' '<<workers[i].bestMove.convertToUCI()<<' '<<workers[i].nodes<<'\n';
                     nodes += workers[i].nodes;
                     // cout<<workers[i].nodes<<'\n';
