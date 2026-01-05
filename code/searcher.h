@@ -647,7 +647,7 @@ struct Worker {
                         }
                     }
 
-                    if (!isMovingSideInCheck && !board.isQuietMove(bestHashMove)) {
+                    if (!isMovingSideInCheck && (bestHashMove == Move() || board.isQuietMove(bestHashMove))) {
                     	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
                     	if (score > staticEval)
                     		corrhistHelper.update(color, board.zobristKeyPawn, (score - staticEval) * depth / 8);
@@ -672,7 +672,7 @@ struct Worker {
             }
         }
 
-        if (!isMovingSideInCheck && !board.isQuietMove(bestHashMove)) {
+        if (!isMovingSideInCheck && (bestHashMove == Move() || board.isQuietMove(bestHashMove))) {
         	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
         	if (type == EXACT || maxEvaluation < staticEval)
         		corrhistHelper.update(color, board.zobristKeyPawn, (maxEvaluation - staticEval) * depth / 8);
