@@ -67,6 +67,7 @@ struct alignas(64) Board {
     char enPassantColumn;
 
     ull zobristKey;
+    ull zobristKeyPawn;
 
     int age;
 
@@ -124,11 +125,14 @@ struct alignas(64) Board {
 
     void initZobristKey() {
         zobristKey = 0;
+        zobristKeyPawn = 0;
         for (int square = 0; square < 64; square++) {
             int piece = occupancyPiece(square);
             int pieceColor = occupancy(square);
             if (pieceColor != EMPTY)
                 zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            if (piece == PAWN)
+                zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
         }
     }
 
@@ -160,6 +164,10 @@ struct alignas(64) Board {
         if (pieceColor != EMPTY) {
             zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
             materialCount -= material[piece];
+        }
+
+        if (piece == PAWN) {
+            zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
         }
 
         evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
@@ -206,6 +214,9 @@ struct alignas(64) Board {
 
         if (color != EMPTY)
             zobristKey ^= zobristKeys.pieceKeys[square][color][pieceType];
+
+        if (pieceType == PAWN)
+            zobristKeyPawn ^= zobristKeys.pieceKeys[square][color][pieceType];
     }
 
     inline void putPiece(int square, int color, int pieceType, NNUEevaluator &nnueEvaluator) {

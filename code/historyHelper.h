@@ -42,3 +42,28 @@ struct HistoryHelper {
                maxHistoryScore; // to prevent negative values
     }
 };
+
+struct CorrHistoryHelper {
+	const int sznd = (1 << 14) - 1;
+	int corrHistTable[2][1 << 14];
+
+	const int maxCorrHistValue=300;
+
+    void clear() {
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j <= sznd; j++)
+            	corrHistTable[i][j] = 0;
+    }
+
+	inline void update(int color, ull key, int score) {
+		score = clamp(score, -maxCorrHistValue, maxCorrHistValue);
+		int index = key & sznd;
+		corrHistTable[color][index] +=
+			score - corrHistTable[color][index] * abs(score) / maxCorrHistValue;
+	}
+
+    inline int getScore(int color, ull key) {
+		int index = key & sznd;
+		return (50 * corrHistTable[color][index]) / maxCorrHistValue;
+    }
+};

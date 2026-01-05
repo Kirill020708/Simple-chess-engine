@@ -44,6 +44,15 @@
 
 #endif /* NNUE */
 
+
+#ifndef HISTORY
+#define HISTORY
+
+#include "historyHelper.h"
+
+#endif /* HISTORY */
+
+
 struct EvalTableEntry {
     ull key = 0;
     int evaluation = NO_EVAL;
@@ -836,6 +845,10 @@ struct Evaluator {
         int evaluation = nnueEvaluator.evaluate(color);
         evaluationTranspositionTable.write(key, int(evaluation));
         return evaluation;
+    }
+
+    int evaluatePosition(Board &board, int color, NNUEevaluator &nnueEvaluator, CorrHistoryHelper &corrhistHelper) { // board evaluation with corrhist
+    	return evaluatePosition(board, color, nnueEvaluator) + corrhistHelper.getScore(color, board.zobristKeyPawn);
     }
 
     int evaluatePosition1(Board &board, int color) { // board evaluation with (color)'s perspective

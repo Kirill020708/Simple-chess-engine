@@ -58,6 +58,8 @@ struct Worker {
     MoveListGenerator moveListGenerator;
     HistoryHelper historyHelper;
 
+    CorrHistoryHelper corrhistHelper;
+
     NNUEevaluator nnueEvaluator;
 
     StackState searchStack[maxDepth];
@@ -125,7 +127,7 @@ struct Worker {
         if (moveListGenerator.isStalled(board, color) || evaluator.insufficientMaterialDraw(board))
             staticEval = evaluator.evaluateStalledPosition(board, color, depthFromRoot);
         else
-            staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator);
+            staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
 
         auto ttEntry = transpositionTableQuiescent.getEntry(board, currentZobristKey);
         if (ttEntry.evaluation != NO_EVAL)
@@ -175,7 +177,7 @@ struct Worker {
             // }
             board.makeMove(move, nnueEvaluator);
             // transpositionTableQuiescent.prefetch(board.getZobristKey());
-            int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator);
+            int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator, corrhistHelper);
             int deltaPruningMargin = 200;
             // if(sseScore<=-1)
             // 	deltaPruningMargin-=sseScore*100;
@@ -258,7 +260,7 @@ struct Worker {
         if (moveListGenerator.isStalled(board, color) || (!isRoot && evaluator.insufficientMaterialDraw(board)))
             return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
 
-        int staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator);
+        int staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
         // cout<<board.generateFEN()<<' '<<staticEval<<'\n';
         bool improving = false;
         bool isMovingSideInCheck = moveGenerator.isInCheck(board, color);
@@ -471,7 +473,7 @@ struct Worker {
 
             // transpositionTable.prefetch(board.getZobristKey());
 
-            int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator);
+            int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator, corrhistHelper);
 
             // cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
@@ -645,6 +647,12 @@ struct Worker {
                         }
                     }
 
+                    if (!isMovingSideInCheck && !board.isQuietMove(bestHashMove)) {
+                    	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
+                    	if (score > staticEval)
+                    		corrhistHelper.update(color, board.zobristKeyPawn, (score - staticEval) * depth / 8);
+                    }
+
                     if ((board.whitePieces & board.blackPieces).getBit(move.getTargetSquare()) ==
                         0) // move is not capture
                         historyHelper.update(color, move, depth * depth);
@@ -662,6 +670,12 @@ struct Worker {
                     return maxEvaluation;
                 }
             }
+        }
+
+        if (!isMovingSideInCheck && !board.isQuietMove(bestHashMove)) {
+        	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
+        	if (type == EXACT || maxEvaluation < staticEval)
+        		corrhistHelper.update(color, board.zobristKeyPawn, (maxEvaluation - staticEval) * depth / 8);
         }
 
         transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove);
@@ -781,6 +795,7 @@ struct Searcher {
             workers[i].nodes = 0;
             workers[i].stopSearch = false;
             workers[i].nnueEvaluator = mainNnueEvaluator;
+            workers[i].corrhistHelper.clear();
             mainBoard.initNNUE(workers[i].nnueEvaluator);
             for (ll j = 0; j < 256; j++) {
                 for (ll j1 = 0; j1 < 2; j1++) {
