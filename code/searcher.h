@@ -650,7 +650,7 @@ struct Worker {
                     if (!isMovingSideInCheck && (bestHashMove == Move() || board.isQuietMove(bestHashMove))) {
                     	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
                     	if (score > staticEval)
-                    		corrhistHelper.update(color, board.zobristKeyPawn, (score - staticEval) * depth / 8);
+                    		corrhistHelper.update(color, board, (score - staticEval) * depth / 8);
                     }
 
                     if ((board.whitePieces & board.blackPieces).getBit(move.getTargetSquare()) ==
@@ -675,7 +675,7 @@ struct Worker {
         if (!isMovingSideInCheck && (bestHashMove == Move() || board.isQuietMove(bestHashMove))) {
         	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
         	if (type == EXACT || maxEvaluation < staticEval)
-        		corrhistHelper.update(color, board.zobristKeyPawn, (maxEvaluation - staticEval) * depth / 8);
+        		corrhistHelper.update(color, board, (maxEvaluation - staticEval) * depth / 8);
         }
 
         transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove);
