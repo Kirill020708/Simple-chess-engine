@@ -223,7 +223,7 @@ struct alignas(64) Board {
 
     inline void putPiece(int square, int color, int pieceType) {
 
-        evaluation += pieceSquareTable.getPieceEval(pieceType, square, color, endgameWeight());
+        // evaluation += pieceSquareTable.getPieceEval(pieceType, square, color, endgameWeight());
         // materialCount += material[pieceType];
         if (color == WHITE)
             whitePieces |= (1ull << square);
