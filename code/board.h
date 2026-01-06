@@ -71,6 +71,9 @@ struct alignas(64) Board {
     ull zobristKeyPawn;
     ull zobristKeyMinor;
 
+    ull zobristKeyWhite;
+    ull zobristKeyBlack;
+
     int age;
 
     int lastIrreversibleMoveAge = -1; // age of last irreversible move (capture/pawn move), for testing repetition
@@ -129,6 +132,8 @@ struct alignas(64) Board {
         zobristKey = 0;
         zobristKeyPawn = 0;
         zobristKeyMinor = 0;
+        zobristKeyWhite = 0;
+        zobristKeyBlack = 0;
         for (int square = 0; square < 64; square++) {
             int piece = occupancyPiece(square);
             int pieceColor = occupancy(square);
@@ -138,6 +143,12 @@ struct alignas(64) Board {
                 zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
             if (piece == KNIGHT || piece == BISHOP)
                 zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            if(piece != PAWN) {
+	            if (pieceColor == WHITE)
+	                zobristKeyWhite ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	            if (pieceColor == BLACK)
+	                zobristKeyBlack ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	        }
         }
     }
 
@@ -178,6 +189,16 @@ struct alignas(64) Board {
         if (piece == KNIGHT || piece == BISHOP){
             zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
         }
+        
+        if(piece != PAWN) {
+	        if (pieceColor == WHITE){
+	            zobristKeyWhite ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	        }
+
+	        if (pieceColor == BLACK){
+	            zobristKeyBlack ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	        }
+	    }
 
         evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
         whitePieces &= (~(1ull << square));
@@ -229,6 +250,14 @@ struct alignas(64) Board {
 
         if (pieceType == KNIGHT || pieceType == BISHOP)
             zobristKeyMinor ^= zobristKeys.pieceKeys[square][color][pieceType];
+
+        if(pieceType != PAWN) {
+	        if (color == WHITE)
+	            zobristKeyWhite ^= zobristKeys.pieceKeys[square][color][pieceType];
+
+	        if (color == BLACK)
+	            zobristKeyBlack ^= zobristKeys.pieceKeys[square][color][pieceType];
+	    }
     }
 
     inline void putPiece(int square, int color, int pieceType, NNUEevaluator &nnueEvaluator) {
