@@ -51,16 +51,25 @@ struct CorrHistoryHelper {
 	int corrHistTableWhite[2][1 << 14];
 	int corrHistTableBlack[2][1 << 14];
 
+	int corrHistTableLastMove[2][64][64];
+
+	Move lastMove;
+
 	const int maxCorrHistValue = 300;
 
     void clear() {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++) {
             for (int j = 0; j <= sznd; j++){
             	corrHistTablePawn[i][j] = 0;
             	corrHistTableMinor[i][j] = 0;
             	corrHistTableWhite[i][j] = 0;
             	corrHistTableBlack[i][j] = 0;
             }
+            for (int j = 0; j < 64; j++)
+            	for (int k = 0; k < 64; k++)
+            		corrHistTableLastMove[i][i][j] = 0;
+        }
+
     }
 
 	inline void update(int color, Board &board, int score) {
@@ -82,6 +91,13 @@ struct CorrHistoryHelper {
 		index = board.zobristKeyBlack & sznd;
 		corrHistTableBlack[color][index] +=
 			score - corrHistTableBlack[color][index] * abs(score) / maxCorrHistValue;
+
+		if (lastMove != Move()) {
+			int st = lastMove.getStartSquare();
+			int tr = lastMove.getTargetSquare();
+			corrHistTableLastMove[color][st][tr] +=
+				score - corrHistTableLastMove[color][st][tr] * abs(score) / maxCorrHistValue;
+		}
 	}
 
     inline int getScore(int color, Board &board) {
@@ -98,6 +114,12 @@ struct CorrHistoryHelper {
 
 		index = board.zobristKeyBlack & sznd;
 		corrScore += (50 * corrHistTableBlack[color][index]) / 300;
+
+		if (lastMove != Move()) {
+			int st = lastMove.getStartSquare();
+			int tr = lastMove.getTargetSquare();
+			corrScore += (50 * corrHistTableLastMove[color][st][tr]) / 300;
+		}
 
 		return corrScore;
     }

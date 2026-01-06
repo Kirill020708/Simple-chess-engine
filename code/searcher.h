@@ -176,6 +176,7 @@ struct Worker {
             // '<<board.occupancyPiece(move.getTargetSquare())<<'\n'; 	exit(0);
             // }
             board.makeMove(move, nnueEvaluator);
+            corrhistHelper.lastMove = move;
             // transpositionTableQuiescent.prefetch(board.getZobristKey());
             int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator, corrhistHelper);
             int deltaPruningMargin = 200;
@@ -470,6 +471,7 @@ struct Worker {
             }
 
             board.makeMove(move, nnueEvaluator);
+            corrhistHelper.lastMove = move;
 
             // transpositionTable.prefetch(board.getZobristKey());
 
