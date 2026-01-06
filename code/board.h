@@ -179,7 +179,7 @@ struct alignas(64) Board {
 
         if (pieceColor != EMPTY) {
             zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
-            materialCount -= material[piece];
+            // materialCount -= material[piece];
         }
 
         if (piece == PAWN) {
@@ -224,7 +224,7 @@ struct alignas(64) Board {
     inline void putPiece(int square, int color, int pieceType) {
 
         evaluation += pieceSquareTable.getPieceEval(pieceType, square, color, endgameWeight());
-        materialCount += material[pieceType];
+        // materialCount += material[pieceType];
         if (color == WHITE)
             whitePieces |= (1ull << square);
         if (color == BLACK)
