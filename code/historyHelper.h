@@ -67,7 +67,7 @@ struct CorrHistoryHelper {
             }
             for (int j = 0; j < 64; j++)
             	for (int k = 0; k < 64; k++)
-            		corrHistTableLastMove[i][i][j] = 0;
+            		corrHistTableLastMove[i][j][k] = 0;
         }
 
     }
