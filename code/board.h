@@ -130,6 +130,7 @@ struct alignas(64) Board {
         zobristKey = 0;
         zobristKeyPawn = 0;
         zobristKeyMinor = 0;
+        zobristKeyMajor = 0;
         for (int square = 0; square < 64; square++) {
             int piece = occupancyPiece(square);
             int pieceColor = occupancy(square);
@@ -139,6 +140,8 @@ struct alignas(64) Board {
                 zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
             if (piece == KNIGHT || piece == BISHOP)
                 zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            if (piece == ROOK || piece == QUEEN)
+                zobristKeyMajor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
         }
     }
 
@@ -178,6 +181,10 @@ struct alignas(64) Board {
 
         if (piece == KNIGHT || piece == BISHOP){
             zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+        }
+
+        if (piece == ROOK || piece == QUEEN){
+            zobristKeyMajor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
         }
 
         evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
@@ -230,6 +237,9 @@ struct alignas(64) Board {
 
         if (pieceType == KNIGHT || pieceType == BISHOP)
             zobristKeyMinor ^= zobristKeys.pieceKeys[square][color][pieceType];
+
+        if (pieceType == ROOK || pieceType == QUEEN)
+            zobristKeyMajor ^= zobristKeys.pieceKeys[square][color][pieceType];
     }
 
     inline void putPiece(int square, int color, int pieceType, NNUEevaluator &nnueEvaluator) {
