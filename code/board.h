@@ -70,6 +70,7 @@ struct alignas(64) Board {
 
     ull zobristKeyPawn;
     ull zobristKeyMinor;
+    ull zobristKeyMajor;
 
     int age;
 
