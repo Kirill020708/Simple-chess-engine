@@ -73,15 +73,15 @@ struct EvaluationTranspositionTable {
     vector<EvalTableEntry> table;
 
     inline void write(ull key, int evaluation) {
-        if (tableSize == 0)
-            return;
+        // if (tableSize == 0)
+        //     return;
         int index = key % tableSize;
         table[index] = {key, evaluation};
     }
 
     inline int get(ull key) {
-        if (tableSize == 0)
-            return NO_EVAL;
+        // if (tableSize == 0)
+        //     return NO_EVAL;
         int index = key % tableSize;
         if (table[index].key != key)
             return NO_EVAL;
@@ -89,8 +89,8 @@ struct EvaluationTranspositionTable {
     }
 
     inline void prefetch(ull key) {
-        if (tableSize == 0)
-            return;
+        // if (tableSize == 0)
+        //     return;
         __builtin_prefetch(&table[key % tableSize]);
 
     }
