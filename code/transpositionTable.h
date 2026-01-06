@@ -46,7 +46,7 @@ struct TranspositionTable {
     inline void write(Board &board, ull key, int evaluation, int depth, int type, int age, Move bestMove) {
         // if (tableSize == 0)
         //     return;
-        int index = key % tableSize;
+        int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type != NONE) {
             if (table[index].key != key) {
                 if (table[index].age >= board.age && alwaysReplace == false)
@@ -66,7 +66,7 @@ struct TranspositionTable {
     inline pair<int, Move> get(Board &board, ull key, int depth, int alpha, int beta) {
         // if (tableSize == 0)
         //     return {NO_EVAL, Move()};
-        int index = key % tableSize;
+        int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type == NONE)
             return {NO_EVAL, Move()};
         if (table[index].key != key)
@@ -91,7 +91,7 @@ struct TranspositionTable {
     inline TableEntry getEntry(Board &board, ull key) {
         // if (tableSize == 0)
         //     return TableEntry();
-        int index = key % tableSize;
+        int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type == NONE)
             return TableEntry();
         if (table[index].key != key)
@@ -103,7 +103,7 @@ struct TranspositionTable {
     inline int getDepth(Board &board, ull key) {
         // if (tableSize == 0)
         //     return -10;
-        int index = key % tableSize;
+        int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type == NONE)
             return -10;
         if (table[index].key != key)
@@ -117,7 +117,7 @@ struct TranspositionTable {
     inline int getNodeType(ull key) {
         // if (tableSize == 0)
         //     return NONE;
-        int index = key % tableSize;
+        int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].key != key)
             return NONE;
         return table[index].type;
@@ -126,7 +126,7 @@ struct TranspositionTable {
     inline void prefetch(ull key) {
         // if (tableSize == 0)
         //     return;
-        __builtin_prefetch(&table[key % tableSize]);
+        __builtin_prefetch(&table[(__uint128_t(key) * __uint128_t(tableSize)) >> 64]);
 
     }
 };
