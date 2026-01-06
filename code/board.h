@@ -177,26 +177,28 @@ struct alignas(64) Board {
         int piece = occupancyPiece(square);
         int pieceColor = occupancy(square);
 
+        ull pieceKey = zobristKeys.pieceKeys[square][pieceColor][piece];
+
         if (pieceColor != EMPTY) {
-            zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            zobristKey ^= pieceKey;
             // materialCount -= material[piece];
         }
 
         if (piece == PAWN) {
-            zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            zobristKeyPawn ^= pieceKey;
         }
 
         if (piece == KNIGHT || piece == BISHOP){
-            zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            zobristKeyMinor ^= pieceKey;
         }
         
         if(piece != PAWN) {
 	        if (pieceColor == WHITE){
-	            zobristKeyWhite ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	            zobristKeyWhite ^= pieceKey;
 	        }
 
 	        if (pieceColor == BLACK){
-	            zobristKeyBlack ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	            zobristKeyBlack ^= pieceKey;
 	        }
 	    }
 
@@ -242,21 +244,23 @@ struct alignas(64) Board {
         if (pieceType == KING)
             kings |= (1ull << square);
 
+        ull pieceKey = zobristKeys.pieceKeys[square][color][pieceType];
+
         if (color != EMPTY)
-            zobristKey ^= zobristKeys.pieceKeys[square][color][pieceType];
+            zobristKey ^= pieceKey;
 
         if (pieceType == PAWN)
-            zobristKeyPawn ^= zobristKeys.pieceKeys[square][color][pieceType];
+            zobristKeyPawn ^= pieceKey;
 
         if (pieceType == KNIGHT || pieceType == BISHOP)
-            zobristKeyMinor ^= zobristKeys.pieceKeys[square][color][pieceType];
+            zobristKeyMinor ^= pieceKey;
 
         if(pieceType != PAWN) {
 	        if (color == WHITE)
-	            zobristKeyWhite ^= zobristKeys.pieceKeys[square][color][pieceType];
+	            zobristKeyWhite ^= pieceKey;
 
 	        if (color == BLACK)
-	            zobristKeyBlack ^= zobristKeys.pieceKeys[square][color][pieceType];
+	            zobristKeyBlack ^= pieceKey;
 	    }
     }
 
