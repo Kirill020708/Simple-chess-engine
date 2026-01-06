@@ -103,9 +103,9 @@ struct alignas(64) Board {
     }
 
     inline int occupancyPiece(int square) {
-        return ERROR * (square < 0 || square > 63) + PAWN * (pawns.getBit(square)) + KNIGHT * (knights.getBit(square)) +
-               BISHOP * (bishops.getBit(square)) + ROOK * (rooks.getBit(square)) + QUEEN * (queens.getBit(square)) +
-               KING * (kings.getBit(square)) + NOPIECE;
+        // return ERROR * (square < 0 || square > 63) + PAWN * (pawns.getBit(square)) + KNIGHT * (knights.getBit(square)) +
+        //        BISHOP * (bishops.getBit(square)) + ROOK * (rooks.getBit(square)) + QUEEN * (queens.getBit(square)) +
+        //        KING * (kings.getBit(square)) + NOPIECE;
 
         if (square < 0 || square > 63)
             return ERROR;
@@ -200,7 +200,7 @@ struct alignas(64) Board {
 	        }
 	    }
 
-        evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
+        // evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
         whitePieces &= (~(1ull << square));
         blackPieces &= (~(1ull << square));
         pawns &= (~(1ull << square));
@@ -384,6 +384,75 @@ struct alignas(64) Board {
                 castlingBlackQueensideBroke = castlingBlackKingsideBroke = 1;
         } else {
             movePiece(startSquare, targetSquare, nnueEvaluator);
+        }
+        if (startSquare == 56 || targetSquare == 56)
+            castlingWhiteQueensideBroke = 1;
+        if (startSquare == 63 || targetSquare == 63)
+            castlingWhiteKingsideBroke = 1;
+        if (startSquare == 0 || targetSquare == 0)
+            castlingBlackQueensideBroke = 1;
+        if (startSquare == 7 || targetSquare == 7)
+            castlingBlackKingsideBroke = 1;
+    }
+
+	inline void clearPositionZbr(int square) {
+        int piece = occupancyPiece(square);
+        int pieceColor = occupancy(square);
+
+        if (pieceColor != EMPTY)
+            zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+    }
+
+    inline void putPieceZbr(int square, int color, int pieceType) {
+        if (color != EMPTY)
+            zobristKey ^= zobristKeys.pieceKeys[square][color][pieceType];
+    }
+
+    inline void movePieceZbr(int startSquare, int targetSquare) {
+        int color = occupancy(startSquare);
+        int movingPiece = occupancyPiece(startSquare);
+        clearPositionZbr(startSquare);
+        clearPositionZbr(targetSquare);
+        putPieceZbr(targetSquare, color, movingPiece);
+    }
+
+    inline void calculateZobristAfterMove(Move move) {
+        boardColor = (boardColor == WHITE) ? BLACK : WHITE;
+        int startSquare = move.getStartSquare();
+        int targetSquare = move.getTargetSquare();
+        int color = occupancy(startSquare);
+        int movingPiece = occupancyPiece(startSquare);
+        enPassantColumn = NO_EN_PASSANT;
+        if (movingPiece == PAWN) {
+            if ((abs(targetSquare - startSquare) & 1) && occupancy(targetSquare) == EMPTY) { // enPassant capture
+                if (color == WHITE)
+                    clearPositionZbr(targetSquare + 8);
+                if (color == BLACK)
+                    clearPositionZbr(targetSquare - 8);
+            }
+            clearPositionZbr(startSquare);
+            clearPositionZbr(targetSquare);
+            if (move.getPromotionFlag() != NOPIECE)
+                movingPiece = move.getPromotionFlag();
+            putPieceZbr(targetSquare, color, movingPiece);
+            if (abs(targetSquare - startSquare) == 16) // updEnPassant
+                enPassantColumn = boardHelper.getColumnNumber(startSquare);
+        } else if (movingPiece == KING) {
+            movePieceZbr(startSquare, targetSquare);
+            if (startSquare == 60 && targetSquare == 58) // white left castling
+                movePieceZbr(56, 59);
+            if (startSquare == 60 && targetSquare == 62) // white right castling
+                movePieceZbr(63, 61);
+            if (startSquare == 4 && targetSquare == 2) // black left castling
+                movePieceZbr(0, 3);
+            if (startSquare == 4 && targetSquare == 6) // black right castling
+                movePieceZbr(7, 5);
+            if (color == WHITE)
+                castlingWhiteQueensideBroke = castlingWhiteKingsideBroke = 1;
+            if (color == BLACK)
+                castlingBlackQueensideBroke = castlingBlackKingsideBroke = 1;
+        } else {
+            movePieceZbr(startSquare, targetSquare);
         }
         if (startSquare == 56 || targetSquare == 56)
             castlingWhiteQueensideBroke = 1;

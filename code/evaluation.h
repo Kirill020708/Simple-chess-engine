@@ -87,6 +87,13 @@ struct EvaluationTranspositionTable {
             return NO_EVAL;
         return table[index].evaluation;
     }
+
+    inline void prefetch(ull key) {
+        if (tableSize == 0)
+            return;
+        __builtin_prefetch(&table[key % tableSize]);
+
+    }
 };
 
 EvaluationTranspositionTable evaluationTranspositionTable;

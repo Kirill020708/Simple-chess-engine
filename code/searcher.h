@@ -168,6 +168,34 @@ struct Worker {
         bestHashMove = Move();
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
+
+            bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
+		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
+		    bool castlingBlackQueensideBroke = board.castlingBlackQueensideBroke;
+		    bool castlingBlackKingsideBroke = board.castlingBlackKingsideBroke;
+
+		    char enPassantColumn = board.enPassantColumn;
+
+		    ull zobristKey = board.zobristKey;
+
+            board.calculateZobristAfterMove(move);
+
+            ull newKey = board.getZobristKey();
+            transpositionTable.prefetch(newKey);
+            evaluationTranspositionTable.prefetch(newKey);
+
+            board.boardColor = color;
+
+		    board.castlingWhiteQueensideBroke = castlingWhiteQueensideBroke;
+		    board.castlingWhiteKingsideBroke = castlingWhiteKingsideBroke;
+		    board.castlingBlackQueensideBroke = castlingBlackQueensideBroke;
+		    board.castlingBlackKingsideBroke = castlingBlackKingsideBroke;
+
+		    board.enPassantColumn = enPassantColumn;
+
+		    board.zobristKey = zobristKey;
+
+
             int sseScore = (move.score & ((1 << 10) - 1)) - 15;
             // if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
             // 	cout<<move.convertToUCI()<<' '<<sseScore<<'
@@ -176,6 +204,8 @@ struct Worker {
             // '<<board.occupancyPiece(move.getTargetSquare())<<'\n'; 	exit(0);
             // }
             board.makeMove(move, nnueEvaluator);
+
+
             // transpositionTableQuiescent.prefetch(board.getZobristKey());
             int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator, corrhistHelper);
             int deltaPruningMargin = 200;
@@ -427,6 +457,34 @@ struct Worker {
 
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
+
+		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
+		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
+		    bool castlingBlackQueensideBroke = board.castlingBlackQueensideBroke;
+		    bool castlingBlackKingsideBroke = board.castlingBlackKingsideBroke;
+
+		    char enPassantColumn = board.enPassantColumn;
+
+		    ull zobristKey = board.zobristKey;
+
+            board.calculateZobristAfterMove(move);
+
+            ull newKey = board.getZobristKey();
+            transpositionTable.prefetch(newKey);
+            evaluationTranspositionTable.prefetch(newKey);
+
+            board.boardColor = color;
+
+		    board.castlingWhiteQueensideBroke = castlingWhiteQueensideBroke;
+		    board.castlingWhiteKingsideBroke = castlingWhiteKingsideBroke;
+		    board.castlingBlackQueensideBroke = castlingBlackQueensideBroke;
+		    board.castlingBlackKingsideBroke = castlingBlackKingsideBroke;
+
+		    board.enPassantColumn = enPassantColumn;
+
+		    board.zobristKey = zobristKey;
+
+
 
             int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
             float historyValueF = (historyHelper.getScore(color, move) - historyHelper.maxHistoryScore)/float(historyHelper.maxHistoryScore);

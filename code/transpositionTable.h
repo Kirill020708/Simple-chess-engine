@@ -122,6 +122,13 @@ struct TranspositionTable {
             return NONE;
         return table[index].type;
     }
+
+    inline void prefetch(ull key) {
+        if (tableSize == 0)
+            return;
+        __builtin_prefetch(&table[key % tableSize]);
+
+    }
 };
 
 TranspositionTable transpositionTable;
