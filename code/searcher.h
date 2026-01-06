@@ -513,7 +513,7 @@ struct Worker {
                 const int LMR_MIN_DEPTH = 3;  // don't reduct depth if it's more or equal to this value
                 int LMR_DEPTH_REDUCTION =
                     floor(log(float(depth)) * log(float(movesSearched)) / 3 + 0.5 -
-                          1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
+                          1 * (isPvNode)-1.75 * float(historyValue) / historyHelper.maxHistoryScore +
                           0.5 * (!improving)); // reduction of depth
 
                 if (ttMove != Move() && !board.isQuietMove(ttMove))
