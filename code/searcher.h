@@ -103,6 +103,8 @@ struct Worker {
         return maxEvaluation;
     }
 
+    int materialValue[6] = {0, 100, 300, 300, 500, 900};
+
     int quiescentSearch(Board &board, int color, int alpha, int beta, int depthFromRoot) {
         if (stopSearch || nodes >= nodesLim) {
             stopSearch = true;
@@ -194,6 +196,14 @@ struct Worker {
 		    board.enPassantColumn = enPassantColumn;
 
 		    board.zobristKey = zobristKey;
+
+		    int deltaPremoveMargin = 200;
+
+            if (move.getPromotionFlag() == 0 &&
+            	staticEval + deltaPremoveMargin + materialValue[board.occupancyPiece(move.getTargetSquare())] * 2.5 < alpha) {
+                
+                continue;
+            }
 
 
             int sseScore = (move.score & ((1 << 10) - 1)) - 15;
