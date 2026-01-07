@@ -179,10 +179,7 @@ struct alignas(64) Board {
 
         ull pieceKey = zobristKeys.pieceKeys[square][pieceColor][piece];
 
-        if (pieceColor != EMPTY) {
-            zobristKey ^= pieceKey;
-            // materialCount -= material[piece];
-        }
+        zobristKey ^= pieceKey;
 
         if (piece == PAWN) {
             zobristKeyPawn ^= pieceKey;
@@ -246,8 +243,7 @@ struct alignas(64) Board {
 
         ull pieceKey = zobristKeys.pieceKeys[square][color][pieceType];
 
-        if (color != EMPTY)
-            zobristKey ^= pieceKey;
+        zobristKey ^= pieceKey;
 
         if (pieceType == PAWN)
             zobristKeyPawn ^= pieceKey;

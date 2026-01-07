@@ -44,7 +44,7 @@ mt19937_64 rng(1898129380);
 
 const int maxDepth = 256;
 
-const int EMPTY = -1, WHITE = 0, BLACK = 1, ERROR = -2;
+const int EMPTY = 2, WHITE = 0, BLACK = 1, ERROR = -2;
 const int NOPIECE = 0, PAWN = 1, KNIGHT = 2, BISHOP = 3, ROOK = 4, QUEEN = 5, KING = 6;
 const int DONT_SORT = 0, DO_SORT = 1;
 const int ALL_MOVES = 0, ONLY_CAPTURES = 1;
