@@ -87,9 +87,6 @@ struct alignas(64) Board {
     }
 
     inline int occupancy(int square) {
-        if (square < 0 || square > 63)
-            return ERROR;
-
         return WHITE * (whitePieces.getBit(square)) + BLACK * (blackPieces.getBit(square)) +
                EMPTY * (!((whitePieces | blackPieces).getBit(square)));
 
@@ -138,16 +135,16 @@ struct alignas(64) Board {
             int piece = occupancyPiece(square);
             int pieceColor = occupancy(square);
             if (pieceColor != EMPTY)
-                zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+                zobristKey ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
             if (piece == PAWN)
-                zobristKeyPawn ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+                zobristKeyPawn ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
             if (piece == KNIGHT || piece == BISHOP)
-                zobristKeyMinor ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+                zobristKeyMinor ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
             if(piece != PAWN) {
 	            if (pieceColor == WHITE)
-	                zobristKeyWhite ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	                zobristKeyWhite ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
 	            if (pieceColor == BLACK)
-	                zobristKeyBlack ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+	                zobristKeyBlack ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
 	        }
         }
     }
@@ -177,27 +174,29 @@ struct alignas(64) Board {
         int piece = occupancyPiece(square);
         int pieceColor = occupancy(square);
 
-        ull pieceKey = zobristKeys.pieceKeys[square][pieceColor][piece];
+        if (pieceColor != EMPTY) {
 
-        zobristKey ^= pieceKey;
+	        ull pieceKey = zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
 
-        if (piece == PAWN) {
-            zobristKeyPawn ^= pieceKey;
-        }
+	        zobristKey ^= pieceKey;
 
-        if (piece == KNIGHT || piece == BISHOP){
-            zobristKeyMinor ^= pieceKey;
-        }
-        
-        if(piece != PAWN) {
-	        if (pieceColor == WHITE){
-	            zobristKeyWhite ^= pieceKey;
+
+	        if (piece == KNIGHT || piece == BISHOP){
+	            zobristKeyMinor ^= pieceKey;
 	        }
+	        
+	        if (piece == PAWN) {
+	            zobristKeyPawn ^= pieceKey;
+	        } else {
+		        if (pieceColor == WHITE){
+		            zobristKeyWhite ^= pieceKey;
+		        }
 
-	        if (pieceColor == BLACK){
-	            zobristKeyBlack ^= pieceKey;
-	        }
-	    }
+		        if (pieceColor == BLACK){
+		            zobristKeyBlack ^= pieceKey;
+		        }
+		    }
+		}
 
         // evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
         whitePieces &= (~(1ull << square));
@@ -241,17 +240,17 @@ struct alignas(64) Board {
         if (pieceType == KING)
             kings |= (1ull << square);
 
-        ull pieceKey = zobristKeys.pieceKeys[square][color][pieceType];
+        ull pieceKey = zobristKeys.pieceKeys[square][(color << 3) + pieceType];
 
         zobristKey ^= pieceKey;
-
-        if (pieceType == PAWN)
-            zobristKeyPawn ^= pieceKey;
 
         if (pieceType == KNIGHT || pieceType == BISHOP)
             zobristKeyMinor ^= pieceKey;
 
-        if(pieceType != PAWN) {
+
+        if (pieceType == PAWN)
+            zobristKeyPawn ^= pieceKey;
+        else {
 	        if (color == WHITE)
 	            zobristKeyWhite ^= pieceKey;
 
@@ -400,12 +399,12 @@ struct alignas(64) Board {
         int pieceColor = occupancy(square);
 
         if (pieceColor != EMPTY)
-            zobristKey ^= zobristKeys.pieceKeys[square][pieceColor][piece];
+            zobristKey ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
     }
 
     inline void putPieceZbr(int square, int color, int pieceType) {
         if (color != EMPTY)
-            zobristKey ^= zobristKeys.pieceKeys[square][color][pieceType];
+            zobristKey ^= zobristKeys.pieceKeys[square][(color << 3) + pieceType];
     }
 
     inline void movePieceZbr(int startSquare, int targetSquare) {
