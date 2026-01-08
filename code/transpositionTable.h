@@ -133,4 +133,4 @@ struct TranspositionTable {
 
 TranspositionTable transpositionTable;
 
-TranspositionTable transpositionTableQuiescent;
+// TranspositionTable transpositionTableQuiescent;
