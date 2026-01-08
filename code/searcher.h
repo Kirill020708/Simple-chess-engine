@@ -613,7 +613,7 @@ struct Worker {
                     continue;
                 }
 
-                if (movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
+                if (LMR_DEPTH_REDUCTION > 0 && movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
                     !isMoveInteresting // don't do LMR with interesting moves
                     // historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
                 ) {
