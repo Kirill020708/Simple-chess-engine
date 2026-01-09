@@ -167,6 +167,11 @@ struct Worker {
         char type = UPPER_BOUND;
         bestHashMove = Move();
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
+
+        	for (int i = currentMove + 1; i < moveListGenerator.moveListSize[depthFromRoot]; i++)
+        		if(moveListGenerator.moveList[depthFromRoot][currentMove].score < moveListGenerator.moveList[depthFromRoot][i].score)
+        			swap(moveListGenerator.moveList[depthFromRoot][currentMove], moveListGenerator.moveList[depthFromRoot][i]);
+
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
 
             bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
@@ -456,6 +461,11 @@ struct Worker {
         bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
 
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
+        	
+        	for (int i = currentMove + 1; i < moveListGenerator.moveListSize[depthFromRoot]; i++)
+        		if(moveListGenerator.moveList[depthFromRoot][currentMove].score < moveListGenerator.moveList[depthFromRoot][i].score)
+        			swap(moveListGenerator.moveList[depthFromRoot][currentMove], moveListGenerator.moveList[depthFromRoot][i]);
+
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
 
 		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;

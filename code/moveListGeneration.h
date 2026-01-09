@@ -161,8 +161,8 @@ struct MoveListGenerator {
                 }
             }
         }
-        if (doSort)
-            stable_sort(moveList[depth], moveList[depth] + moveListSize[depth]);
+        // if (doSort)
+        //     stable_sort(moveList[depth], moveList[depth] + moveListSize[depth]);
     }
 
     inline void generateMovesForPerft(Board &board, int color, int depth) { // optimized gen without scores
