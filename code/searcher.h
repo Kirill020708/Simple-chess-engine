@@ -121,7 +121,10 @@ struct Worker {
             // if(alpha>=beta)
             // 	return alpha;
         }
+        if (!moveGenerator.isMoveLegal(board, bestHashMove))
+        	bestHashMove = Move();
         moveListGenerator.hashMove = bestHashMove;
+        Move ttMove = bestHashMove;
 
         int staticEval;
         if (moveListGenerator.isStalled(board, color) || evaluator.insufficientMaterialDraw(board))
@@ -148,7 +151,9 @@ struct Worker {
 
         // moveListGenerator.killerMove=moveListGenerator.hashMove;
         Board boardCopy = board;
-        moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
+        if (ttMove == Move()) {
+        	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
+        }
 
         __int16_t accumW[hiddenLayerSize], accumB[hiddenLayerSize];
         for (int i = 0; i < hiddenLayerSize; i += 16) {
@@ -166,8 +171,19 @@ struct Worker {
         bool isFirstMove = 1;
         char type = UPPER_BOUND;
         bestHashMove = Move();
+
+        if (ttMove != Move())
+        	moveListGenerator.moveListSize[depthFromRoot] = 1;
+
+        bool searchedTTmove = false;
+
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
+
+            if(ttMove != Move() && !searchedTTmove) {
+            	move = ttMove;
+            	searchedTTmove = true;
+            }
 
             bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
 		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
@@ -197,6 +213,8 @@ struct Worker {
 
 
             int sseScore = (move.score & ((1 << 10) - 1)) - 15;
+            // if(ttMove==move && searchedTTmove)
+            // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             // if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
             // 	cout<<move.convertToUCI()<<' '<<sseScore<<'
             // '<<moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())<<' '<<move.score<<'\n';
@@ -258,6 +276,12 @@ struct Worker {
                     return maxEvaluation;
                 }
             }
+
+            if (move == ttMove) {
+		        moveListGenerator.hashMove = ttMove;
+
+            	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
+            }
         }
         transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, type, boardCurrentAge,
                                           bestHashMove);
@@ -307,6 +331,9 @@ struct Worker {
         }
 
         auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, depth, alpha, beta);
+        if (!moveGenerator.isMoveLegal(board, bestHashMove))
+        	bestHashMove = Move();
+
         if (hashTableEvaluation != NO_EVAL) {
             if (!isPvNode)
                 return hashTableEvaluation;
@@ -407,7 +434,9 @@ struct Worker {
             depth--;
         }
 
-        moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
+        if(ttMove == Move()){
+        	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
+        }
 
         int extendTTmove = 0;
         // if(
@@ -455,8 +484,19 @@ struct Worker {
 
         bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
 
+        bool searchedTTmove = false;
+
+        if (ttMove != Move()) {
+        	moveListGenerator.moveListSize[depthFromRoot] = 1;
+        }
+
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
+
+            if (ttMove != Move() && !searchedTTmove) {
+            	move = ttMove;
+            	searchedTTmove = true;
+            }
 
 		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
 		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
@@ -725,6 +765,14 @@ struct Worker {
                                              boardCurrentAge, bestHashMove);
                     return maxEvaluation;
                 }
+            }
+
+            if (move == ttMove) {
+		        moveListGenerator.hashMove = ttMove;
+		        moveListGenerator.killerMove = killerMovesTable[depthFromRoot][killerMove];
+		        moveListGenerator.killerBackup = killerMovesTable[depthFromRoot][killerBackup];
+
+            	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
             }
         }
 
