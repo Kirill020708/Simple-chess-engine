@@ -376,12 +376,12 @@ struct Worker {
         if (!isMovingSideInCheck && // position not in check
             ((board.whitePieces | board.blackPieces) ^ (board.pawns | board.kings)) >
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
-            staticEval >= beta && // static evaluation >= beta
+            staticEval >= beta - improving * 100 && // static evaluation >= beta
             !isPvNode) {
 
             int R = floor(4 +
             	depth / 5.0 +
-            	min((staticEval - beta) / 200.0, 5.0));
+            	min(max(staticEval - beta, 0) / 200.0, 5.0));
 
             int prevEnPassColumn = board.makeNullMove();
             int score = -search(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1);
