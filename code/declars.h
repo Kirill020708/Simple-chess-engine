@@ -58,6 +58,14 @@ const int MATE_SCORE = inf / 10, DRAW_SCORE = 0;
 
 #define memoryUsageMB 64
 
+float lmrLogTable[257][257];
+
+void initLmrTable() {
+	for (int i = 1; i <= 256; i++)
+		for (int j = 1; j <= 256; j++)
+			lmrLogTable[i][j] = log(float(i)) * log(float(j)) / 3.0;
+}
+
 vector<string> splitStr(string s, string c) { // splits a string by (c) substrings (for parsing)
     s += c;
     vector<string> an;

@@ -52,6 +52,7 @@ string squareToString(int square) {
 }
 
 int main(int argc, char *argv[]) {
+	initLmrTable();
     // texelTuner.checkData();
     // evaluator.writeToFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
     // evaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/apps/evalbase.txt");
