@@ -618,7 +618,7 @@ struct Worker {
                 const int LMR_FULL_MOVES = 3; // number of moves to search with full depth
                 const int LMR_MIN_DEPTH = 3;  // don't reduct depth if it's more or equal to this value
                 int LMR_DEPTH_REDUCTION =
-                    floor(lmrLogTable[depth][movesSearched] + 0.5 -
+                    floor(lmrLogTable[depth][currentMove + 1] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
                           0.5 * (!improving) + (isTTCapture) * 1); // reduction of depth
 
