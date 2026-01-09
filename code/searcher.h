@@ -213,6 +213,8 @@ struct Worker {
 
 
             int sseScore = (move.score & ((1 << 10) - 1)) - 15;
+            if(ttMove==move && searchedTTmove)
+            	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             // if(ttMove==move && searchedTTmove)
             // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             // if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
@@ -242,6 +244,12 @@ struct Worker {
                     // nnueEvaluator.hlSumW[i]=accumW[i];
                     // nnueEvaluator.hlSumB[i]=accumB[i];
                 }
+
+	            if (move == ttMove) {
+			        moveListGenerator.hashMove = ttMove;
+
+	            	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
+	            }
 
                 continue;
             }
