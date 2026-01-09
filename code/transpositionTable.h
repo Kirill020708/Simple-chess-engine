@@ -13,24 +13,21 @@ struct TableEntry {
     ull key = 0;
     int evaluation = NO_EVAL;
     char depth = 0, type = NONE;
-    int age = -1;
-    Move bestMove = Move();
+    int16_t bestMove = 0;
 
     TableEntry() {
         key = 0;
         evaluation = NO_EVAL;
         depth = 0;
         type = NONE;
-        age = -1;
-        bestMove = Move();
+        bestMove = 0;
     }
 
-    TableEntry(ull key_, int evaluation_, char depth_, char type_, int age_, Move bestMove_) {
+    TableEntry(ull key_, int evaluation_, char depth_, char type_, int16_t bestMove_) {
         key = key_;
         evaluation = evaluation_;
         depth = depth_;
         type = type_;
-        age = age_;
         bestMove = bestMove_;
     }
 };
@@ -48,10 +45,7 @@ struct TranspositionTable {
         //     return;
         int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type != NONE) {
-            if (table[index].key != key) {
-                if (table[index].age >= board.age && alwaysReplace == false)
-                    return;
-            } else {
+            if (table[index].key == key) {
                 if (table[index].depth > depth)
                     return;
                 if (table[index].depth == depth && table[index].type == EXACT)
@@ -59,7 +53,7 @@ struct TranspositionTable {
             }
         }
         // TTmutex.lock();
-        table[index] = {key, evaluation, char(depth), char(type), (age), bestMove};
+        table[index] = {key, evaluation, char(depth), char(type), bestMove.move};
         // TTmutex.unlock();
     }
 
@@ -72,7 +66,7 @@ struct TranspositionTable {
         if (table[index].key != key)
             return {NO_EVAL, Move()};
         if (table[index].depth < depth)
-            return {NO_EVAL, table[index].bestMove};
+            return {NO_EVAL, Move(table[index].bestMove)};
 
         int eval = NO_EVAL;
         if (table[index].type == EXACT)
@@ -85,7 +79,7 @@ struct TranspositionTable {
         if (table[index].type == UPPER_BOUND && table[index].evaluation < alpha)
             eval = table[index].evaluation;
 
-        return {eval, table[index].bestMove};
+        return {eval, Move(table[index].bestMove)};
     }
 
     inline TableEntry getEntry(Board &board, ull key) {

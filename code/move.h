@@ -10,7 +10,7 @@
 #endif /* DECLARS */
 
 struct Move {
-    int move = 0; // 0-5b: start, 6-11: end; 11-...:flag for promotion
+    int16_t move = 0; // 0-5b: start, 6-11: end; 11-...:flag for promotion
     ll score;
 
     Move() {}
