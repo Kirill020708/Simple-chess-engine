@@ -275,7 +275,7 @@ struct Worker {
                                                       boardCurrentAge, bestHashMove);
                     return maxEvaluation;
                 }
-            } 
+            }
 
             if (move == ttMove) {
 		        moveListGenerator.hashMove = ttMove;
