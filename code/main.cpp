@@ -70,9 +70,38 @@ int main(int argc, char *argv[]) {
     mainNnueEvaluator.initFromFile("/Users/Apple/Desktop/projects/chessEngv2/Simple-chess-engine/code/quantisedv2.bin");
     mainBoard = Board();
 
-    if (argc >= 2 && strcmp(argv[1], "bench") == 0) {
-        benchmarker.benchmark(8, 10000);
-        exit(0);
+    if (argc >= 2) {
+    	string args = string(argv[1]);
+
+	    if (args == "bench") {
+	        benchmarker.benchmark(8, 10000);
+	        exit(0);
+	    }
+
+	    if(args.substr(0, 7) == "genfens") {
+	    	auto tokens = splitStr(args, " ");
+	    	int N = stoi(tokens[1]);
+	    	int seed = stoi(tokens[3]);
+	    	mt19937_64 rngS(seed);
+
+	    	MoveListGenerator moveListGenerator;
+	    	HistoryHelper historyHelper;
+
+	    	while (N--) {
+	    		auto boardCopy = mainBoard;
+	    		int nmbOfMoves = 8 + (rngS() % 2);
+	    		while (nmbOfMoves--) {
+	                moveListGenerator.generateMoves(boardCopy, historyHelper,boardCopy.boardColor, 0, DONT_SORT, ALL_MOVES);
+	                int movesCount = moveListGenerator.moveListSize[0];
+	                Move randomMove = moveListGenerator.moveList[0][rngS() % movesCount];
+	                boardCopy.makeMove(randomMove);
+	            }
+
+	            cout << "info string genfens " << boardCopy.generateFEN() << endl;
+	    	}
+
+	    	exit(0);
+	    }
     }
 
     // mainBoard.initNNUE(mainNnueEvaluator);
