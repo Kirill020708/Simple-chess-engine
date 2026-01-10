@@ -392,7 +392,7 @@ struct Worker {
         }
 
         if (!isMovingSideInCheck) { // Razoring
-            int margin = 200 * depth;
+            int margin = 400 * depth;
 
             if (staticEval + margin < alpha) {
                 int qEval = quiescentSearch(board, color, alpha - 1, alpha, depthFromRoot + 1);
