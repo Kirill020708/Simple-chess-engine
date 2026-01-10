@@ -567,6 +567,14 @@ struct Worker {
                 continue;
             }
 
+			if (movesSearched > 0 && !isMovingSideInCheck && 
+                !isMoveInteresting && movesSearched >= 2 + depth * depth * 1.5
+
+            ) {
+
+                continue;
+            }            
+
             int seeMargin[4] = {0, 2, 4, 9};
 
             if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
