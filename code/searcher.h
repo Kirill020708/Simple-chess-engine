@@ -583,7 +583,7 @@ struct Worker {
 
             // cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
-            int futilityMargin = (100) * depth * depth; 
+            int futilityMargin = (50) * depth * depth; 
 
             // if(isCapture){
             // 	if(sseEval)
