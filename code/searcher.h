@@ -555,8 +555,7 @@ struct Worker {
             bool inCheck = moveGenerator.isInCheck(board, oppositeColor);
             bool isPromotion = (move.getPromotionFlag() > 0);
             int sseEval = 0;
-            if (isCapture)
-                sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+            sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
 
             int premovefutilityMargin = (150 + historyValueF * 75 - isTTCapture * 100) * depth * depth;
             if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
@@ -569,8 +568,16 @@ struct Worker {
 
             int seeMargin[4] = {0, 2, 4, 9};
 
-            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+            if (movesSearched > 0 && isCapture && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth]) {
+
+                continue;
+            }
+
+            int seeQuietMargin[4] = {0, 3, 6, 9};
+
+            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+                sseEval <= -seeQuietMargin[depth]) {
 
                 continue;
             }
