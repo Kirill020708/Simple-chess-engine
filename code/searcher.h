@@ -567,8 +567,8 @@ struct Worker {
                 continue;
             }
 
-			if (movesSearched > 0 && !isMovingSideInCheck && 
-                !isMoveInteresting && movesSearched >= 2 + depth * depth * 1.5
+			if (movesSearched > 0 && !isMovingSideInCheck && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
+                !isMoveInteresting && movesSearched >= 3 + depth * depth * 1.5 && historyValue < 0
 
             ) {
 
