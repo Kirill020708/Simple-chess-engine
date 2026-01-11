@@ -439,7 +439,7 @@ struct Worker {
 
         if (depth >= 6 && isPvNode && ttMove == Move()) {
 
-            depth--;
+            depth -= 2;
         }
 
         if(ttMove == Move()){
