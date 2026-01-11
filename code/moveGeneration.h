@@ -102,6 +102,13 @@ struct MoveGeneration {
         return moves;
     }
 
+    inline Bitboard rawBishopMoves(Board &board, int square) {
+        ull key = (((magic.bishopAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
+                    magic.bishopsMagics[square]) >>
+                   magic.bishopsShifts[square]);
+        return magic.bishopCaptures[square][key];
+    }
+
     inline Bitboard rookMoves(Board &board, int square) {
         ull key = (((magic.rookAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
                     magic.rooksMagics[square]) >>
@@ -113,6 +120,13 @@ struct MoveGeneration {
         if (occup == BLACK)
             moves &= (~board.blackPieces);
         return moves;
+    }
+
+    inline Bitboard rawRookMoves(Board &board, int square) {
+        ull key = (((magic.rookAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
+                    magic.rooksMagics[square]) >>
+                   magic.rooksShifts[square]);
+        return magic.rookCaptures[square][key];
     }
 
     inline Bitboard queenMoves(Board &board, int square) {
@@ -213,11 +227,11 @@ struct MoveGeneration {
         if (board.whitePieces & board.kings & boardHelper.kingMoves[square])
             return true;
 
-        Bitboard bishopRays = bishopMoves(board, square);
+        Bitboard bishopRays = rawBishopMoves(board, square);
         if (board.whitePieces & board.bishops & bishopRays)
             return true;
 
-        Bitboard rookRays = rookMoves(board, square);
+        Bitboard rookRays = rawRookMoves(board, square);
         if (board.whitePieces & board.rooks & rookRays)
             return true;
 
@@ -240,11 +254,11 @@ struct MoveGeneration {
         if (board.blackPieces & board.kings & boardHelper.kingMoves[square])
             return true;
 
-        Bitboard bishopRays = bishopMoves(board, square);
+        Bitboard bishopRays = rawBishopMoves(board, square);
         if (board.blackPieces & board.bishops & bishopRays)
             return true;
 
-        Bitboard rookRays = rookMoves(board, square);
+        Bitboard rookRays = rawRookMoves(board, square);
         if (board.blackPieces & board.rooks & rookRays)
             return true;
 
