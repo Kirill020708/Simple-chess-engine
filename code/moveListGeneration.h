@@ -82,6 +82,7 @@ struct MoveListGenerator {
             if (onlyCaptures) {
                 moves &= opponentPieces;
             }
+            moves &= (~friendPieces);
 
             while (moves > 0) {
                 int targetSquare = moves.getFirstBitNumberAndExclude();
@@ -184,6 +185,7 @@ struct MoveListGenerator {
         while (pieces > 0) {
             int startSquare = pieces.getFirstBitNumberAndExclude();
             Bitboard moves = moveGenerator.moves(board, startSquare);
+            moves &= (~friendPieces);
 
             while (moves > 0) {
                 int targetSquare = moves.getFirstBitNumberAndExclude();
@@ -230,6 +232,7 @@ struct MoveListGenerator {
         while (pieces > 0) {
             int startSquare = pieces.getFirstBitNumberAndExclude();
             Bitboard moves = moveGenerator.moves(board, startSquare);
+            moves &= (~friendPieces);
 
             while (moves > 0) {
                 int targetSquare = moves.getFirstBitNumberAndExclude();

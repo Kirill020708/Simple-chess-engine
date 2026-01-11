@@ -82,10 +82,6 @@ struct MoveGeneration {
     inline Bitboard knightMoves(Board &board, int square) {
         int occup = board.occupancy(square);
         Bitboard moves = boardHelper.knightMoves[square];
-        if (occup == WHITE)
-            moves &= (~board.whitePieces);
-        if (occup == BLACK)
-            moves &= (~board.blackPieces);
         return moves;
     }
 
@@ -93,36 +89,10 @@ struct MoveGeneration {
         ull key = (((magic.bishopAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
                     magic.bishopsMagics[square]) >>
                    magic.bishopsShifts[square]);
-        Bitboard moves = magic.bishopCaptures[square][key];
-        int occup = board.occupancy(square);
-        if (occup == WHITE)
-            moves &= (~board.whitePieces);
-        if (occup == BLACK)
-            moves &= (~board.blackPieces);
-        return moves;
-    }
-
-    inline Bitboard rawBishopMoves(Board &board, int square) {
-        ull key = (((magic.bishopAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
-                    magic.bishopsMagics[square]) >>
-                   magic.bishopsShifts[square]);
         return magic.bishopCaptures[square][key];
     }
 
     inline Bitboard rookMoves(Board &board, int square) {
-        ull key = (((magic.rookAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
-                    magic.rooksMagics[square]) >>
-                   magic.rooksShifts[square]);
-        Bitboard moves = magic.rookCaptures[square][key];
-        int occup = board.occupancy(square);
-        if (occup == WHITE)
-            moves &= (~board.whitePieces);
-        if (occup == BLACK)
-            moves &= (~board.blackPieces);
-        return moves;
-    }
-
-    inline Bitboard rawRookMoves(Board &board, int square) {
         ull key = (((magic.rookAttackPruned[square] & ull(board.whitePieces | board.blackPieces)) *
                     magic.rooksMagics[square]) >>
                    magic.rooksShifts[square]);
@@ -227,11 +197,11 @@ struct MoveGeneration {
         if (board.whitePieces & board.kings & boardHelper.kingMoves[square])
             return true;
 
-        Bitboard bishopRays = rawBishopMoves(board, square);
+        Bitboard bishopRays = bishopMoves(board, square);
         if (board.whitePieces & board.bishops & bishopRays)
             return true;
 
-        Bitboard rookRays = rawRookMoves(board, square);
+        Bitboard rookRays = rookMoves(board, square);
         if (board.whitePieces & board.rooks & rookRays)
             return true;
 
@@ -254,11 +224,11 @@ struct MoveGeneration {
         if (board.blackPieces & board.kings & boardHelper.kingMoves[square])
             return true;
 
-        Bitboard bishopRays = rawBishopMoves(board, square);
+        Bitboard bishopRays = bishopMoves(board, square);
         if (board.blackPieces & board.bishops & bishopRays)
             return true;
 
-        Bitboard rookRays = rawRookMoves(board, square);
+        Bitboard rookRays = rookMoves(board, square);
         if (board.blackPieces & board.rooks & rookRays)
             return true;
 
@@ -387,6 +357,22 @@ struct MoveGeneration {
         board = boardCopy;
         return true;
     }
+
+    // Bitboard computeAttackBitboardsW(Board &board) {
+    // 	Bitboard attacks;
+
+    // 	Bitboard pieces = board.pawns & board.whitePieces;
+    // 	while (pieces > 0)
+    // 		attacks |= pawnMoves(board, pieces.getFirstBitNumberAndExclude());
+
+    // 	pieces = board.pawns & board.whitePieces;
+    // 	while (pieces > 0)
+    // 		attacks |= pawnMoves(board, pieces.getFirstBitNumberAndExclude());
+    // }
+
+    // Bitboard computeAttackBitboardsB(Board &board) {
+
+    // }
 };
 
 MoveGeneration moveGenerator;
