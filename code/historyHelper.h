@@ -17,14 +17,13 @@
 #endif /* MOVE */
 
 struct HistoryHelper {
-    int historyScore[2][64][64];
+    int historyScore[2][64][64][2][2];
     int maxHistoryScore = 511;
 
+    Bitboard whiteAttacks, blackAttacks;
+
     void clear() {
-        for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 64; j++)
-                for (int k = 0; k < 64; k++)
-                    historyScore[i][j][k] = 0;
+    	memset(historyScore, 0, sizeof(historyScore));
     }
 
     inline void update(int color, Move move, int score) {
@@ -33,12 +32,37 @@ struct HistoryHelper {
         if (score > maxHistoryScore)
             score = maxHistoryScore; // clamp
 
-        historyScore[color][move.getStartSquare()][move.getTargetSquare()] +=
-            score - historyScore[color][move.getStartSquare()][move.getTargetSquare()] * abs(score) / maxHistoryScore;
+        int st = move.getStartSquare();
+        int tr = move.getTargetSquare();
+
+        int stTh, trTh;
+        if (color == WHITE) {
+        	stTh = (blackAttacks & (1ull << st)) > 0;
+        	trTh = (blackAttacks & (1ull << tr)) > 0;
+        } else {
+        	stTh = (whiteAttacks & (1ull << st)) > 0;
+        	trTh = (whiteAttacks & (1ull << tr)) > 0;
+        }
+
+        historyScore[color][st][tr][stTh][trTh] +=
+            score - historyScore[color][st][tr][stTh][trTh] * abs(score) / maxHistoryScore;
     }
 
     inline int getScore(int color, Move move) {
-        return (historyScore[color][move.getStartSquare()][move.getTargetSquare()]) +
+
+        int st = move.getStartSquare();
+        int tr = move.getTargetSquare();
+
+        int stTh, trTh;
+        if (color == WHITE) {
+        	stTh = (blackAttacks & (1ull << st)) > 0;
+        	trTh = (blackAttacks & (1ull << tr)) > 0;
+        } else {
+        	stTh = (whiteAttacks & (1ull << st)) > 0;
+        	trTh = (whiteAttacks & (1ull << tr)) > 0;
+        }
+        
+        return (historyScore[color][st][tr][stTh][trTh]) +
                maxHistoryScore; // to prevent negative values
     }
 };

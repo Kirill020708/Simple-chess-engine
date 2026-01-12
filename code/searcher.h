@@ -442,7 +442,12 @@ struct Worker {
             depth--;
         }
 
+        Bitboard whiteAttacks = moveGenerator.computeAttackBitboardsW(board);
+        Bitboard blackAttacks = moveGenerator.computeAttackBitboardsB(board);
+
         if(ttMove == Move()){
+        	historyHelper.whiteAttacks = whiteAttacks;
+        	historyHelper.blackAttacks = blackAttacks;
         	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
         }
 
@@ -533,9 +538,11 @@ struct Worker {
 		    board.zobristKey = zobristKey;
 
 
+        	historyHelper.whiteAttacks = whiteAttacks;
+        	historyHelper.blackAttacks = blackAttacks;
 
             int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
-            float historyValueF = (historyHelper.getScore(color, move) - historyHelper.maxHistoryScore)/float(historyHelper.maxHistoryScore);
+            float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
 
             int extendDepth = 0;
@@ -757,6 +764,9 @@ struct Worker {
                     		corrhistHelper.update(color, board, (score - staticEval) * depth / 8);
                     }
 
+		        	historyHelper.whiteAttacks = whiteAttacks;
+		        	historyHelper.blackAttacks = blackAttacks;
+
                     if ((board.whitePieces & board.blackPieces).getBit(move.getTargetSquare()) ==
                         0) // move is not capture
                         historyHelper.update(color, move, depth * depth);
@@ -776,6 +786,9 @@ struct Worker {
             }
 
             if (move == ttMove) {
+	        	historyHelper.whiteAttacks = whiteAttacks;
+	        	historyHelper.blackAttacks = blackAttacks;
+
 		        moveListGenerator.hashMove = ttMove;
 		        moveListGenerator.killerMove = killerMovesTable[depthFromRoot][killerMove];
 		        moveListGenerator.killerBackup = killerMovesTable[depthFromRoot][killerBackup];
