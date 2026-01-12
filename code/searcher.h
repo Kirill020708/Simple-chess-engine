@@ -544,6 +544,10 @@ struct Worker {
             int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
             float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
+            if (!isPvNode && historyValue < -100 * depth) {
+            	continue;
+            }
+
 
             int extendDepth = 0;
 
