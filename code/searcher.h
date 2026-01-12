@@ -567,12 +567,12 @@ struct Worker {
                 sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
 
             
-            if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
+            if (!isPvNode && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
             	continue;
             }
 
             int premovefutilityMargin = (150 + historyValueF * 75 - isTTCapture * 100) * depth * depth;
-            if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
+            if (!isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
 
             ) {
@@ -582,7 +582,7 @@ struct Worker {
 
             int seeMargin[4] = {0, 2, 4, 9};
 
-            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+            if (!isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth]) {
 
                 continue;
@@ -603,7 +603,7 @@ struct Worker {
             // }
 
             // Futility pruning
-            if (movesSearched > 0 && !isMovingSideInCheck && newStaticEval < alpha - futilityMargin &&
+            if (!isMovingSideInCheck && newStaticEval < alpha - futilityMargin &&
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
 
             ) {
@@ -808,6 +808,9 @@ struct Worker {
         	if (type == EXACT || maxEvaluation < staticEval)
         		corrhistHelper.update(color, board, (maxEvaluation - staticEval) * depth / 8);
         }
+
+        if (maxEvaluation == -inf)
+        	maxEvaluation = alpha;
 
         transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove);
         return maxEvaluation;
