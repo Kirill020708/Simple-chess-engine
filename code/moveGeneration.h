@@ -81,7 +81,7 @@ struct MoveGeneration {
 
     inline Bitboard knightMoves(Board &board, int square) {
         int occup = board.occupancy(square);
-        Bitboard moves = boardHelper.knightMoves[square];
+        Bitboard moves = boardHelper.knightMoves[square]; 
         return moves;
     }
 
