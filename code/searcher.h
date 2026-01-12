@@ -544,9 +544,6 @@ struct Worker {
             int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
             float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
-            if (!isPvNode && historyValue < -100 * depth) {
-            	continue;
-            }
 
 
             int extendDepth = 0;
@@ -568,6 +565,11 @@ struct Worker {
             int sseEval = 0;
             if (isCapture)
                 sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+
+            
+            if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
+            	continue;
+            }
 
             int premovefutilityMargin = (150 + historyValueF * 75 - isTTCapture * 100) * depth * depth;
             if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
