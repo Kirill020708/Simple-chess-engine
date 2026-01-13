@@ -183,6 +183,11 @@ struct Worker {
             if(ttMove != Move() && !searchedTTmove) {
             	move = ttMove;
             	searchedTTmove = true;
+            } else {
+            	for (int i = currentMove + 1; i < moveListGenerator.moveListSize[depthFromRoot]; i++)
+            		if (moveListGenerator.moveList[depthFromRoot][currentMove].score < moveListGenerator.moveList[depthFromRoot][i].score)
+            			swap(moveListGenerator.moveList[depthFromRoot][currentMove], moveListGenerator.moveList[depthFromRoot][i]);
+            	move = moveListGenerator.moveList[depthFromRoot][currentMove];
             }
 
             bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
@@ -511,6 +516,11 @@ struct Worker {
             if (ttMove != Move() && !searchedTTmove) {
             	move = ttMove;
             	searchedTTmove = true;
+            } else {
+            	for (int i = currentMove + 1; i < moveListGenerator.moveListSize[depthFromRoot]; i++)
+            		if (moveListGenerator.moveList[depthFromRoot][currentMove].score < moveListGenerator.moveList[depthFromRoot][i].score)
+            			swap(moveListGenerator.moveList[depthFromRoot][currentMove], moveListGenerator.moveList[depthFromRoot][i]);
+            	move = moveListGenerator.moveList[depthFromRoot][currentMove];
             }
 
 		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;

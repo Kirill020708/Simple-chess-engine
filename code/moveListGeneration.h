@@ -136,6 +136,8 @@ struct MoveListGenerator {
                         if (onlyCaptures)
                             promotionMoves[i].score += (sseEval + 15);
                         moveList[depth][moveListSize[depth]++] = promotionMoves[i];
+                        if (promotionMoves[i] == hashMove)
+                        	swap(moveList[depth][moveListSize[depth] - 1], moveList[depth][0]);
                     }
                 } else {
                     board.makeMove(Move(startSquare, targetSquare, NOPIECE));
@@ -159,11 +161,13 @@ struct MoveListGenerator {
                     else if (move == killerBackup)
                         move.score += (1 << killerMoveShift);
                     moveList[depth][moveListSize[depth]++] = move;
+                    if (move == hashMove)
+                    	swap(moveList[depth][moveListSize[depth] - 1], moveList[depth][0]);
                 }
             }
         }
-        if (doSort)
-            stable_sort(moveList[depth], moveList[depth] + moveListSize[depth]);
+        // if (doSort)
+        //     stable_sort(moveList[depth], moveList[depth] + moveListSize[depth]);
     }
 
     inline void generateMovesForPerft(Board &board, int color, int depth) { // optimized gen without scores
