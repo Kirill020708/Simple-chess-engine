@@ -101,6 +101,9 @@ struct MoveListGenerator {
                     else
                         captureEval = sseEval = 1;
 
+                    if (captureEval <= -1 && onlyCaptures)
+                    	continue;
+
                     if (captureEval >= -1)
                         captureCoeff += (1 << 5);
 
