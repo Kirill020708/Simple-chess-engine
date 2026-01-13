@@ -322,21 +322,9 @@ struct Worker {
         if (!isRoot && evaluator.insufficientMaterialDraw(board))
             return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
 
-        int staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
+        int staticEval = 0;
+        
         // cout<<board.generateFEN()<<' '<<staticEval<<'\n';
-        bool improving = false;
-        bool isMovingSideInCheck = moveGenerator.isInCheck(board, color);
-
-        if (isMovingSideInCheck)
-            staticEvaluationHistory[depthFromRoot] = NONE_SCORE;
-        else {
-            staticEvaluationHistory[depthFromRoot] = staticEval;
-            if (depthFromRoot >= 2) {
-                int previousEval = staticEvaluationHistory[depthFromRoot - 2];
-                if (previousEval == NONE_SCORE || previousEval < staticEval)
-                    improving = true;
-            }
-        }
 
         auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, depth, alpha, beta);
         if (!moveGenerator.isMoveLegal(board, bestHashMove))
@@ -351,6 +339,23 @@ struct Worker {
         auto ttEntry = transpositionTable.getEntry(board, currentZobristKey);
         if (ttEntry.evaluation != NO_EVAL)
             staticEval = ttEntry.evaluation;
+        else
+        	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
+
+
+        bool improving = false;
+        bool isMovingSideInCheck = moveGenerator.isInCheck(board, color);
+
+        if (isMovingSideInCheck)
+            staticEvaluationHistory[depthFromRoot] = NONE_SCORE;
+        else {
+            staticEvaluationHistory[depthFromRoot] = staticEval;
+            if (depthFromRoot >= 2) {
+                int previousEval = staticEvaluationHistory[depthFromRoot - 2];
+                if (previousEval == NONE_SCORE || previousEval < staticEval)
+                    improving = true;
+            }
+        }
 
         // occuredPositions[board.age]=currentZobristKey;
 
