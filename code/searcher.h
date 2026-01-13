@@ -319,7 +319,7 @@ struct Worker {
                     return DRAW_SCORE;
         }
 
-        if (moveListGenerator.isStalled(board, color) || (!isRoot && evaluator.insufficientMaterialDraw(board)))
+        if (!isRoot && evaluator.insufficientMaterialDraw(board))
             return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
 
         int staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
@@ -449,6 +449,8 @@ struct Worker {
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
         	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
+        	if (moveListGenerator.moveListSize[depthFromRoot] == 0)
+        		return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
         }
 
         int extendTTmove = 0;
