@@ -128,7 +128,7 @@ struct Worker {
 
         int staticEval;
         if (moveListGenerator.isStalled(board, color) || evaluator.insufficientMaterialDraw(board))
-            staticEval = evaluator.evaluateStalledPosition(board, color, depthFromRoot);
+            return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
         else
             staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
 
