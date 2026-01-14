@@ -784,7 +784,7 @@ struct Worker {
                         Move prevMove = moveListGenerator.moveList[depthFromRoot][previousMoves];
                         if ((board.whitePieces & board.blackPieces).getBit(prevMove.getTargetSquare()) ==
                             0) // move is not capture
-                            historyHelper.update(color, prevMove, -(depth * depth));
+                            historyHelper.update(color, prevMove, -(depth * 3));
                     }
 
                     transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, LOWER_BOUND,
