@@ -359,7 +359,7 @@ struct Worker {
         // Reverse futility pruning
         if (!isMovingSideInCheck &&                                        // position not in check
             (bestHashMove == Move() || board.isQuietMove(bestHashMove)) && // TT move is null or non-capture
-            nodeType != EXACT) {                                           // node type is not PV
+            !isPvNode) {
 
             int margin = (50 - improving * 30) * max(depth, 1) * max(depth, 1);
 
