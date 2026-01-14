@@ -508,6 +508,9 @@ struct Worker {
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
 
+	        bool isKiller = (move == killerMovesTable[depthFromRoot][killerMove] ||
+	        				move == killerMovesTable[depthFromRoot][killerBackup]);
+
             if (ttMove != Move() && !searchedTTmove) {
             	move = ttMove;
             	searchedTTmove = true;
@@ -635,7 +638,7 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1); // reduction of depth
+                          0.5 * (!improving) + (isTTCapture) * 1 - (isKiller) * 1); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
