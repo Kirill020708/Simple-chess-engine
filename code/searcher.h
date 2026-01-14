@@ -565,8 +565,7 @@ struct Worker {
             bool inCheck = moveGenerator.isInCheck(board, oppositeColor);
             bool isPromotion = (move.getPromotionFlag() > 0);
             int sseEval = 0;
-            if (isCapture)
-                sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+            sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
 
             
             if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
@@ -584,8 +583,18 @@ struct Worker {
 
             int seeMargin[4] = {0, 2, 4, 9};
 
-            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+            if (isCapture && movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth]) {
+
+                continue;
+            }
+
+
+
+            int seeMarginQuiet[4] = {0, 3, 400, 900};
+
+            if (!isCapture && movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+                sseEval <= -seeMarginQuiet[depth]) {
 
                 continue;
             }
