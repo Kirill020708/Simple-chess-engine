@@ -54,7 +54,7 @@ struct HistoryHelper {
 	    	int capturedPiece = board.occupancyPiece(tr);
 
 	        captHistoryScore[color][movedPiece][tr][capturedPiece] +=
-	            captHistoryScore[color][movedPiece][tr][capturedPiece] * abs(score) / maxHistoryScore;
+	            score - captHistoryScore[color][movedPiece][tr][capturedPiece] * abs(score) / maxHistoryScore;
 	    }
     }
 
