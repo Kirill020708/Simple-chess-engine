@@ -108,6 +108,8 @@ struct CorrHistoryHelper {
 			score - corrHistTableBlack[color][index] * abs(score) / maxCorrHistValue;
 	}
 
+	int corrhistScore;
+
     inline int getScore(int color, Board &board) {
     	int index, corrScore = 0;
 
@@ -122,6 +124,8 @@ struct CorrHistoryHelper {
 
 		index = board.zobristKeyBlack & sznd;
 		corrScore += (50 * corrHistTableBlack[color][index]) / 300;
+
+		corrhistScore = corrScore;
 
 		return corrScore;
     }

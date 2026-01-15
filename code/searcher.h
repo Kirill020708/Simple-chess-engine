@@ -331,6 +331,7 @@ struct Worker {
             return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
 
         int staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
+        int corrhist = abs(corrhistHelper.corrhistScore);
         // cout<<board.generateFEN()<<' '<<staticEval<<'\n';
         bool improving = false;
         bool isMovingSideInCheck = moveGenerator.isInCheck(board, color);
@@ -642,7 +643,7 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1); // reduction of depth
+                          0.5 * (!improving) + (isTTCapture) * 1 - corrhist * 0.05); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
@@ -684,7 +685,7 @@ struct Worker {
                 }
 
                 if (movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
-                    !isMoveInteresting // don't do LMR with interesting moves
+                    !inCheck // don't do LMR with interesting moves
                     // historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
                 ) {
                     score = -search<NonPV>(board, oppositeColor, depth - 1 - LMR_DEPTH_REDUCTION, 0, -(alpha + 1), -alpha,
