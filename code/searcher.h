@@ -550,7 +550,7 @@ struct Worker {
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
 
-            int historyValue = historyHelper.getScore(color, move) - historyHelper.maxHistoryScore;
+            int historyValue = historyHelper.getScore(board, color, move) - historyHelper.maxHistoryScore;
             float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
 
@@ -782,16 +782,12 @@ struct Worker {
 		        	historyHelper.whiteAttacks = whiteAttacks;
 		        	historyHelper.blackAttacks = blackAttacks;
 
-                    if ((board.whitePieces & board.blackPieces).getBit(move.getTargetSquare()) ==
-                        0) // move is not capture
-                        historyHelper.update(color, move, depth * depth);
+                    historyHelper.update(board, color, move, depth * depth);
 
                     for (int previousMoves = 0; previousMoves < currentMove;
                          previousMoves++) { // negate all searched non-capture moves
                         Move prevMove = moveListGenerator.moveList[depthFromRoot][previousMoves];
-                        if ((board.whitePieces & board.blackPieces).getBit(prevMove.getTargetSquare()) ==
-                            0) // move is not capture
-                            historyHelper.update(color, prevMove, -(depth * depth));
+                        historyHelper.update(board, color, prevMove, -(depth * depth));
                     }
 
                     transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, LOWER_BOUND,
