@@ -18,7 +18,7 @@
 
 struct HistoryHelper {
     int historyScore[2][64][64][2][2];
-    int captHistoryScore[2][8][64][8];
+    int captHistoryScore[2][8][64][8][2];
     int maxHistoryScore = 511;
 
     Bitboard whiteAttacks, blackAttacks;
@@ -53,8 +53,14 @@ struct HistoryHelper {
 	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
 
-	        captHistoryScore[color][movedPiece][tr][capturedPiece] +=
-	            score - captHistoryScore[color][movedPiece][tr][capturedPiece] * abs(score) / maxHistoryScore;
+	    	int trTh;
+	        if (color == WHITE)
+	        	trTh = (blackAttacks & (1ull << tr)) > 0;
+	        else
+	        	trTh = (whiteAttacks & (1ull << tr)) > 0;
+
+	        captHistoryScore[color][movedPiece][tr][capturedPiece][trTh] +=
+	            score - captHistoryScore[color][movedPiece][tr][capturedPiece][trTh] * abs(score) / maxHistoryScore;
 	    }
     }
 
@@ -80,7 +86,13 @@ struct HistoryHelper {
 	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
 
-	        return (captHistoryScore[color][movedPiece][tr][capturedPiece]) +
+	    	int trTh;
+	        if (color == WHITE)
+	        	trTh = (blackAttacks & (1ull << tr)) > 0;
+	        else
+	        	trTh = (whiteAttacks & (1ull << tr)) > 0;
+
+	        return (captHistoryScore[color][movedPiece][tr][capturedPiece][trTh]) +
 	               maxHistoryScore;
 	    }
     }
