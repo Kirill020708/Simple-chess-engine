@@ -684,7 +684,7 @@ struct Worker {
                 }
 
                 if (movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
-                    !isMoveInteresting // don't do LMR with interesting moves
+                    !isMoveInteresting && LMR_DEPTH_REDUCTION > 0
                     // historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
                 ) {
                     score = -search<NonPV>(board, oppositeColor, depth - 1 - LMR_DEPTH_REDUCTION, 0, -(alpha + 1), -alpha,
