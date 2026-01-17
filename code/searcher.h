@@ -649,8 +649,13 @@ struct Worker {
 
 
                 bool doLMRcapture = true;
-                if (inCheck || (isCapture && sseEval >= -1))
+                if (inCheck)
                 	doLMRcapture = false;
+
+                if (isCapture) {
+                	int LMR_DEPTH_REDUCTION =
+                    floor(lmrLogTable[depth][movesSearched]);
+                }
 
                 // if(isRoot){
                 // 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<'
