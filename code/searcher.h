@@ -642,7 +642,7 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 2); // reduction of depth
+                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2)); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
@@ -651,11 +651,6 @@ struct Worker {
                 bool doLMRcapture = true;
                 if (inCheck)
                 	doLMRcapture = false;
-
-                if (isCapture) {
-                	int LMR_DEPTH_REDUCTION =
-                    floor(lmrLogTable[depth][movesSearched]);
-                }
 
                 // if(isRoot){
                 // 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<'
