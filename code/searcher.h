@@ -383,7 +383,7 @@ struct Worker {
         if (!isMovingSideInCheck && // position not in check
             ((board.whitePieces | board.blackPieces) ^ (board.pawns | board.kings)) >
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
-            staticEval >= beta && // static evaluation >= beta
+            staticEval >= beta + 30 && // static evaluation >= beta
             !isPvNode) {
 
             int R = floor(4 +
