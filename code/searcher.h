@@ -384,14 +384,17 @@ struct Worker {
             ((board.whitePieces | board.blackPieces) ^ (board.pawns | board.kings)) >
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
             staticEval >= beta && // static evaluation >= beta
+            depth >= 2 &&
             !isPvNode) {
 
-            int R = floor(4 +
+            int R = floor(5 +
             	depth / 5.0 +
             	min((staticEval - beta) / 200.0, 5.0));
 
+        	R = min(depth - 1, R);
+
             int prevEnPassColumn = board.makeNullMove();
-            int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1);
+            int score = -search<NonPV>(board, oppositeColor, depth - R, 0, -beta, -beta + 1, depthFromRoot + 1);
             board.makeNullMove();
             board.enPassantColumn = prevEnPassColumn;
             if (score >= beta)
