@@ -18,7 +18,7 @@
 
 struct HistoryHelper {
     int historyScore[2][64][64][2][2];
-    int pieceSquareHistory[2][6][64][2][2];
+    int pieceSquareHistory[2][8][64][2][2];
     int captHistoryScore[2][8][64][8];
     int maxHistoryScore = 511;
 
