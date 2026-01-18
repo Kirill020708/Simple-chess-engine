@@ -18,6 +18,7 @@
 
 struct HistoryHelper {
     int historyScore[2][64][64][2][2];
+    int pieceSquareHistory[2][6][64][2][2];
     int captHistoryScore[2][8][64][8];
     int maxHistoryScore = 511;
 
@@ -49,6 +50,12 @@ struct HistoryHelper {
 
 	        historyScore[color][st][tr][stTh][trTh] +=
 	            score - historyScore[color][st][tr][stTh][trTh] * abs(score) / maxHistoryScore;
+
+	        pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] +=
+	            score - pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] * abs(score) / maxHistoryScore;
+
+
+
 	    } else {
 	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
@@ -73,9 +80,15 @@ struct HistoryHelper {
 	        	stTh = (whiteAttacks & (1ull << st)) > 0;
 	        	trTh = (whiteAttacks & (1ull << tr)) > 0;
 	        }
+
+	        int history = 0;
 	        
-	        return (historyScore[color][st][tr][stTh][trTh]) +
-	               maxHistoryScore; // to prevent negative values
+	        history += (historyScore[color][st][tr][stTh][trTh]);
+	        history += (pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh]);
+
+	        history /= 2;
+	        return history + maxHistoryScore; // to prevent negative values
+
 	    } else {
 	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
