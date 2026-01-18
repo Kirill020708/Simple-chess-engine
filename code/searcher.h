@@ -351,7 +351,7 @@ struct Worker {
         	bestHashMove = Move();
 
         if (hashTableEvaluation != NO_EVAL) {
-            if (!isPvNode)
+            if (!isPvNode && !searchStack[depthFromRoot].excludeTTmove)
                 return hashTableEvaluation;
 
             staticEval = hashTableEvaluation;
@@ -366,7 +366,8 @@ struct Worker {
 
         // Reverse futility pruning
         if (!isMovingSideInCheck &&                                        // position not in check
-            nodeType != EXACT) {                                           // node type is not PV
+            nodeType != EXACT &&
+            !searchStack[depthFromRoot].excludeTTmove) {                                           // node type is not PV
 
             int margin = (50 - improving * 30) * max(depth, 1) * max(depth, 1);
 
@@ -384,7 +385,8 @@ struct Worker {
             ((board.whitePieces | board.blackPieces) ^ (board.pawns | board.kings)) >
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
             staticEval >= beta && // static evaluation >= beta
-            !isPvNode) {
+            !isPvNode &&
+            !searchStack[depthFromRoot].excludeTTmove) {
 
             int R = floor(4 +
             	depth / 5.0 +
@@ -398,7 +400,8 @@ struct Worker {
                 return score;
         }
 
-        if (depth == 1 && !isMovingSideInCheck) { // Razoring
+        if (depth == 1 && !isMovingSideInCheck &&
+        	!searchStack[depthFromRoot].excludeTTmove) { // Razoring
             int margin = 200;
 
             if (staticEval + margin < alpha) {
@@ -452,39 +455,39 @@ struct Worker {
         Bitboard whiteAttacks = moveGenerator.computeAttackBitboardsW(board);
         Bitboard blackAttacks = moveGenerator.computeAttackBitboardsB(board);
 
-        if(ttMove == Move()){
+        bool doTTmoveBeforeMovegen = true;
+
+        if(ttMove == Move() || searchStack[depthFromRoot].excludeTTmove){
+        	doTTmoveBeforeMovegen = false;
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
         	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
-        	if (moveListGenerator.moveListSize[depthFromRoot] == 0)
-        		return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
+        } else {
+        	moveListGenerator.moveListSize[depthFromRoot] = 1;
         }
 
         int extendTTmove = 0;
-        // if(
-        // 	ttMove!=Move() &&
-        // 	depth>=6 &&
-        // 	!searchStack[depthFromRoot].excludeTTmove &&
-        // 	moveListGenerator.moveListSize[depthFromRoot]>1 &&
-        // 	nodeType==LOWER_BOUND
-        // 	){
-        // 	auto ttEntry=transpositionTable.getEntry(board,currentZobristKey);
+        if(
+        	ttMove != Move() &&
+        	depth >= 6 &&
+        	!searchStack[depthFromRoot].excludeTTmove &&
+        	nodeType != UPPER_BOUND &&
+        	abs(MATE_SCORE) - abs(ttEntry.evaluation) > maxDepth
+        	){
 
-        // 	searchStack[depthFromRoot+1].excludeTTmove=true;
-        // 	searchStack[depthFromRoot+1].excludeMove=ttMove;
-        // 	int margin=80;
-        // 	int
-        // singularScore=search(board,color,depth/2,0,ttEntry.evaluation-margin-1,ttEntry.evaluation-margin,depthFromRoot+1);
+        	searchStack[depthFromRoot + 1].excludeTTmove = true;
+        	searchStack[depthFromRoot + 1].excludeMove = ttMove;
+        	int singularBeta = ttEntry.evaluation - depth * 4;
+        	int singularScore = search(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1);
 
-        // 	if(singularScore<ttEntry.evaluation-margin){
-        // 		extendTTmove=1;
-        // 		singularExtended++;
-        // 		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<'
-        // '<<int(ttEntry.depth)<<'\n';
-        // 	}
+        	if(singularScore < singularBeta){
+        		extendTTmove = 1;
+        		singularExtended++;
+        		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
+        	}
 
-        // 	searchStack[depthFromRoot+1].excludeTTmove=false;
-        // }
+        	searchStack[depthFromRoot + 1].excludeTTmove = false;
+        }
 
         int maxEvaluation = -inf;
         char type = UPPER_BOUND;
@@ -515,7 +518,12 @@ struct Worker {
         for (int currentMove = 0; currentMove < moveListGenerator.moveListSize[depthFromRoot]; currentMove++) {
             Move move = moveListGenerator.moveList[depthFromRoot][currentMove];
 
-            if (ttMove != Move() && !searchedTTmove) {
+            if (move == searchStack[depthFromRoot].excludeMove) {
+                if (searchStack[depthFromRoot].excludeTTmove)
+                    continue;
+            }
+
+            if (doTTmoveBeforeMovegen && !searchedTTmove) {
             	move = ttMove;
             	searchedTTmove = true;
             }
@@ -554,13 +562,7 @@ struct Worker {
             float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
 
-
             int extendDepth = 0;
-
-            if (move == searchStack[depthFromRoot].excludeMove) {
-                if (searchStack[depthFromRoot].excludeTTmove == true)
-                    continue;
-            }
 
             if (move == ttMove)
                 extendDepth += extendTTmove;
@@ -582,8 +584,8 @@ struct Worker {
 
             int premovefutilityMargin = (150 + historyValueF * 75 - isTTCapture * 100) * depth * depth;
             if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
-                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
-
+                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
+                !searchStack[depthFromRoot].excludeTTmove
             ) {
 
                 continue;
@@ -592,7 +594,7 @@ struct Worker {
             int seeMargin[4] = {0, 2, 4, 9};
 
             if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
-                sseEval <= -seeMargin[depth]) {
+                sseEval <= -seeMargin[depth] && !searchStack[depthFromRoot].excludeTTmove) {
 
                 continue;
             }
@@ -613,7 +615,8 @@ struct Worker {
 
             // Futility pruning
             if (movesSearched > 0 && !isMovingSideInCheck && newStaticEval < alpha - futilityMargin &&
-                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth
+                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
+                !searchStack[depthFromRoot].excludeTTmove
 
             ) {
 
@@ -801,7 +804,7 @@ struct Worker {
                 }
             }
 
-            if (move == ttMove) {
+            if (doTTmoveBeforeMovegen && currentMove == 0) {
 	        	historyHelper.whiteAttacks = whiteAttacks;
 	        	historyHelper.blackAttacks = blackAttacks;
 
@@ -818,6 +821,9 @@ struct Worker {
         	if (type == EXACT || maxEvaluation < staticEval)
         		corrhistHelper.update(color, board, (maxEvaluation - staticEval) * depth / 8);
         }
+
+        if (maxEvaluation == -inf)
+        	maxEvaluation = alpha;
 
         transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove);
         return maxEvaluation;
