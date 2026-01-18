@@ -76,6 +76,9 @@ struct alignas(64) Board {
 
     int age;
 
+    int lastMoveSquare = 0;
+    int lastMovedPiece = 0;
+
     int lastIrreversibleMoveAge = -1; // age of last irreversible move (capture/pawn move), for testing repetition
 
     inline int numberOfPieces() {
@@ -293,12 +296,16 @@ struct alignas(64) Board {
             pawns.getBit(move.getStartSquare())) // check if move is irreversible
             lastIrreversibleMoveAge = age;
 
-        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
-        boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         int startSquare = move.getStartSquare();
         int targetSquare = move.getTargetSquare();
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
+
+        lastMoveSquare = targetSquare;
+        lastMovedPiece = movingPiece;
+
+        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
+        boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
             if ((abs(targetSquare - startSquare) & 1) && occupancy(targetSquare) == EMPTY) { // enPassant capture
@@ -346,12 +353,16 @@ struct alignas(64) Board {
             pawns.getBit(move.getStartSquare())) // check if move is irreversible
             lastIrreversibleMoveAge = age;
 
-        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
-        boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         int startSquare = move.getStartSquare();
         int targetSquare = move.getTargetSquare();
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
+
+        lastMoveSquare = targetSquare; 
+        lastMovedPiece = movingPiece;
+
+        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
+        boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
             if ((abs(targetSquare - startSquare) & 1) && occupancy(targetSquare) == EMPTY) { // enPassant capture
