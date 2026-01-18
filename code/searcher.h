@@ -630,9 +630,6 @@ struct Worker {
                 continue;
             }
 
-            if (moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
-                extendDepth++;
-
             int score;
             if (movesSearched) { // Principal variation search
 
