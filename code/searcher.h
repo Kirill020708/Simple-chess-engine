@@ -469,7 +469,8 @@ struct Worker {
         int extendTTmove = 0;
         if(
         	ttMove != Move() &&
-        	depth >= 6 &&
+        	depth >= 7 &&
+        	ttEntry.depth >= depth - 3 &&
         	!searchStack[depthFromRoot].excludeTTmove &&
         	nodeType != UPPER_BOUND &&
         	abs(MATE_SCORE) - abs(ttEntry.evaluation) > maxDepth
@@ -477,8 +478,8 @@ struct Worker {
 
         	searchStack[depthFromRoot + 1].excludeTTmove = true;
         	searchStack[depthFromRoot + 1].excludeMove = ttMove;
-        	int singularBeta = ttEntry.evaluation - depth * 4;
-        	int singularScore = search(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1);
+        	int singularBeta = ttEntry.evaluation - depth;
+        	int singularScore = search<nodePvType>(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1);
 
         	if(singularScore < singularBeta){
         		extendTTmove = 1;
@@ -633,7 +634,7 @@ struct Worker {
                 continue;
             }
 
-            if (moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
+            if (!extendDepth && moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
                 extendDepth++;
 
             int score;
