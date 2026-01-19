@@ -462,6 +462,8 @@ struct Worker {
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
         	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
+        	if (moveListGenerator.moveListSize[depthFromRoot] == 0)
+        		return evaluator.evaluateStalledPosition(board, color, depthFromRoot);
         } else {
         	moveListGenerator.moveListSize[depthFromRoot] = 1;
         }
