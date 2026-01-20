@@ -469,7 +469,7 @@ struct Worker {
         }
 
         int extendTTmove = 0;
-        if(
+        if (
         	extended <= 30 &&
         	depthFromRoot < maxDepth - 10 &&
         	ttMove != Move() &&
@@ -485,13 +485,14 @@ struct Worker {
         	int singularBeta = ttEntry.evaluation - depth;
         	int singularScore = search<nodePvType>(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1, extended);
 
-        	if(singularScore < singularBeta){
+        	searchStack[depthFromRoot + 1].excludeTTmove = false;
+
+        	if (singularScore < singularBeta){
         		extendTTmove = 1;
         		singularExtended++;
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
-        	}
-
-        	searchStack[depthFromRoot + 1].excludeTTmove = false;
+        	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
+        		return beta;
         }
 
         int maxEvaluation = -inf;
