@@ -486,8 +486,6 @@ struct Worker {
         	int singularScore = search<nodePvType>(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1, extended);
 
         	if(singularScore < singularBeta){
-        		moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
-        		assert(moveListGenerator.moveListSize[depthFromRoot]>1);
         		extendTTmove = 1;
         		singularExtended++;
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
