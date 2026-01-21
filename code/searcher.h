@@ -490,6 +490,10 @@ struct Worker {
         	if (singularScore < singularBeta){
         		extendTTmove = 1;
         		singularExtended++;
+
+        		if (!isPvNode && singularScore < singularBeta - 30)
+        			singularExtended++;
+
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
         	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
         		return beta;
