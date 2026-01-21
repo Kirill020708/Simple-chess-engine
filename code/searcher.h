@@ -400,7 +400,7 @@ struct Worker {
                 return score;
         }
 
-        if (depth == 1 && !isMovingSideInCheck &&
+        if (!isPvNode && depth == 1 && !isMovingSideInCheck &&
         	!searchStack[depthFromRoot].excludeTTmove) { // Razoring
             int margin = 200;
 
