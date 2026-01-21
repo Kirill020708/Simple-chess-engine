@@ -27,6 +27,9 @@
 
 using namespace std;
 
+
+// #define DO_HCE
+
 typedef long long ll;
 typedef unsigned long long ull;
 // typedef __int128 lll;

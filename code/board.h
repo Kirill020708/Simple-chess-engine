@@ -174,6 +174,11 @@ struct alignas(64) Board {
         int piece = occupancyPiece(square);
         int pieceColor = occupancy(square);
 
+        #if defined DO_HCE
+        if (pieceColor != EMPTY)
+            materialCount -= material[piece];
+        #endif
+
         if (pieceColor != EMPTY) {
 
 	        ull pieceKey = zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
@@ -213,8 +218,10 @@ struct alignas(64) Board {
         int piece = occupancyPiece(square);
         int pieceColor = occupancy(square);
 
+        #if !defined DO_HCE
         if (pieceColor != EMPTY)
             nnueEvaluator.set0(getNNUEidx(square, piece, pieceColor));
+        #endif
 
         clearPosition(square);
     }
@@ -222,7 +229,11 @@ struct alignas(64) Board {
     inline void putPiece(int square, int color, int pieceType) {
 
         // evaluation += pieceSquareTable.getPieceEval(pieceType, square, color, endgameWeight());
-        // materialCount += material[pieceType];
+
+        #if defined DO_HCE
+        materialCount += material[pieceType];
+        #endif
+
         if (color == WHITE)
             whitePieces |= (1ull << square);
         if (color == BLACK)
@@ -260,7 +271,10 @@ struct alignas(64) Board {
     }
 
     inline void putPiece(int square, int color, int pieceType, NNUEevaluator &nnueEvaluator) {
+
+        #if !defined DO_HCE
         nnueEvaluator.set1(getNNUEidx(square, pieceType, color));
+        #endif
 
         putPiece(square, color, pieceType);
     }

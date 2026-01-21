@@ -840,6 +840,7 @@ struct Evaluator {
     }
 
     int evaluatePosition(Board &board, int color, NNUEevaluator &nnueEvaluator) { // board evaluation with NNUE
+
         if (insufficientMaterialDraw(board))
             return DRAW_SCORE;
 
@@ -849,7 +850,15 @@ struct Evaluator {
             if (TTevaluation != NO_EVAL)
                 return TTevaluation;
         }
-        int evaluation = nnueEvaluator.evaluate(color);
+        int evaluation;
+
+        #if defined DO_HCE
+            evaluation = evaluatePosition(board) * ((color == WHITE) ? 1 : -1);
+        #else
+            evaluation = nnueEvaluator.evaluate(color);
+        #endif
+
+        
         evaluationTranspositionTable.write(key, int(evaluation));
         return evaluation;
     }

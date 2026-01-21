@@ -162,6 +162,7 @@ struct Worker {
         	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
         }
 
+        #if !defined DO_HCE
         __int16_t accumW[hiddenLayerSize], accumB[hiddenLayerSize];
         for (int i = 0; i < hiddenLayerSize; i += 16) {
 
@@ -172,6 +173,7 @@ struct Worker {
             // accumW[i]=nnueEvaluator.hlSumW[i];
             // accumB[i]=nnueEvaluator.hlSumB[i];
         }
+        #endif
 
         int oppositeColor = (color == WHITE) ? BLACK : WHITE;
 
@@ -242,6 +244,7 @@ struct Worker {
             if (((numOfPiecesOnBoard - 1) >= 6 && newStaticEval + deltaPruningMargin < alpha) || sseScore <= -1) {
                 board = boardCopy;
 
+                #if !defined DO_HCE
                 for (int i = 0; i < hiddenLayerSize; i += 16) {
 
                     _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
@@ -251,6 +254,7 @@ struct Worker {
                     // nnueEvaluator.hlSumW[i]=accumW[i];
                     // nnueEvaluator.hlSumB[i]=accumB[i];
                 }
+                #endif
 
 	            if (move == ttMove) {
 			        moveListGenerator.hashMove = ttMove;
@@ -265,6 +269,7 @@ struct Worker {
 
             board = boardCopy;
 
+            #if !defined DO_HCE
             for (int i = 0; i < hiddenLayerSize; i += 16) {
 
                 _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
@@ -274,6 +279,7 @@ struct Worker {
                 // nnueEvaluator.hlSumW[i]=accumW[i];
                 // nnueEvaluator.hlSumB[i]=accumB[i];
             }
+            #endif
 
             isFirstMove = 0;
             if (stopSearch)
@@ -502,6 +508,7 @@ struct Worker {
         bestHashMove = Move();
         int numberOfMoves = moveListGenerator.moveListSize[depthFromRoot];
 
+        #if !defined DO_HCE
         __int16_t accumW[hiddenLayerSize], accumB[hiddenLayerSize];
         for (int i = 0; i < hiddenLayerSize; i += 16) {
 
@@ -512,6 +519,7 @@ struct Worker {
             // accumW[i]=nnueEvaluator.hlSumW[i];
             // accumB[i]=nnueEvaluator.hlSumB[i];
         }
+        #endif
 
         bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
 
@@ -626,6 +634,7 @@ struct Worker {
 
             ) {
 
+            	#if !defined DO_HCE
                 for (int i = 0; i < hiddenLayerSize; i += 16) {
 
                     _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
@@ -635,6 +644,8 @@ struct Worker {
                     // nnueEvaluator.hlSumW[i]=accumW[i];
                     // nnueEvaluator.hlSumB[i]=accumB[i];
                 }
+                #endif
+
                 board = boardCopy;
                 continue;
             }
@@ -683,6 +694,8 @@ struct Worker {
 
                 if (!isMovingSideInCheck && doLMRcapture && LMR_DEPTH_REDUCTION >= depth) {
                     board = boardCopy;
+
+                    #if !defined DO_HCE
                     for (int i = 0; i < hiddenLayerSize; i += 16) {
 
                         _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i],
@@ -694,6 +707,8 @@ struct Worker {
                         // nnueEvaluator.hlSumW[i]=accumW[i];
                         // nnueEvaluator.hlSumB[i]=accumB[i];
                     }
+                    #endif
+
                     continue;
                 }
 
@@ -718,6 +733,7 @@ struct Worker {
 
             board = boardCopy;
 
+            #if !defined DO_HCE
             for (int i = 0; i < hiddenLayerSize; i += 16) {
 
                 _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
@@ -727,6 +743,7 @@ struct Worker {
                 // nnueEvaluator.hlSumW[i]=accumW[i];
                 // nnueEvaluator.hlSumB[i]=accumB[i];
             }
+            #endif
 
             movesSearched++;
             if (!isMoveInteresting)
