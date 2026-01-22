@@ -53,6 +53,8 @@ struct Worker {
     bool doneSearch;
     int nodesLim = 1e9;
 
+    int hardTimeBound;
+
     int boardCurrentAge;
 
     int rootScore;
@@ -110,10 +112,18 @@ struct Worker {
 
     template<NodeType nodePvType>
     int quiescentSearch(Board &board, int color, int alpha, int beta, int depthFromRoot) {
-        if (stopSearch || nodes >= nodesLim) {
-            stopSearch = true;
-            return 0;
-        }
+
+    	if ((nodes & 1023) == 0) {
+        	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
+            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
+            if (timeThinked >= hardTimeBound)
+            	stopSearch = true;
+	        if (stopSearch || nodes >= nodesLim) {
+	            stopSearch = true;
+	            return 0;
+	        }
+	    }
+
         constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
@@ -318,10 +328,18 @@ struct Worker {
 
 	template<NodeType nodePvType>
     int search(Board &board, int color, int depth, int isRoot, int alpha, int beta, int depthFromRoot, int extended) {
-        if (stopSearch || nodes >= nodesLim) {
-            stopSearch = true;
-            return 0;
-        }
+
+    	if ((nodes & 1023) == 0) {
+        	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
+            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
+            if (timeThinked >= hardTimeBound)
+            	stopSearch = true;
+	        if (stopSearch || nodes >= nodesLim) {
+	            stopSearch = true;
+	            return 0;
+	        }
+	    }
+
         constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
@@ -901,7 +919,7 @@ struct Worker {
         }
     }
 
-    void IDsearch(Board &board, int maxDepth, int nodesLimit, int nodesH) {
+    void IDsearchDatagen(Board &board, int maxDepth, int nodesLimit, int nodesH) {
         nodesLim = nodesH;
         nodes = 0;
 
@@ -909,12 +927,17 @@ struct Worker {
 
         stopSearch = false;
 
+        int score = 0;
+
         for (int depth = 1; depth <= maxDepth; depth++) {
             // workers[0].nnueEvaluator.printAccum();
             // cout<<'\n';
             int alpha = -inf * 2, beta = inf * 2;
 
-            search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            if (depth == 1)
+            	score = search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            else
+            	score = aspirationSearch(board, depth, score);
 
             // cout<<"depth "<<depth<<" score "<<rootScore<<' '<<bestMove.convertToUCI()<<'\n';
 
@@ -923,6 +946,105 @@ struct Worker {
         }
         stopSearch = true;
     }
+
+    void IDsearch(Board &board, int maxDepth, int softBound, int hardBound, int nodesLimit, int nodesH, bool isMainThread, bool printUCI, vector<Worker> &workers) {
+        
+        nodesLim = nodesH;
+        nodes = 0;
+        hardTimeBound = hardBound;
+
+        int color = board.boardColor;
+
+        stopSearch = false;
+
+        Move bestMoves[257];
+        int scores[257];
+        int times[257];
+        int dnodes[257];
+        int prevTimeThinked = 0, prevNodes = 0;
+        float branchFactor = 2;
+
+        int score = 0;
+        searchStartTime = std::chrono::steady_clock::now();
+
+        for (int depth = 1; depth <= maxDepth; depth++) {
+            // workers[0].nnueEvaluator.printAccum();
+            // cout<<'\n';
+            int alpha = -inf * 2, beta = inf * 2;
+
+            if (depth == 1)
+            	score = search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            else
+            	score = aspirationSearch(board, depth, score);
+
+            if (isMainThread) {
+            	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
+	            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
+
+	            scores[depth] = score;
+	            bestMoves[depth] = bestMove;
+	            dnodes[depth] = nodes - prevNodes;
+	            prevNodes = nodes;
+	            times[depth] = max(1ll, timeThinked - prevTimeThinked);
+	            prevTimeThinked = timeThinked;
+
+	            // for(int i=1;i<workers[0].pvLineSize;i++)
+	            // 	cout<<workers[0].pvLine[i].convertToUCI()<<' ';
+
+	            bool stopIDsearch = false;
+
+	            if (nodes >= min(nodesLimit, nodesH))
+	                stopIDsearch = true;
+
+	            int timeUntilHardBound = hardBound - timeThinked;
+	            if (timeUntilHardBound <= 0 || stopSearch)
+	            	stopIDsearch = true;
+
+	            if (depth > 1)
+	                branchFactor =
+	                    (branchFactor + clamp(float(dnodes[depth]) / dnodes[depth - 1], float(1.3), float(6))) / 2;
+
+	            int estimatedTimeForNextDepth = times[depth] * branchFactor;
+	            // cout<<estimatedTimeForNextDepth<<'\n';
+	            if (timeThinked >= softBound) {
+	                if (depth >= 3) {
+	                    if (bestMoves[depth] == bestMoves[depth - 1] &&
+	                        bestMoves[depth] == bestMoves[depth - 2]) { // if best move is stable, abort the search
+	                        stopIDsearch = true;
+	                    }
+	                    if (timeUntilHardBound < estimatedTimeForNextDepth) {
+	                        stopIDsearch = true;
+	                    }
+	                }
+	            }
+
+            	int totalNodes = 0;
+            	for (int i = 0; i < workers.size(); i++)
+            		totalNodes += workers[i].nodes;
+
+            	if (printUCI) {
+	                cout << "info depth " << depth << " score ";
+	                if (MATE_SCORE - abs(score) > maxDepth)
+	                    cout << "cp " << score;
+	                else {
+	                    cout << "mate ";
+	                    if (score > 0)
+	                        cout << (MATE_SCORE - score);
+	                    else
+	                        cout << (-MATE_SCORE - score);
+	                }
+	                cout << " nodes " << totalNodes << " nps " << (totalNodes * (long long)(1000)) / (timeThinked + 1) << " time "
+	                     << timeThinked << " pv " << bestMove.convertToUCI() << ' ';
+	                cout << endl;
+	            }
+
+                if (stopIDsearch)
+                	break;
+            }
+        }
+        if (printUCI)
+        	cout << "bestmove " << bestMove.convertToUCI() << endl;
+    }
 };
 
 struct Searcher {
@@ -930,29 +1052,10 @@ struct Searcher {
     int threadNumber = 1;
     vector<Worker> workers;
     bool stopIDsearch;
-    bool stopWaitingThread;
     bool minimal = false;
 
     Searcher() {
         workers.resize(threadNumber);
-    }
-
-    void stopSearch() {
-        for (int i = 0; i < threadNumber; i++)
-            workers[i].stopSearch = true;
-    }
-
-    void waitAndEndSearch(int timeToWait) {
-        stopWaitingThread = false;
-        auto beginSleep = std::chrono::steady_clock::now();
-        while (!stopWaitingThread) {
-            auto curr = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(curr - beginSleep).count() >= timeToWait)
-                break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        stopIDsearch = true;
-        stopSearch();
     }
 
     void iterativeDeepeningSearch(int maxDepth, int softBound, int hardBound, int nodesLimit, int nodesH) {
@@ -975,142 +1078,16 @@ struct Searcher {
                 }
             }
         }
-        std::chrono::steady_clock::time_point searchStartTime = std::chrono::steady_clock::now();
-        thread waitThread(&Searcher::waitAndEndSearch, this, hardBound);
-        Move bestMoves[257];
-        int scores[257];
-        int times[257];
-        int dnodes[257];
-        int prevTimeThinked = 0, prevNodes = 0;
-        float branchFactor = 2;
-        Move bestMove;
-        for (int depth = 1; depth <= maxDepth; depth++) {
-            // workers[0].nnueEvaluator.printAccum();
-            // cout<<'\n';
-            int alpha = -inf * 2, beta = inf * 2;
-            int score;
-            int nodes = 0;
-            if (depth == 1) {
-                workers[0].search<PV>(mainBoard, mainBoard.boardColor, depth, 1, alpha, beta, 0, 0);
-                score = workers[0].rootScore;
-                bestMove = workers[0].bestMove;
-                nodes = workers[0].nodes;
-                for (int i = 1; i < threadNumber; i++)
-                    workers[i].bestMove = bestMove;
-                workers[0].pvLineSize = 0;
-                // workers[0].getPvLine(mainBoard,mainBoard.boardColor);
-            } else {
-                for (int i = 0; i < threadNumber; i++) {
-                    workers[i].doneSearch = false;
-                    workers[i].stopSearch = false;
-                    threadPool[i] =
-                        thread(&Worker::aspirationSearch, &workers[i], ref(boards[i]), depth, scores[depth - 1]);
-                    // threadPool[i]=thread(&Worker::search,&workers[i],ref(boards[i]),boards[i].boardColor,depth,1,alpha,beta,0);
-                }
 
-                int firstFinishedThread = 0;
-                // threadPool[0].join();
-                // stopSearch();
-                // while(true){
-                // 	bool stopped=false;
-                // 	for(int i=0;i<threadNumber;i++)
-                // 		if(workers[i].doneSearch){
-                // 			stopped=true;
-                // 			firstFinishedThread=i;
-                // 			stopSearch();
-                // 			break;
-                // 		}
-                // 	if(stopped)
-                // 		break;
-                // 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                // }
+        for (int i = 1; i < threadNumber; i++)
+            threadPool[i] = thread(&Worker::IDsearch, &workers[i], ref(boards[i]), maxDepth, softBound, hardBound, nodesLimit, nodesH, false, 0, ref(workers));
 
-                for (int i = 0; i < threadNumber; i++)
-                    threadPool[i].join();
+        workers[0].IDsearch(ref(boards[0]), maxDepth, softBound, hardBound, nodesLimit, nodesH, true, doInfoOutput, ref(workers));
 
-                score = -inf;
-
-                // score=workers[firstFinishedThread].rootScore;
-                // bestMove=workers[firstFinishedThread].bestMove;
-
-                for (int i = 0; i < threadNumber; i++) {
-                    if (score < workers[i].rootScore) {
-                        score = workers[i].rootScore;
-                        bestMove = workers[i].bestMove;
-                    }
-                }
-                // cout<<firstFinishedThread<<'\n';
-                for (int i = 0; i < threadNumber; i++) { 
-                    // cout<<workers[i].rootScore<<' '<<workers[i].bestMove.convertToUCI()<<' '<<workers[i].nodes<<'\n';
-                    nodes += workers[i].nodes;
-                    // cout<<workers[i].nodes<<'\n';
-                    // workers[i].bestMove=bestMove;
-                }
-            }
-            std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
-            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
-
-            scores[depth] = score;
-            bestMoves[depth] = bestMove;
-            dnodes[depth] = nodes - prevNodes;
-            prevNodes = nodes;
-            times[depth] = max(1ll, timeThinked - prevTimeThinked);
-            prevTimeThinked = timeThinked;
-
-            // for(int i=1;i<workers[0].pvLineSize;i++)
-            // 	cout<<workers[0].pvLine[i].convertToUCI()<<' ';
-
-            if (nodes >= min(nodesLimit, nodesH)) {
-                stopWaitingThread = true;
-                stopIDsearch = true;
-            }
-
-            int timeUntilHardBound = hardBound - timeThinked;
-
-            if (depth > 1)
-                branchFactor =
-                    (branchFactor + clamp(float(dnodes[depth]) / dnodes[depth - 1], float(1.3), float(6))) / 2;
-
-            int estimatedTimeForNextDepth = times[depth] * branchFactor;
-            // cout<<estimatedTimeForNextDepth<<'\n';
-            if (timeThinked >= softBound) {
-                if (depth >= 3) {
-                    if (bestMoves[depth] == bestMoves[depth - 1] &&
-                        bestMoves[depth] == bestMoves[depth - 2]) { // if best move is stable, abort the search
-                        stopWaitingThread = true;
-                        stopIDsearch = true;
-                    }
-                    if (timeUntilHardBound < estimatedTimeForNextDepth) {
-                        stopWaitingThread = true;
-                        stopIDsearch = true;
-                    }
-                }
-            }
-
-            if ((!minimal || stopIDsearch) && doInfoOutput) {
-                cout << "info depth " << depth << " score ";
-                if (MATE_SCORE - abs(score) > maxDepth)
-                    cout << "cp " << score;
-                else {
-                    cout << "mate ";
-                    if (score > 0)
-                        cout << (MATE_SCORE - score);
-                    else
-                        cout << (-MATE_SCORE - score);
-                }
-                // cout<<" sing_extended "<<workers[0].singularExtended;
-                cout << " nodes " << nodes << " nps " << (nodes * (long long)(1000)) / (timeThinked + 1) << " time "
-                     << timeThinked << " pv " << bestMove.convertToUCI() << ' ';
-                cout << endl;
-            }
-            if (stopIDsearch)
-                break;
+        for (int i = 1; i < threadNumber; i++) {
+        	workers[i].stopSearch = true;
+        	threadPool[i].join();
         }
-        stopWaitingThread = true;
-        if (doInfoOutput) 
-            cout << "bestmove " << bestMove.convertToUCI() << endl;
-        if (waitThread.joinable())
-            waitThread.join();
     }
 };
 

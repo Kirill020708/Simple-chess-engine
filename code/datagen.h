@@ -129,7 +129,7 @@ struct DataGenerator {
 
             } else {
                 results[workerIdx]++;
-                workers[workerIdx].IDsearch(boards[workerIdx], 256, softNodesLimit, hardNodesLimit);
+                workers[workerIdx].IDsearchDatagen(boards[workerIdx], 256, softNodesLimit, hardNodesLimit);
                 int score = workers[workerIdx].rootScore;
                 if (boards[workerIdx].boardColor == BLACK)
                     score = -score;
