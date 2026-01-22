@@ -52,6 +52,7 @@ struct Worker {
     bool stopSearch;
     bool doneSearch;
     int nodesLim = 1e9;
+    int hardTimeBound;
 
     int boardCurrentAge;
 
@@ -110,6 +111,18 @@ struct Worker {
 
     template<NodeType nodePvType>
     int quiescentSearch(Board &board, int color, int alpha, int beta, int depthFromRoot) {
+
+    	if ((nodes & 1023) == 0) {
+        	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
+            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
+            if (timeThinked >= hardTimeBound)
+            	stopSearch = true;
+	        if (stopSearch || nodes >= nodesLim) {
+	            stopSearch = true;
+	            return 0;
+	        }
+	    }
+
         if (stopSearch || nodes >= nodesLim) {
             stopSearch = true;
             return 0;
@@ -318,10 +331,18 @@ struct Worker {
 
 	template<NodeType nodePvType>
     int search(Board &board, int color, int depth, int isRoot, int alpha, int beta, int depthFromRoot, int extended) {
-        if (stopSearch || nodes >= nodesLim) {
-            stopSearch = true;
-            return 0;
-        }
+        
+        if ((nodes & 1023) == 0) {
+        	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
+            ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
+            if (timeThinked >= hardTimeBound)
+            	stopSearch = true;
+	        if (stopSearch || nodes >= nodesLim) {
+	            stopSearch = true;
+	            return 0;
+	        }
+	    }
+
         constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
@@ -937,24 +958,6 @@ struct Searcher {
         workers.resize(threadNumber);
     }
 
-    void stopSearch() {
-        for (int i = 0; i < threadNumber; i++)
-            workers[i].stopSearch = true;
-    }
-
-    void waitAndEndSearch(int timeToWait) {
-        stopWaitingThread = false;
-        auto beginSleep = std::chrono::steady_clock::now();
-        while (!stopWaitingThread) {
-            auto curr = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(curr - beginSleep).count() >= timeToWait)
-                break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-        stopIDsearch = true;
-        stopSearch();
-    }
-
     void iterativeDeepeningSearch(int maxDepth, int softBound, int hardBound, int nodesLimit, int nodesH) {
         workers[0].nodesLim = nodesH;
         stopIDsearch = false;
@@ -967,6 +970,8 @@ struct Searcher {
             workers[i].nnueEvaluator = mainNnueEvaluator;
             workers[i].corrhistHelper.clear();
             mainBoard.initNNUE(workers[i].nnueEvaluator);
+            workers[i].hardTimeBound = hardBound;
+            workers[i].searchStartTime = std::chrono::steady_clock::now();
             for (ll j = 0; j < 256; j++) {
                 for (ll j1 = 0; j1 < 2; j1++) {
                     workers[i].killerMovesTable[j][j1] = Move();
@@ -976,7 +981,6 @@ struct Searcher {
             }
         }
         std::chrono::steady_clock::time_point searchStartTime = std::chrono::steady_clock::now();
-        thread waitThread(&Searcher::waitAndEndSearch, this, hardBound);
         Move bestMoves[257];
         int scores[257];
         int times[257];
@@ -1109,8 +1113,6 @@ struct Searcher {
         stopWaitingThread = true;
         if (doInfoOutput) 
             cout << "bestmove " << bestMove.convertToUCI() << endl;
-        if (waitThread.joinable())
-            waitThread.join();
     }
 };
 
