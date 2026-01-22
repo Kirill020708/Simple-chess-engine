@@ -947,6 +947,8 @@ struct Worker {
         stopSearch = true;
     }
 
+    bool minimal = false;
+
     void IDsearch(Board &board, int maxDepth, int softBound, int hardBound, int nodesLimit, int nodesH, bool isMainThread, bool printUCI, vector<Worker> &workers) {
         
         nodesLim = nodesH;
@@ -1022,7 +1024,7 @@ struct Worker {
             	for (int i = 0; i < workers.size(); i++)
             		totalNodes += workers[i].nodes;
 
-            	if (printUCI) {
+            	if (printUCI && (!minimal || stopIDsearch || depth == maxDepth)) {
 	                cout << "info depth " << depth << " score ";
 	                if (MATE_SCORE - abs(score) > maxDepth)
 	                    cout << "cp " << score;
@@ -1066,6 +1068,7 @@ struct Searcher {
         vector<Board> boards(threadNumber, mainBoard);
         for (int i = 0; i < threadNumber; i++) {
             workers[i].nodes = 0;
+            workers[i].minimal = minimal;
             workers[i].stopSearch = false;
             workers[i].nnueEvaluator = mainNnueEvaluator;
             workers[i].corrhistHelper.clear();
