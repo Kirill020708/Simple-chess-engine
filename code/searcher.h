@@ -347,6 +347,8 @@ struct Worker {
 
         ull currentZobristKey = board.getZobristKey();
 
+        occuredPositionsHelper.occuredPositions[board.age] = currentZobristKey;
+
         if (!isRoot) {
             for (int repAge = board.age - 4; repAge > board.lastIrreversibleMoveAge; repAge -= 1)
                 if (currentZobristKey == occuredPositionsHelper.occuredPositions[repAge])
@@ -419,9 +421,13 @@ struct Worker {
             	min((staticEval - beta) / 200.0, 5.0));
 
             int prevEnPassColumn = board.makeNullMove();
+            int rvra = board.lastIrreversibleMoveAge;
+            board.lastIrreversibleMoveAge = board.age++;
             int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1, extended);
             board.makeNullMove();
             board.enPassantColumn = prevEnPassColumn;
+            board.age--;
+            board.lastIrreversibleMoveAge = rvra;
             if (score >= beta)
                 return score;
         }
@@ -587,9 +593,6 @@ struct Worker {
 		    board.enPassantColumn = enPassantColumn;
 
 		    board.zobristKey = zobristKey;
-
-
-            occuredPositionsHelper.occuredPositions[board.age + 1] = newKey;
 
 
         	historyHelper.whiteAttacks = whiteAttacks;
