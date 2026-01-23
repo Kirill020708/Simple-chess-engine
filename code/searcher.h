@@ -391,9 +391,10 @@ struct Worker {
         int nodeType = transpositionTable.getNodeType(currentZobristKey);
 
         // Reverse futility pruning
-        if (!isMovingSideInCheck &&                                        // position not in check
-            nodeType != EXACT &&
-            !searchStack[depthFromRoot].excludeTTmove) {                                           // node type is not PV
+        if (!isMovingSideInCheck &&
+        	ttEntry.evaluation == NO_EVAL &&
+        	!isPvNode &&
+            !searchStack[depthFromRoot].excludeTTmove) {
 
             int margin = (50 - improving * 30) * max(depth, 1) * max(depth, 1);
 
