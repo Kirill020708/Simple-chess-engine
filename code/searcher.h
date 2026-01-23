@@ -690,6 +690,8 @@ struct Worker {
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
 
+                LMR_DEPTH_REDUCTION = min(LMR_DEPTH_REDUCTION, depth - 1);
+
 
                 bool doLMRcapture = true;
                 if (inCheck)
