@@ -71,6 +71,8 @@ struct Worker {
 
     StackState searchStack[maxDepth];
 
+    OccuredPositionsHelper occuredPositionsHelper;
+
     std::chrono::steady_clock::time_point searchStartTime;
 
     float texelSearch(Board &board, int color, float alpha, float beta, int depthFromRoot) {
@@ -587,6 +589,9 @@ struct Worker {
 		    board.zobristKey = zobristKey;
 
 
+            occuredPositionsHelper.occuredPositions[board.age + 1] = newKey;
+
+
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
 
@@ -1072,6 +1077,7 @@ struct Searcher {
             workers[i].stopSearch = false;
             workers[i].nnueEvaluator = mainNnueEvaluator;
             workers[i].corrhistHelper.clear();
+            workers[i].occuredPositionsHelper = mainOccuredPositionsHelper;
             mainBoard.initNNUE(workers[i].nnueEvaluator);
             for (ll j = 0; j < 256; j++) {
                 for (ll j1 = 0; j1 < 2; j1++) {

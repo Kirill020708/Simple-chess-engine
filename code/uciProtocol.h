@@ -162,6 +162,7 @@ struct UCIcommunicationHepler {
             if (waitingThread.joinable())
                 waitingThread.join();
 
+            mainOccuredPositionsHelper.occuredPositions[mainBoard.age] = mainBoard.getZobristKey();
             mainBoard.makeMove(Move(tokens[1]));
             return;
         }
@@ -264,8 +265,10 @@ struct UCIcommunicationHepler {
                 }
                 mainBoard.initFromFEN(fen);
             }
+            mainOccuredPositionsHelper.occuredPositions[mainBoard.age] = mainBoard.getZobristKey();
             for (; movesIter < tokens.size(); movesIter++) {
                 mainBoard.makeMove(Move(tokens[movesIter]));
+                mainOccuredPositionsHelper.occuredPositions[mainBoard.age] = mainBoard.getZobristKey();
             }
         }
         if (mainCommand == "go") {

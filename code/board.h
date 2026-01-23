@@ -48,7 +48,7 @@ struct OccuredPositionsHelper {
     ull occuredPositions[2560]; // positions occured in current variation; for testing repetition
 };
 
-OccuredPositionsHelper occuredPositionsHelper;
+OccuredPositionsHelper mainOccuredPositionsHelper;
 
 int material[8] = {0, 0, 3, 3, 5, 10, 0};
 
@@ -307,7 +307,7 @@ struct alignas(64) Board {
             pawns.getBit(move.getStartSquare())) // check if move is irreversible
             lastIrreversibleMoveAge = age;
 
-        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
+        age++;
         boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         int startSquare = move.getStartSquare();
         int targetSquare = move.getTargetSquare();
@@ -360,7 +360,7 @@ struct alignas(64) Board {
             pawns.getBit(move.getStartSquare())) // check if move is irreversible
             lastIrreversibleMoveAge = age;
 
-        occuredPositionsHelper.occuredPositions[age++] = getZobristKey();
+        age++;
         boardColor = (boardColor == WHITE) ? BLACK : WHITE;
         int startSquare = move.getStartSquare();
         int targetSquare = move.getTargetSquare();

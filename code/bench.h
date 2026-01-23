@@ -77,6 +77,7 @@ struct Benchmark {
 
         for (int i = 0; i < benchNumber; i++) {
             mainBoard.initFromFEN(benchmarkfens[i]);
+            mainOccuredPositionsHelper.occuredPositions[mainBoard.age] = mainBoard.getZobristKey();
             searcher.iterativeDeepeningSearch(depth, benchTime, benchTime, inf, inf);
             nodes += searcher.workers[0].nodes;
             // uciHelper.clearHash();
