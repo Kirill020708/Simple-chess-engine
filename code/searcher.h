@@ -940,9 +940,11 @@ struct Worker {
             int alpha = -inf * 2, beta = inf * 2;
 
             if (depth == 1)
-            	score = search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
             else
-            	score = aspirationSearch(board, depth, score);
+            	aspirationSearch(board, depth, score);
+
+            score = rootScore;
 
             // cout<<"depth "<<depth<<" score "<<rootScore<<' '<<bestMove.convertToUCI()<<'\n';
 
@@ -980,9 +982,11 @@ struct Worker {
             int alpha = -inf * 2, beta = inf * 2;
 
             if (depth == 1)
-            	score = search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
             else
-            	score = aspirationSearch(board, depth, score);
+            	aspirationSearch(board, depth, score);
+
+            score = rootScore;
 
             if (isMainThread) {
             	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
@@ -1048,7 +1052,11 @@ struct Worker {
                 if (stopIDsearch)
                 	break;
             }
+
+            if (stopSearch)
+            	break;
         }
+        
         if (printUCI)
         	cout << "bestmove " << bestMove.convertToUCI() << endl;
     }
