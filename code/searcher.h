@@ -515,7 +515,7 @@ struct Worker {
         	searchStack[depthFromRoot + 1].excludeTTmove = false;
 
         	if (singularScore < singularBeta){
-        		
+
         		singularExtended++;
 
         		extendTTmove = 1;
@@ -702,46 +702,6 @@ struct Worker {
                 bool doLMRcapture = true;
                 if (inCheck)
                 	doLMRcapture = false;
-
-                // if(isRoot){
-                // 	cout<<move.convertToUCI()<<' '<<LMR_DEPTH_REDUCTION<<'
-                // '<<float(historyValue)/historyHelper.maxHistoryScore<<'\n';
-                // }
-
-                // const int LMP_MIN_DEPTH=4;
-                // const int LMP_FULL_MOVES=6;
-                // // Late move pruning
-                // if(
-                // 	!isPvNode &&
-                // 	!isMovingSideInCheck &&
-                // 	!isMoveInteresting &&
-                // 	depth>=LMP_MIN_DEPTH &&
-                // 	movesSearched>=LMP_FULL_MOVES &&
-                // 	historyValue<0){
-
-                // 	board=boardCopy;
-                // 	continue;
-                // }
-
-                if (!isMovingSideInCheck && doLMRcapture && LMR_DEPTH_REDUCTION >= depth) {
-                    board = boardCopy;
-
-                    #if !defined DO_HCE
-                    for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                        _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i],
-                                            _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                        _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i],
-                                            _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                        // nnueEvaluator.hlSumW[i]=accumW[i];
-                        // nnueEvaluator.hlSumB[i]=accumB[i];
-                    }
-                    #endif
-
-                    continue;
-                }
 
                 if (movesSearched >= LMR_FULL_MOVES && !isMovingSideInCheck && depth >= LMR_MIN_DEPTH &&
                     doLMRcapture // don't do LMR with interesting moves
