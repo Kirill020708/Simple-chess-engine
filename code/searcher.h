@@ -417,7 +417,8 @@ struct Worker {
 
             int R = floor(4 +
             	depth / 5.0 +
-            	min((staticEval - beta) / 200.0, 5.0));
+            	min((staticEval - beta) / 200.0, 5.0) +
+            	(improving) * 0.5);
 
             int prevEnPassColumn = board.makeNullMove();
             int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1, extended);
