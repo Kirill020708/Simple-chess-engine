@@ -515,8 +515,13 @@ struct Worker {
         	searchStack[depthFromRoot + 1].excludeTTmove = false;
 
         	if (singularScore < singularBeta){
-        		extendTTmove = 1;
+        		
         		singularExtended++;
+
+        		extendTTmove = 1;
+        		if (!isPvNode && singularScore < singularBeta - 30)
+        			extendTTmove++;
+
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
         	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
         		return beta;
