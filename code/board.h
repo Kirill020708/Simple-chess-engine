@@ -74,6 +74,8 @@ struct alignas(64) Board {
     ull zobristKeyWhite;
     ull zobristKeyBlack;
 
+    int lastSq, lastPs;
+
     int age;
 
     int lastIrreversibleMoveAge = -1; // age of last irreversible move (capture/pawn move), for testing repetition
@@ -313,6 +315,10 @@ struct alignas(64) Board {
         int targetSquare = move.getTargetSquare();
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
+
+        lastSq = targetSquare;
+        lastPs = movingPiece;
+
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
             if ((abs(targetSquare - startSquare) & 1) && occupancy(targetSquare) == EMPTY) { // enPassant capture
@@ -366,6 +372,10 @@ struct alignas(64) Board {
         int targetSquare = move.getTargetSquare();
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
+
+        lastSq = targetSquare;
+        lastPs = movingPiece;
+        
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
             if ((abs(targetSquare - startSquare) & 1) && occupancy(targetSquare) == EMPTY) { // enPassant capture
