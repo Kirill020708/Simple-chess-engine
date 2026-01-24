@@ -519,7 +519,7 @@ struct Worker {
         		singularExtended++;
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
         	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
-        		return beta;
+        		return singularScore;
         }
 
         int maxEvaluation = -inf;
