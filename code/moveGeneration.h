@@ -321,6 +321,8 @@ struct MoveGeneration {
 
             eval += evalStack[captureNumber - 1];
             if (eval - pieceMaterial[attackingPiece] > 0 || attackingPiece == KING) {
+                if (eval - pieceMaterial[attackingPiece] > 0)
+                    evalStack[captureNumber - 1] -= pieceMaterial[attackingPiece] * 0.3;
                 break;
             }
             eval = -eval;
