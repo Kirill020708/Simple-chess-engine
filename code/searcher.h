@@ -329,7 +329,7 @@ struct Worker {
     int staticEvaluationHistory[maxDepth];
 
 	template<NodeType nodePvType>
-    int search(Board &board, int color, int depth, int isRoot, int alpha, int beta, int depthFromRoot, int extended) {
+    int search(Board &board, int color, int depth, int isRoot, int alpha, int beta, int depthFromRoot, int extended, bool cutNode) {
 
     	if ((nodes & 1023) == 0) {
         	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
@@ -420,7 +420,7 @@ struct Worker {
             	min((staticEval - beta) / 200.0, 5.0));
 
             int prevEnPassColumn = board.makeNullMove();
-            int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1, extended);
+            int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1, extended, !cutNode);
             board.makeNullMove();
             board.enPassantColumn = prevEnPassColumn;
             if (score >= beta)
@@ -510,7 +510,7 @@ struct Worker {
         	searchStack[depthFromRoot + 1].excludeTTmove = true;
         	searchStack[depthFromRoot + 1].excludeMove = ttMove;
         	int singularBeta = ttEntry.evaluation - depth;
-        	int singularScore = search<nodePvType>(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1, extended);
+        	int singularScore = search<nodePvType>(board, color, depth / 2, 0, singularBeta - 1, singularBeta, depthFromRoot + 1, extended, cutNode);
 
         	searchStack[depthFromRoot + 1].excludeTTmove = false;
 
@@ -691,7 +691,8 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2)); // reduction of depth
+                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2) -
+                          0.5 * (!cutNode)); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
@@ -708,19 +709,19 @@ struct Worker {
                     // historyHelper.getScore(color,move)<historyHelper.maxHistoryScore // history score is negative
                 ) {
                     score = -search<NonPV>(board, oppositeColor, depth - 1 - LMR_DEPTH_REDUCTION, 0, -(alpha + 1), -alpha,
-                                    depthFromRoot + 1, extended);
+                                    depthFromRoot + 1, extended, true);
                 } else
                     score = alpha + 1; // if LMR is restricted, do this to do PVS
 
                 if (score > alpha) {
                     score = -search<NonPV>(board, oppositeColor, depth - 1 + extendDepth, 0, -(alpha + 1), -alpha,
-                                    depthFromRoot + 1, extended + extendDepth);
+                                    depthFromRoot + 1, extended + extendDepth, !cutNode);
                     if (isPvNode && score > alpha && score < beta)
                         score =
-                            -search<nodePvType>(board, oppositeColor, depth - 1 + extendDepth, 0, -beta, -alpha, depthFromRoot + 1, extended + extendDepth);
+                            -search<nodePvType>(board, oppositeColor, depth - 1 + extendDepth, 0, -beta, -alpha, depthFromRoot + 1, extended + extendDepth, false);
                 }
             } else
-                score = -search<nodePvType>(board, oppositeColor, depth - 1 + extendDepth, 0, -beta, -alpha, depthFromRoot + 1, extended + extendDepth);
+                score = -search<nodePvType>(board, oppositeColor, depth - 1 + extendDepth, 0, -beta, -alpha, depthFromRoot + 1, extended + extendDepth, false);
 
             board = boardCopy;
 
@@ -844,7 +845,7 @@ struct Worker {
     }
 
     int startSearch(Board &board, int depth, int alpha, int beta) {
-        return search<PV>(board, board.boardColor, depth, true, alpha, beta, 0, 0);
+        return search<PV>(board, board.boardColor, depth, true, alpha, beta, 0, 0, false);
         doneSearch = true;
     }
 
@@ -908,7 +909,7 @@ struct Worker {
             int alpha = -inf * 2, beta = inf * 2;
 
             if (depth == 1)
-            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0, false);
             else
             	aspirationSearch(board, depth, score);
 
@@ -950,7 +951,7 @@ struct Worker {
             int alpha = -inf * 2, beta = inf * 2;
 
             if (depth == 1)
-            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
+            	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0, false);
             else
             	aspirationSearch(board, depth, score);
 
