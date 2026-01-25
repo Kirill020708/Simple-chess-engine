@@ -233,9 +233,9 @@ struct Worker {
 		    board.zobristKey = zobristKey;
 
 
-            int sseScore = (move.score & ((1 << 10) - 1)) - 15;
-            if(ttMove==move && searchedTTmove)
-            	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+            // int sseScore = (move.score & ((1 << 10) - 1)) - 15;
+            // if(ttMove==move && searchedTTmove)
+            // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             // if(ttMove==move && searchedTTmove)
             // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             // if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
@@ -609,7 +609,7 @@ struct Worker {
                 continue;
             }
 
-            int seeMargin[4] = {0, 2, 4, 9};
+            int seeMargin[4] = {0, 200, 400, 900};
 
             if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth] && !searchStack[depthFromRoot].excludeTTmove) {
@@ -666,7 +666,7 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2) -
+                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.002) -
                           1 * (isKiller)); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)

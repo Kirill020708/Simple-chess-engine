@@ -101,12 +101,12 @@ struct MoveListGenerator {
                     if (attackingPiece > capturedPiece)
                         captureEval = sseEval = moveGenerator.sseEval(board, targetSquare, color, startSquare);
                     else
-                        captureEval = sseEval = 1;
+                        captureEval = sseEval = 100;
 
-                    if (captureEval <= -1 && onlyCaptures)
+                    if (captureEval <= -100 && onlyCaptures)
                     	continue;
 
-                    if (captureEval >= -1)
+                    if (captureEval >= -100)
                         captureCoeff += (1 << 15);
 
                     int historyScore = historyHelper.getScore(board, color, Move(startSquare, targetSquare, NOPIECE));

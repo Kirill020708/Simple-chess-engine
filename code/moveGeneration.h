@@ -275,7 +275,7 @@ struct MoveGeneration {
         return -1;
     }
 
-    int pieceMaterial[7] = {0, 1, 3, 3, 5, 10, 100000};
+    int pieceMaterial[7] = {0, 100, 300, 300, 500, 1000, 100000};
     int evalStack[32];
 
     inline int sseEval(Board &board, int square, int color, int firstAttacker) {
