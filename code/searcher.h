@@ -604,6 +604,9 @@ struct Worker {
             int historyValue = historyHelper.getScore(board, color, move) - historyHelper.maxHistoryScore;
             float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
 
+            bool isKiller = (
+        		move == killerMovesTable[depthFromRoot][killerMove] ||
+        		move == killerMovesTable[depthFromRoot][killerBackup]);
 
             int extendDepth = 0;
 
@@ -691,7 +694,8 @@ struct Worker {
                 int LMR_DEPTH_REDUCTION =
                     floor(lmrLogTable[depth][movesSearched] + 0.5 -
                           1 * (isPvNode)-1.5 * float(historyValue) / historyHelper.maxHistoryScore +
-                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2)); // reduction of depth
+                          0.5 * (!improving) + (isTTCapture) * 1 - (isCapture) * 1 - sseEval * (0.2) -
+                          1 * (isKiller)); // reduction of depth
 
                 if (LMR_DEPTH_REDUCTION < 0)
                     LMR_DEPTH_REDUCTION = 0;
