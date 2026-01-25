@@ -248,34 +248,6 @@ struct Worker {
 
 
             // transpositionTableQuiescent.prefetch(board.getZobristKey());
-            int newStaticEval = -evaluator.evaluatePosition(board, oppositeColor, nnueEvaluator, corrhistHelper);
-            int deltaPruningMargin = 200;
-            // if(sseScore<=-1)
-            // 	deltaPruningMargin-=sseScore*100;
-            // assert(sseScore>=0);
-            if (((numOfPiecesOnBoard - 1) >= 6 && newStaticEval + deltaPruningMargin < alpha) || sseScore <= -1) {
-                board = boardCopy;
-
-                #if !defined DO_HCE
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
-                #endif
-
-	            if (move == ttMove) {
-			        moveListGenerator.hashMove = ttMove;
-
-	            	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
-	            }
-
-                continue;
-            }
 
             int score = -quiescentSearch<nodePvType>(board, (color == WHITE) ? BLACK : WHITE, -beta, -alpha, depthFromRoot + 1);
 
