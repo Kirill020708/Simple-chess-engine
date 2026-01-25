@@ -65,6 +65,11 @@ struct MoveListGenerator {
         Board boardCopy = board;
         moveListSize[depth] = 0;
 
+        bool isQs = onlyCaptures;
+
+        if (moveGenerator.isInCheck(board, color))
+            onlyCaptures = false;
+
         Bitboard friendPieces, opponentPieces;
 
         if (color == WHITE) {
@@ -103,7 +108,7 @@ struct MoveListGenerator {
                     else
                         captureEval = sseEval = 1;
 
-                    if (captureEval <= -1 && onlyCaptures)
+                    if (captureEval <= -1 && isQs)
                     	continue;
 
                     if (captureEval >= -1)
