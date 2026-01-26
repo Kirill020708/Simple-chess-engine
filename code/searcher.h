@@ -233,17 +233,14 @@ struct Worker {
 		    board.zobristKey = zobristKey;
 
 
-            // int sseScore = (move.score & ((1 << 10) - 1)) - 15;
-            // if(ttMove==move && searchedTTmove)
-            // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
-            // if(ttMove==move && searchedTTmove)
-            // 	sseScore=moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
-            // if(sseScore!=moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())){
-            // 	cout<<move.convertToUCI()<<' '<<sseScore<<'
-            // '<<moveGenerator.sseEval(move.getTargetSquare(),color,move.getStartSquare())<<' '<<move.score<<'\n';
-            // 	cout<<board.occupancyPiece(move.getStartSquare())<<'
-            // '<<board.occupancyPiece(move.getTargetSquare())<<'\n'; 	exit(0);
-            // }
+            int seeEval = moveListGenerator.seeTable[move.getStartSquare()][move.getTargetSquare()];
+        	if(move == ttMove)
+        		seeEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+
+        	if (staticEval + 100 < alpha && seeEval <= 0)
+        		continue;
+
+
             board.makeMove(move, nnueEvaluator);
 
 
