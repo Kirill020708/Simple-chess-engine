@@ -595,6 +595,9 @@ struct Worker {
             		sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             }
 
+            if (!isPvNode && movesSearched > 3 + depth * depth * 3 && !isMovingSideInCheck && !isMoveInteresting && historyValue < 0) {
+            	continue;
+            }
             
             if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
             	continue;
