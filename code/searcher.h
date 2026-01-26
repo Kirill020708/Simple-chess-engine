@@ -592,8 +592,11 @@ struct Worker {
             bool inCheck = moveGenerator.isInCheck(board, oppositeColor);
             bool isPromotion = (move.getPromotionFlag() > 0);
             int sseEval = 0;
-            if (isCapture)
-                sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+            if (isCapture){
+                sseEval = moveListGenerator.seeTable[move.getStartSquare()][move.getTargetSquare()];
+            	if(doTTmoveBeforeMovegen && currentMove == 0)
+            		sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+            }
 
             
             if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {

@@ -60,6 +60,8 @@ struct MoveListGenerator {
 
     int material[6] = {0, 100, 300, 300, 500, 900};
 
+    int seeTable[64][64];
+
     inline void generateMoves(Board &board, HistoryHelper &historyHelper, int color, int depth, bool doSort,
                               bool onlyCaptures) {
         Board boardCopy = board;
@@ -98,10 +100,9 @@ struct MoveListGenerator {
                     int capturedPiece = board.occupancyPiece(targetSquare);
 
                     int captureEval;
-                    if (attackingPiece > capturedPiece)
-                        captureEval = sseEval = moveGenerator.sseEval(board, targetSquare, color, startSquare);
-                    else
-                        captureEval = sseEval = 100;
+                    captureEval = sseEval = moveGenerator.sseEval(board, targetSquare, color, startSquare);
+
+                    seeTable[startSquare][targetSquare] = sseEval;
 
                     if (captureEval <= -100 && onlyCaptures)
                     	continue;
