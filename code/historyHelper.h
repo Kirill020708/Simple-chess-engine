@@ -152,6 +152,8 @@ struct CorrHistoryHelper {
 			score - corrHistLastmove[color][board.lastPs][board.lastSq] * abs(score) / maxCorrHistValue;
 	}
 
+	int lastCorrScore = 0;
+
     inline int getScore(int color, Board &board) {
     	int index, corrScore = 0;
 
@@ -168,6 +170,8 @@ struct CorrHistoryHelper {
 		corrScore += (50 * corrHistTableBlack[color][index]) / 300;
 
 		corrScore += (50 * corrHistLastmove[color][board.lastPs][board.lastSq]) / 300;
+
+		lastCorrScore = corrScore;
 
 		return corrScore;
     }
