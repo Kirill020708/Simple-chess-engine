@@ -101,7 +101,7 @@ struct MoveListGenerator {
                     if (attackingPiece > capturedPiece)
                         captureEval = sseEval = moveGenerator.sseEval(board, targetSquare, color, startSquare);
                     else
-                        captureEval = sseEval = moveGenerator.pieceMaterial[capturedPiece] - moveGenerator.pieceMaterial[attackingPiece];
+                        captureEval = sseEval = moveGenerator.pieceMaterial[capturedPiece];
 
                     if (captureEval <= -100 && onlyCaptures)
                     	continue;
