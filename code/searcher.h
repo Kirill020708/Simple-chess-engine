@@ -324,7 +324,7 @@ struct Worker {
 
         nodes++;
 
-        if (board.age - board.lastIrreversibleMoveAge > 100)
+        if (!isRoot && board.age - board.lastIrreversibleMoveAge > 100)
         	return DRAW_SCORE;
 
         ull currentZobristKey = board.getZobristKey();
@@ -359,7 +359,7 @@ struct Worker {
         	bestHashMove = Move();
 
         if (hashTableEvaluation != NO_EVAL) {
-            if (!isPvNode && !searchStack[depthFromRoot].excludeTTmove)
+            if (!isRoot && !isPvNode && !searchStack[depthFromRoot].excludeTTmove)
                 return hashTableEvaluation;
 
             staticEval = hashTableEvaluation;
@@ -373,7 +373,8 @@ struct Worker {
         int nodeType = transpositionTable.getNodeType(currentZobristKey);
 
         // Reverse futility pruning
-        if (!isMovingSideInCheck &&
+        if (!isRoot &&
+        	!isMovingSideInCheck &&
         	ttEntry.evaluation == NO_EVAL &&
         	!isPvNode &&
             !searchStack[depthFromRoot].excludeTTmove) {
@@ -392,7 +393,8 @@ struct Worker {
         int oppositeColor = (color == WHITE) ? BLACK : WHITE;
 
         // Null move pruning
-        if (!isMovingSideInCheck && // position not in check
+        if (!isRoot &&
+        	!isMovingSideInCheck && // position not in check
             ((board.whitePieces | board.blackPieces) ^ (board.pawns | board.kings)) >
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
             staticEval >= beta && // static evaluation >= beta
@@ -411,7 +413,7 @@ struct Worker {
                 return score;
         }
 
-        if (depth == 1 && !isMovingSideInCheck &&
+        if (!isRoot && depth == 1 && !isMovingSideInCheck &&
         	!searchStack[depthFromRoot].excludeTTmove) { // Razoring
             int margin = 200;
 
@@ -581,16 +583,16 @@ struct Worker {
             		sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             }
 
-            if (!isPvNode && movesSearched > 3 + depth * depth * 3 && !isMovingSideInCheck && !isMoveInteresting && historyValue < 0) {
+            if (!isRoot && !isPvNode && movesSearched > 3 + depth * depth * 3 && !isMovingSideInCheck && !isMoveInteresting && historyValue < 0) {
             	continue;
             }
             
-            if (!isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
+            if (!isRoot && !isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
             	continue;
             }
 
             int premovefutilityMargin = max((150 + historyValueF * 75 - isTTCapture * 100), float(0)) * depth * depth;
-            if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
+            if (!isRoot && movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
                 !searchStack[depthFromRoot].excludeTTmove
             ) {
@@ -600,7 +602,7 @@ struct Worker {
 
             int seeMargin[4] = {0, 200, 400, 900};
 
-            if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+            if (!isRoot && movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth] && !searchStack[depthFromRoot].excludeTTmove) {
 
                 continue;
