@@ -227,6 +227,8 @@ struct UCIcommunicationHepler {
             }
         }
         if (mainCommand == "go") {
+            if (searcherThread.joinable())
+                searcherThread.join();
             int wtime = -1, btime = -1, winc = -1, binc = 0;
             int movetime = -1;
             int depth = 256;
@@ -283,7 +285,8 @@ struct UCIcommunicationHepler {
         }
         if (mainCommand == "stop") {
             searcher.workers[0].stopSearch = true;
-            searcherThread.join();
+            if (searcherThread.joinable())
+                searcherThread.join();
         }
         if (mainCommand == "setoption") {
             if (tokens[2] == "HardNodesLimit") {
