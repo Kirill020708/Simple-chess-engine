@@ -501,7 +501,7 @@ struct alignas(64) Board {
         age = 0;
         vector<string> tokens = splitStr(fen, " ");
         string position = tokens[0], currentColor = tokens[1], castlingAvailability = tokens[2],
-               enPassantSquare = tokens[3];
+               enPassantSquare = tokens[3], ageDiff = tokens[4];
         whitePieces = blackPieces = pawns = knights = bishops = rooks = queens = kings = 0;
         castlingWhiteQueensideBroke = castlingWhiteKingsideBroke = castlingBlackQueensideBroke =
             castlingBlackKingsideBroke = 1;
@@ -554,6 +554,8 @@ struct alignas(64) Board {
 
         if (enPassantSquare != "-")
             enPassantColumn = enPassantSquare[0] - 'a';
+
+        lastIrreversibleMoveAge = age - stoi(ageDiff) - 1;
 
         evaluation = 0;
         materialCount = 0;

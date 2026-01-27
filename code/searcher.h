@@ -320,7 +320,7 @@ struct Worker {
         ull currentZobristKey = board.getZobristKey();
 
         if (!isRoot) {
-            for (int repAge = board.age - 4; repAge > board.lastIrreversibleMoveAge; repAge -= 1)
+            for (int repAge = board.age - 4; repAge > max(board.lastIrreversibleMoveAge, -1); repAge -= 1)
                 if (currentZobristKey == occuredPositionsHelper.occuredPositions[repAge])
                     return DRAW_SCORE;
         }
