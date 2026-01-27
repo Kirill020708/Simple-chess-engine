@@ -206,6 +206,14 @@ struct Worker {
             	searchedTTmove = true;
             }
 
+
+            int seeEval = moveListGenerator.seeTable[move.getStartSquare()][move.getTargetSquare()];
+        	if(move == ttMove)
+        		seeEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
+
+        	if (staticEval + 100 < alpha && seeEval <= 0)
+        		continue;
+
             bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
 		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
 		    bool castlingBlackQueensideBroke = board.castlingBlackQueensideBroke;
@@ -231,14 +239,6 @@ struct Worker {
 		    board.enPassantColumn = enPassantColumn;
 
 		    board.zobristKey = zobristKey;
-
-
-            int seeEval = moveListGenerator.seeTable[move.getStartSquare()][move.getTargetSquare()];
-        	if(move == ttMove)
-        		seeEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
-
-        	if (staticEval + 100 < alpha && seeEval <= 0)
-        		continue;
 
 
             board.makeMove(move, nnueEvaluator);
@@ -540,35 +540,6 @@ struct Worker {
             	searchedTTmove = true;
             }
 
-		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
-		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
-		    bool castlingBlackQueensideBroke = board.castlingBlackQueensideBroke;
-		    bool castlingBlackKingsideBroke = board.castlingBlackKingsideBroke;
-
-		    char enPassantColumn = board.enPassantColumn;
-
-		    ull zobristKey = board.zobristKey;
-
-            board.calculateZobristAfterMove(move);
-
-            ull newKey = board.getZobristKey();
-            transpositionTable.prefetch(newKey);
-            evaluationTranspositionTable.prefetch(newKey);
-
-            board.boardColor = color;
-
-		    board.castlingWhiteQueensideBroke = castlingWhiteQueensideBroke;
-		    board.castlingWhiteKingsideBroke = castlingWhiteKingsideBroke;
-		    board.castlingBlackQueensideBroke = castlingBlackQueensideBroke;
-		    board.castlingBlackKingsideBroke = castlingBlackKingsideBroke;
-
-		    board.enPassantColumn = enPassantColumn;
-
-		    board.zobristKey = zobristKey;
-
-
-            occuredPositionsHelper.occuredPositions[board.age + 1] = newKey;
-
 
         	historyHelper.whiteAttacks = whiteAttacks;
         	historyHelper.blackAttacks = blackAttacks;
@@ -622,6 +593,35 @@ struct Worker {
 
                 continue;
             }
+
+		    bool castlingWhiteQueensideBroke = board.castlingWhiteQueensideBroke;
+		    bool castlingWhiteKingsideBroke = board.castlingWhiteKingsideBroke;
+		    bool castlingBlackQueensideBroke = board.castlingBlackQueensideBroke;
+		    bool castlingBlackKingsideBroke = board.castlingBlackKingsideBroke;
+
+		    char enPassantColumn = board.enPassantColumn;
+
+		    ull zobristKey = board.zobristKey;
+
+            board.calculateZobristAfterMove(move);
+
+            ull newKey = board.getZobristKey();
+            transpositionTable.prefetch(newKey);
+            evaluationTranspositionTable.prefetch(newKey);
+
+            board.boardColor = color;
+
+		    board.castlingWhiteQueensideBroke = castlingWhiteQueensideBroke;
+		    board.castlingWhiteKingsideBroke = castlingWhiteKingsideBroke;
+		    board.castlingBlackQueensideBroke = castlingBlackQueensideBroke;
+		    board.castlingBlackKingsideBroke = castlingBlackKingsideBroke;
+
+		    board.enPassantColumn = enPassantColumn;
+
+		    board.zobristKey = zobristKey;
+
+
+            occuredPositionsHelper.occuredPositions[board.age + 1] = newKey;
 
             board.makeMove(move, nnueEvaluator);
 
