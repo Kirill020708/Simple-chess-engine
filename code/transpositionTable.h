@@ -126,5 +126,3 @@ struct TranspositionTable {
 };
 
 TranspositionTable transpositionTable;
-
-TranspositionTable transpositionTableQuiescent;

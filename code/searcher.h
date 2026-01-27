@@ -137,8 +137,8 @@ struct Worker {
 
         ull currentZobristKey = board.getZobristKey();
         auto [hashTableEvaluation, bestHashMove] =
-            transpositionTableQuiescent.get(board, currentZobristKey, 0, alpha, beta);
-        int nodeType = transpositionTableQuiescent.getNodeType(currentZobristKey);
+            transpositionTable.get(board, currentZobristKey, 0, alpha, beta);
+        int nodeType = transpositionTable.getNodeType(currentZobristKey);
         if (hashTableEvaluation != NO_EVAL) {
             return hashTableEvaluation;
 
@@ -157,7 +157,7 @@ struct Worker {
         else
             staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
 
-        auto ttEntry = transpositionTableQuiescent.getEntry(board, currentZobristKey);
+        auto ttEntry = transpositionTable.getEntry(board, currentZobristKey);
         if (ttEntry.evaluation != NO_EVAL)
             staticEval = ttEntry.evaluation;
 
@@ -169,7 +169,7 @@ struct Worker {
 
         alpha = max(alpha, staticEval);
         if (alpha >= beta) {
-            transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND, boardCurrentAge,
+            transpositionTable.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND, boardCurrentAge,
                                               bestHashMove);
             return maxEvaluation;
         }
@@ -250,7 +250,7 @@ struct Worker {
             board.makeMove(move, nnueEvaluator);
 
 
-            // transpositionTableQuiescent.prefetch(board.getZobristKey());
+            // transpositionTable.prefetch(board.getZobristKey());
 
             int score = -quiescentSearch<nodePvType>(board, (color == WHITE) ? BLACK : WHITE, -beta, -alpha, depthFromRoot + 1);
 
@@ -279,7 +279,7 @@ struct Worker {
                 if (alpha < score)
                     alpha = score;
                 if (alpha >= beta) {
-                    transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND,
+                    transpositionTable.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND,
                                                       boardCurrentAge, bestHashMove);
                     return maxEvaluation;
                 }
@@ -291,7 +291,7 @@ struct Worker {
             	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ONLY_CAPTURES);
             }
         }
-        transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, type, boardCurrentAge,
+        transpositionTable.write(board, currentZobristKey, maxEvaluation, 0, type, boardCurrentAge,
                                           bestHashMove);
         return maxEvaluation;
     }
