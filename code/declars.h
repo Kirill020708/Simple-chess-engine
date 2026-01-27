@@ -58,6 +58,7 @@ const int NO_EVAL = inf * 10; // return if we can't use evaluation from the tran
 
 const int NONE_SCORE = inf - 10; // score which never occures
 const int MATE_SCORE = inf / 10, DRAW_SCORE = 0;
+const int MATE_SCORE_MAX_PLY = MATE_SCORE - 257;
 
 #define memoryUsageMB 64
 

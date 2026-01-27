@@ -137,7 +137,7 @@ struct Worker {
 
         ull currentZobristKey = board.getZobristKey();
         auto [hashTableEvaluation, bestHashMove] =
-            transpositionTableQuiescent.get(board, currentZobristKey, 0, alpha, beta);
+            transpositionTableQuiescent.get(board, currentZobristKey, 0, alpha, beta, depthFromRoot);
         int nodeType = transpositionTableQuiescent.getNodeType(currentZobristKey);
         if (hashTableEvaluation != NO_EVAL) {
             return hashTableEvaluation;
@@ -157,7 +157,7 @@ struct Worker {
         else
             staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
 
-        auto ttEntry = transpositionTableQuiescent.getEntry(board, currentZobristKey);
+        auto ttEntry = transpositionTableQuiescent.getEntry(board, currentZobristKey, depthFromRoot);
         if (ttEntry.evaluation != NO_EVAL)
             staticEval = ttEntry.evaluation;
 
@@ -170,7 +170,7 @@ struct Worker {
         alpha = max(alpha, staticEval);
         if (alpha >= beta) {
             transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND, boardCurrentAge,
-                                              bestHashMove);
+                                              bestHashMove, depthFromRoot);
             return maxEvaluation;
         }
 
@@ -280,7 +280,7 @@ struct Worker {
                     alpha = score;
                 if (alpha >= beta) {
                     transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, LOWER_BOUND,
-                                                      boardCurrentAge, bestHashMove);
+                                                      boardCurrentAge, bestHashMove, depthFromRoot);
                     return maxEvaluation;
                 }
             }
@@ -292,7 +292,7 @@ struct Worker {
             }
         }
         transpositionTableQuiescent.write(board, currentZobristKey, maxEvaluation, 0, type, boardCurrentAge,
-                                          bestHashMove);
+                                          bestHashMove, depthFromRoot);
         return maxEvaluation;
     }
 
@@ -320,6 +320,13 @@ struct Worker {
 	            stopSearch = true;
 	            return 0;
 	        }
+	    }
+
+	    if (!isRoot) {
+	    	alpha = max(alpha, -MATE_SCORE + depthFromRoot);
+	    	beta = min(beta, MATE_SCORE - depthFromRoot);
+	    	if (alpha >= beta)
+	    		return alpha;
 	    }
 
         nodes++;
@@ -354,7 +361,7 @@ struct Worker {
             }
         }
 
-        auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, depth, alpha, beta);
+        auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, depth, alpha, beta, depthFromRoot);
         if (!moveGenerator.isMoveLegal(board, bestHashMove))
         	bestHashMove = Move();
 
@@ -364,9 +371,13 @@ struct Worker {
 
             staticEval = hashTableEvaluation;
         }
-        auto ttEntry = transpositionTable.getEntry(board, currentZobristKey);
+        auto ttEntry = transpositionTable.getEntry(board, currentZobristKey, depthFromRoot);
         if (ttEntry.evaluation != NO_EVAL)
             staticEval = ttEntry.evaluation;
+
+        bool isMateScores = (abs(alpha) >= MATE_SCORE_MAX_PLY ||
+					    	 abs(beta) >= MATE_SCORE_MAX_PLY ||
+					    	 abs(staticEval) >= MATE_SCORE_MAX_PLY);
 
         // occuredPositions[board.age]=currentZobristKey;
 
@@ -377,7 +388,8 @@ struct Worker {
         	!isMovingSideInCheck &&
         	ttEntry.evaluation == NO_EVAL &&
         	!isPvNode &&
-            !searchStack[depthFromRoot].excludeTTmove) {
+            !searchStack[depthFromRoot].excludeTTmove &&
+            !isMateScores) {
 
             int margin = (50 - improving * 30) * max(depth, 1) * max(depth, 1);
 
@@ -399,7 +411,8 @@ struct Worker {
                 0 &&              // pieces except kings and pawns exist (to prevent zugzwang)
             staticEval >= beta && // static evaluation >= beta
             !isPvNode &&
-            !searchStack[depthFromRoot].excludeTTmove) {
+            !searchStack[depthFromRoot].excludeTTmove &&
+            !isMateScores) {
 
             int R = floor(4 +
             	depth / 5.0 +
@@ -414,7 +427,7 @@ struct Worker {
         }
 
         if (!isRoot && depth == 1 && !isMovingSideInCheck &&
-        	!searchStack[depthFromRoot].excludeTTmove) { // Razoring
+        	!searchStack[depthFromRoot].excludeTTmove && !isMateScores) { // Razoring
             int margin = 200;
 
             if (staticEval + margin < alpha) {
@@ -583,17 +596,21 @@ struct Worker {
             		sseEval = moveGenerator.sseEval(board, move.getTargetSquare(), color, move.getStartSquare());
             }
 
-            if (!isRoot && !isPvNode && movesSearched > 3 + depth * depth * 3 && !isMovingSideInCheck && !isMoveInteresting && historyValue < 0) {
+            bool beingMated = (alpha <= -MATE_SCORE_MAX_PLY ||
+            				   maxEvaluation <= -MATE_SCORE_MAX_PLY ||
+            				   isMateScores);
+
+            if (!beingMated && !isRoot && !isPvNode && movesSearched > 3 + depth * depth * 3 && !isMovingSideInCheck && !isMoveInteresting && historyValue < 0) {
             	continue;
             }
             
-            if (!isRoot && !isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
+            if (!beingMated && !isRoot && !isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
             	continue;
             }
 
             int premovefutilityMargin = max((150 + historyValueF * 75 - isTTCapture * 100), float(0)) * depth * depth;
             if (!isRoot && movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
-                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
+                !isMoveInteresting && !beingMated &&
                 !searchStack[depthFromRoot].excludeTTmove
             ) {
 
@@ -602,7 +619,7 @@ struct Worker {
 
             int seeMargin[4] = {0, 200, 400, 900};
 
-            if (!isRoot && movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
+            if (!beingMated && !isRoot && movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
                 sseEval <= -seeMargin[depth] && !searchStack[depthFromRoot].excludeTTmove) {
 
                 continue;
@@ -784,7 +801,7 @@ struct Worker {
                     }
 
                     transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, LOWER_BOUND,
-                                             boardCurrentAge, bestHashMove);
+                                             boardCurrentAge, bestHashMove, depthFromRoot);
                     return maxEvaluation;
                 }
             }
@@ -810,7 +827,7 @@ struct Worker {
         if (maxEvaluation == -inf)
         	maxEvaluation = alpha;
 
-        transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove);
+        transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, type, boardCurrentAge, bestHashMove, depthFromRoot);
         return maxEvaluation;
     }
 
@@ -828,7 +845,7 @@ struct Worker {
         if (transpositionTable.getNodeType(currentZobristKey) != EXACT)
             return;
 
-        auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, 0, 0, 0);
+        auto [hashTableEvaluation, bestHashMove] = transpositionTable.get(board, currentZobristKey, 0, 0, 0, 0);
 
         if (bestHashMove != Move()) {
             pvLine[pvLineSize++] = bestHashMove;
@@ -851,8 +868,8 @@ struct Worker {
         const int aspirationWindow = 25, aspirationWindowMult = 2;
         int alphaWindow = aspirationWindow, betaWindow = aspirationWindow;
         while (true) {
-            int alpha = expectedScore - alphaWindow;
-            int beta = expectedScore + betaWindow;
+            int alpha = max(-MATE_SCORE, expectedScore - alphaWindow);
+            int beta = min(MATE_SCORE, expectedScore + betaWindow);
             int score = startSearch(board, depth, alpha, beta);
             if (score <= alpha)
                 alphaWindow *= aspirationWindowMult;
@@ -919,7 +936,7 @@ struct Worker {
         for (int depth = 1; depth <= maxDepth; depth++) {
             // workers[0].nnueEvaluator.printAccum();
             // cout<<'\n';
-            int alpha = -inf * 2, beta = inf * 2;
+            int alpha = -MATE_SCORE, beta = MATE_SCORE;
 
             if (depth == 1)
             	search<PV>(board, board.boardColor, depth, 1, alpha, beta, 0, 0);
@@ -980,9 +997,9 @@ struct Worker {
 	                else {
 	                    cout << "mate ";
 	                    if (score > 0)
-	                        cout << (MATE_SCORE - score);
+	                        cout << (MATE_SCORE - score + 1) / 2;
 	                    else
-	                        cout << (-MATE_SCORE - score);
+	                        cout << (-MATE_SCORE - score - 1) / 2;
 	                }
 	                cout << " nodes " << totalNodes << " nps " << (totalNodes * (long long)(1000)) / (timeThinked + 1) << " time "
 	                     << timeThinked << " pv " << bestMove.convertToUCI() << ' ';

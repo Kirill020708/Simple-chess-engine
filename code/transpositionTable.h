@@ -40,9 +40,15 @@ struct TranspositionTable {
 
     // mutex TTmutex;
 
-    inline void write(Board &board, ull key, int evaluation, int depth, int type, int age, Move bestMove) {
+    inline void write(Board &board, ull key, int evaluation, int depth, int type, int age, Move bestMove, int depthFromRoot) {
         // if (tableSize == 0)
         //     return;
+        if (abs(evaluation) >= MATE_SCORE_MAX_PLY){
+            if (evaluation > 0)
+                evaluation += depthFromRoot;
+            else
+                evaluation -= depthFromRoot;
+        }
         int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
         if (table[index].type != NONE) {
             if (table[index].key == key) {
@@ -57,7 +63,7 @@ struct TranspositionTable {
         // TTmutex.unlock();
     }
 
-    inline pair<int, Move> get(Board &board, ull key, int depth, int alpha, int beta) {
+    inline pair<int, Move> get(Board &board, ull key, int depth, int alpha, int beta, int depthFromRoot) {
         // if (tableSize == 0)
         //     return {NO_EVAL, Move()};
         int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
@@ -79,10 +85,17 @@ struct TranspositionTable {
         if (table[index].type == UPPER_BOUND && table[index].evaluation < alpha)
             eval = table[index].evaluation;
 
+        if (abs(eval) >= MATE_SCORE_MAX_PLY && eval != NO_EVAL){
+            if (eval > 0)
+                eval -= depthFromRoot;
+            else
+                eval += depthFromRoot;
+        }
+
         return {eval, Move(table[index].bestMove)};
     }
 
-    inline TableEntry getEntry(Board &board, ull key) {
+    inline TableEntry getEntry(Board &board, ull key, int depthFromRoot) {
         // if (tableSize == 0)
         //     return TableEntry();
         int index = (__uint128_t(key) * __uint128_t(tableSize)) >> 64;
@@ -91,7 +104,16 @@ struct TranspositionTable {
         if (table[index].key != key)
             return TableEntry();
 
-        return table[index];
+        auto entry = table[index];
+
+        if (abs(entry.evaluation) >= MATE_SCORE_MAX_PLY && entry.evaluation != NO_EVAL){
+            if (entry.evaluation > 0)
+                entry.evaluation -= depthFromRoot;
+            else
+                entry.evaluation += depthFromRoot;
+        }
+
+        return entry;
     }
 
     inline int getDepth(Board &board, ull key) {
