@@ -111,3 +111,13 @@ string intTo5symbFormat(int x) { // for eval diagram
         s.pop_back();
     return s;
 }
+
+int normalizeNNUEscore(int score, int material) {
+    int x = material;
+    int p_a = ((49.326 * x / 58 + -82.882) * x / 58 + -128.585) * x / 58 + 421.978;
+    int p_b = ((61.170 * x / 58 + -266.040) * x / 58 + 420.050) * x / 58 + 24.085;
+    // constexpr double as[] = {49.32556867, -82.88198999, -128.58538737, 421.97786682};
+    // constexpr double bs[] = {61.17007333, -266.04041076, 420.05003873, 24.08542565};
+
+    return (score * 100.0 / p_a);
+}

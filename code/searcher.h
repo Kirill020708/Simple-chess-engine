@@ -60,6 +60,8 @@ struct Worker {
     int rootScore;
     Move bestMove;
 
+    int seldepth;
+
     ll nodes = 0, singularExtended = 0;
 
     MoveListGenerator moveListGenerator;
@@ -115,6 +117,11 @@ struct Worker {
     template<NodeType nodePvType>
     int quiescentSearch(Board &board, int color, int alpha, int beta, int depthFromRoot) {
 
+        constexpr bool isPvNode = nodePvType != NonPV;
+
+    	if (isPvNode)
+    		seldepth = max(seldepth, depthFromRoot + 1);
+
     	if ((nodes & 1023) == 0) {
         	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
             ll timeThinked = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - searchStartTime).count();
@@ -126,7 +133,6 @@ struct Worker {
 	        }
 	    }
 
-        constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
         ull currentZobristKey = board.getZobristKey();
@@ -299,6 +305,11 @@ struct Worker {
 
 	template<NodeType nodePvType>
     int search(Board &board, int color, int depth, int isRoot, int alpha, int beta, int depthFromRoot, int extended) {
+    	
+        constexpr bool isPvNode = nodePvType != NonPV;
+
+    	if (isPvNode)
+    		seldepth = max(seldepth, depthFromRoot + 1);
 
     	if ((nodes & 1023) == 0) {
         	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
@@ -311,7 +322,6 @@ struct Worker {
 	        }
 	    }
 
-        constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
         if (board.age - board.lastIrreversibleMoveAge > 100)
@@ -374,8 +384,10 @@ struct Worker {
                 return (staticEval + beta) / 2;
         }
 
-        if (depth <= 0)
+        if (depth <= 0){
+        	nodes--;
             return quiescentSearch<nodePvType>(board, color, alpha, beta, depthFromRoot);
+        }
 
         int oppositeColor = (color == WHITE) ? BLACK : WHITE;
 
@@ -886,6 +898,7 @@ struct Worker {
         nodesLim = nodesH;
         nodes = 0;
         hardTimeBound = hardBound;
+        seldepth = 0;
 
         int color = board.boardColor;
 
@@ -959,9 +972,9 @@ struct Worker {
             		totalNodes += workers[i].nodes;
 
             	if (printUCI && (!minimal || stopIDsearch || depth == maxDepth)) {
-	                cout << "info depth " << depth << " score ";
+	                cout << "info depth " << depth << " seldepth " << seldepth << " score ";
 	                if (MATE_SCORE - abs(score) > maxDepth)
-	                    cout << "cp " << score;
+	                    cout << "cp " << normalizeNNUEscore(score, board.getNormalizeMaterial());
 	                else {
 	                    cout << "mate ";
 	                    if (score > 0)

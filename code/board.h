@@ -74,9 +74,9 @@ struct alignas(64) Board {
     ull zobristKeyWhite;
     ull zobristKeyBlack;
 
-    int lastSq, lastPs;
+    int lastSq = 0, lastPs = 0;
 
-    int age;
+    int age = 0;
 
     int lastIrreversibleMoveAge = -1; // age of last irreversible move (capture/pawn move), for testing repetition
 
@@ -655,6 +655,16 @@ struct alignas(64) Board {
         for (int square = 0; square < 64; square++)
             if (occupancy(square) != EMPTY)
                 materialCount += material[occupancyPiece(square)];
+    }
+
+    int getNormalizeMaterial() {
+        int mat = 0;
+        int materialNNUE[] = {0, 1, 3, 3, 5, 9, 0};
+
+        for (int square = 0; square < 64; square++)
+            if (occupancy(square) != EMPTY)
+                mat += materialNNUE[occupancyPiece(square)];
+        return mat;
     }
 };
 

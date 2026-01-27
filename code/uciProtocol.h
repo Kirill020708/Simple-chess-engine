@@ -73,28 +73,7 @@ struct UCIcommunicationHepler {
 
     thread searcherThread;
 
-    thread waitingThread;
-    bool stopWaitingThread;
     int hardNodesOpt = 1e9;
-
-    void sleepCond(int ms) {
-        stopWaitingThread = 0;
-        auto beginSleep = std::chrono::steady_clock::now();
-        while (!stopWaitingThread) {
-            auto curr = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(curr - beginSleep).count() >= ms)
-                break;
-        }
-    }
-
-    void waitAndEndSearch(int timeToThink) {
-        // searcher.stopSearch=false;
-        // searcherThread=thread(&Searcher::iterativeDeepeningSearch,&searcher,mainBoard.boardColor,256);
-        // sleepCond(timeToThink);
-        this_thread::sleep_for(std::chrono::milliseconds(timeToThink));
-        // searcher.stopSearch=true;
-        searcherThread.join();
-    }
 
     void reallocateHashMemory(int MBsize) {
         long long bSize = ll(MBsize) * 1024 * 1024;
@@ -158,10 +137,6 @@ struct UCIcommunicationHepler {
             return;
         }
         if (mainCommand == "makemove") {
-            stopWaitingThread = 1;
-            if (waitingThread.joinable())
-                waitingThread.join();
-
             mainOccuredPositionsHelper.occuredPositions[mainBoard.age] = mainBoard.getZobristKey();
             mainBoard.makeMove(Move(tokens[1]));
             return;
@@ -180,26 +155,9 @@ struct UCIcommunicationHepler {
 
             char pieceChar[2][7] = {{' ', 'P', 'N', 'B', 'R', 'Q', 'K'}, {' ', 'p', 'n', 'b', 'r', 'q', 'k'}};
 
-            int materials[6] = {0, 100, 300, 300, 500, 900};
-            int nnueMaterial = 0, plainMaterial = 0;
-            for (int square = 0; square < 64; square++) {
-                int color = mainBoard.occupancy(square);
-                int piece = mainBoard.occupancyPiece(square);
-                if (color != EMPTY && piece != KING) {
-                    plainMaterial += materials[piece];
+            int scaledNNUEeval = normalizeNNUEscore(nnueEval, mainBoard.getNormalizeMaterial());
 
-                    mainBoard.clearPosition(square, mainNnueEvaluator);
-                    int newNnueEval = mainNnueEvaluator.evaluate(mainBoard.boardColor);
-                    if (mainBoard.boardColor == BLACK)
-                        newNnueEval = -newNnueEval;
-                    mainBoard.putPiece(square, color, piece, mainNnueEvaluator);
-                    nnueMaterial += abs(nnueEval - newNnueEval);
-                }
-            }
-
-            float scale = float(plainMaterial) / nnueMaterial;
-            // cout<<plainMaterial<<' '<<nnueMaterial<<'\n';
-            cout << int(nnueEval * scale) << " cp (scaled NNUE, white's perspective)" << endl;
+            cout << scaledNNUEeval << " cp (scaled NNUE, white's perspective)" << endl;
 
             cout << "+-------+-------+-------+-------+-------+-------+-------+-------+\n";
 
@@ -230,9 +188,10 @@ struct UCIcommunicationHepler {
                         int newNnueEval = mainNnueEvaluator.evaluate(mainBoard.boardColor);
                         if (mainBoard.boardColor == BLACK)
                             newNnueEval = -newNnueEval;
+                        newNnueEval = normalizeNNUEscore(newNnueEval, mainBoard.getNormalizeMaterial());
                         mainBoard.putPiece(square, color, piece, mainNnueEvaluator);
-                        int pieceValue = nnueEval - newNnueEval;
-                        cout << intTo5symbFormat(int(pieceValue * scale));
+                        int pieceValue = scaledNNUEeval - newNnueEval;
+                        cout << intTo5symbFormat(pieceValue);
                     }
                     cout << " |";
                 }
@@ -245,10 +204,6 @@ struct UCIcommunicationHepler {
             return;
         }
         if (mainCommand == "position") {
-            stopWaitingThread = 1;
-            if (waitingThread.joinable())
-                waitingThread.join();
-
             int movesIter = tokens.size();
             if (tokens[1] == "startpos") {
                 movesIter = 3;
@@ -272,10 +227,6 @@ struct UCIcommunicationHepler {
             }
         }
         if (mainCommand == "go") {
-            stopWaitingThread = 1;
-            if (waitingThread.joinable())
-                waitingThread.join();
-
             int wtime = -1, btime = -1, winc = -1, binc = 0;
             int movetime = -1;
             int depth = 256;
@@ -324,17 +275,15 @@ struct UCIcommunicationHepler {
             if (movetime != -1) {
                 softBound = hardBound = timeToThink = movetime;
             }
-            searcher.iterativeDeepeningSearch(depth, softBound, hardBound, nodes, hardNodesOpt);
-            // waitAndEndSearch(timeToThink);
-            // waitingThread=thread(&UCIcommunicationHepler::waitAndEndSearch,this,timeToThink);
+            searcherThread = thread(&Searcher::iterativeDeepeningSearch, &searcher, depth, softBound, hardBound, nodes, hardNodesOpt);
+            // searcher.iterativeDeepeningSearch(depth, softBound, hardBound, nodes, hardNodesOpt);
         }
         if (mainCommand == "perft") {
             perftester.perfTest(stoi(tokens[1]));
         }
         if (mainCommand == "stop") {
-            stopWaitingThread = 1;
-            if (waitingThread.joinable())
-                waitingThread.join();
+            searcher.workers[0].stopSearch = true;
+            searcherThread.join();
         }
         if (mainCommand == "setoption") {
             if (tokens[2] == "HardNodesLimit") {
