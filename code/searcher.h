@@ -589,7 +589,7 @@ struct Worker {
             int seeMargin[4] = {0, 200, 400, 900};
 
             if (movesSearched > 0 && !isPvNode && !isMovingSideInCheck && !inCheck && depth <= 3 &&
-                sseEval <= -seeMargin[depth] && !searchStack[depthFromRoot].excludeTTmove) {
+                sseEval <= -seeMargin[depth] - historyValueF * 100 && !searchStack[depthFromRoot].excludeTTmove) {
 
                 continue;
             }
