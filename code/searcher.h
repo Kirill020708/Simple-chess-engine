@@ -577,7 +577,7 @@ struct Worker {
             	continue;
             }
 
-            int premovefutilityMargin = max((150 + historyValueF * 75 - isTTCapture * 100), float(0)) * depth * depth;
+            int premovefutilityMargin = max((150 + historyValueF * 75 - isTTCapture * 100 - (!improving) * 50), float(0)) * depth * depth;
             if (movesSearched > 0 && !isMovingSideInCheck && staticEval < alpha - premovefutilityMargin &&
                 !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
                 !searchStack[depthFromRoot].excludeTTmove
