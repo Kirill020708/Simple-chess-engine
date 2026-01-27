@@ -758,12 +758,15 @@ struct Worker {
 		        	historyHelper.whiteAttacks = whiteAttacks;
 		        	historyHelper.blackAttacks = blackAttacks;
 
-                    historyHelper.update(board, color, move, depth * depth);
+		        	int historyBonus = 10 * depth + 0;
+		        	int maluseBonus = 10 * depth + 0;
+
+                    historyHelper.update(board, color, move, historyBonus);
 
                     for (int previousMoves = 0; previousMoves < currentMove;
                          previousMoves++) { // negate all searched non-capture moves
                         Move prevMove = moveListGenerator.moveList[depthFromRoot][previousMoves];
-                        historyHelper.update(board, color, prevMove, -(depth * depth));
+                        historyHelper.update(board, color, prevMove, -maluseBonus);
                     }
 
                     transpositionTable.write(board, currentZobristKey, maxEvaluation, depth, LOWER_BOUND,
