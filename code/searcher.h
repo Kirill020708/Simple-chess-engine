@@ -314,6 +314,9 @@ struct Worker {
         constexpr bool isPvNode = nodePvType != NonPV;
         nodes++;
 
+        if (board.age - board.lastIrreversibleMoveAge > 100)
+        	return DRAW_SCORE;
+
         ull currentZobristKey = board.getZobristKey();
 
         if (!isRoot) {
