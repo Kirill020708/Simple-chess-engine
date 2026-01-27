@@ -631,34 +631,6 @@ struct Worker {
 
             // cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
-            int futilityMargin = (100) * depth * depth; 
-
-            // if(isCapture){
-            // 	if(sseEval)
-            // }
-
-            // Futility pruning
-            if (movesSearched > 0 && !isMovingSideInCheck && newStaticEval < alpha - futilityMargin &&
-                !isMoveInteresting && abs(MATE_SCORE - beta) > maxDepth && abs(alpha + MATE_SCORE) > maxDepth &&
-                !searchStack[depthFromRoot].excludeTTmove
-
-            ) {
-
-            	#if !defined DO_HCE
-                for (int i = 0; i < hiddenLayerSize; i += 16) {
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumW[i], _mm256_loadu_si256((__m256i *)&accumW[i]));
-
-                    _mm256_storeu_si256((__m256i *)&nnueEvaluator.hlSumB[i], _mm256_loadu_si256((__m256i *)&accumB[i]));
-
-                    // nnueEvaluator.hlSumW[i]=accumW[i];
-                    // nnueEvaluator.hlSumB[i]=accumB[i];
-                }
-                #endif
-
-                board = boardCopy;
-                continue;
-            }
 
             if (extended <= 30 && depthFromRoot < maxDepth - 10 && moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
                 extendDepth++;
