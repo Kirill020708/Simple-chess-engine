@@ -77,6 +77,8 @@ struct Worker {
 
     std::chrono::steady_clock::time_point searchStartTime;
 
+    int rootNodes[1<<16];
+
     float texelSearch(Board &board, int color, float alpha, float beta, int depthFromRoot) {
         float staticEval;
         if (moveListGenerator.isStalled(board, color) || evaluator.insufficientMaterialDraw(board))
@@ -666,6 +668,8 @@ struct Worker {
             if (extended <= 30 && depthFromRoot < maxDepth - 10 && moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
                 extendDepth++;
 
+            int prevNodes = nodes;
+
             int score;
             if (movesSearched) { // Principal variation search
 
@@ -720,6 +724,9 @@ struct Worker {
                 // nnueEvaluator.hlSumB[i]=accumB[i];
             }
             #endif
+
+            if (isRoot)
+            	rootNodes[move.move] += (nodes - prevNodes);
 
             movesSearched++;
             if (!isMoveInteresting)
@@ -933,6 +940,9 @@ struct Worker {
         int score = 0;
         searchStartTime = std::chrono::steady_clock::now();
 
+        for (int i = 0; i < (1 << 16); i++)
+        	rootNodes[i] = 0;
+
         for (int depth = 1; depth <= maxDepth; depth++) {
             // workers[0].nnueEvaluator.printAccum();
             // cout<<'\n';
@@ -985,7 +995,11 @@ struct Worker {
 
 	            bestMoveStreak = min(bestMoveStreak, 5);
 
-	            int targetTime = softBound * bestmoveStabilityMult[bestMoveStreak - 1];
+	            float bestmoveNodePart = float(rootNodes[bestMove.move]) / nodes;
+
+	            int targetTime = softBound 
+	            * bestmoveStabilityMult[bestMoveStreak - 1]
+	            * (1.7 - bestmoveNodePart);
 
 	            if (timeThinked >= targetTime) {
 	            	stopIDsearch = true;
