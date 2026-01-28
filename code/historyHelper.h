@@ -20,6 +20,10 @@ struct HistoryHelper {
     int historyScore[2][64][64][2][2];
     int pieceSquareHistory[2][8][64][2][2];
     int counterHistory[2][8][64][8][64];
+    
+    const int pwnSz = (1 << 10) - 1;
+    int pawnHistory[1 << 10][2][8][64];
+
     int captHistoryScore[2][8][64][8];
     int maxHistoryScore = 511;
 
@@ -35,10 +39,11 @@ struct HistoryHelper {
         if (score > maxHistoryScore)
             score = maxHistoryScore; // clamp
 
+	    int st = move.getStartSquare();
 	    int tr = move.getTargetSquare();
+	    int movedPiece = board.occupancyPiece(st);
 
         if (board.occupancy(tr) == EMPTY) {
-	        int st = move.getStartSquare();
 
 	        int stTh, trTh;
 	        if (color == WHITE) {
@@ -52,16 +57,17 @@ struct HistoryHelper {
 	        historyScore[color][st][tr][stTh][trTh] +=
 	            score - historyScore[color][st][tr][stTh][trTh] * abs(score) / maxHistoryScore;
 
-	        pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] +=
-	            score - pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] * abs(score) / maxHistoryScore;
+	        pieceSquareHistory[color][movedPiece][tr][stTh][trTh] +=
+	            score - pieceSquareHistory[color][movedPiece][tr][stTh][trTh] * abs(score) / maxHistoryScore;
 
-	        counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr] +=
-	            score - counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr] * abs(score) / maxHistoryScore;
+	        counterHistory[color][board.lastPs][board.lastSq][movedPiece][tr] +=
+	            score - counterHistory[color][board.lastPs][board.lastSq][movedPiece][tr] * abs(score) / maxHistoryScore;
 
-
+	        int index = board.zobristKeyPawn & pwnSz;
+	        pawnHistory[index][color][movedPiece][tr] +=
+	            score - pawnHistory[index][color][movedPiece][tr] * abs(score) / maxHistoryScore;
 
 	    } else {
-	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
 
 	        captHistoryScore[color][movedPiece][tr][capturedPiece] +=
@@ -71,10 +77,11 @@ struct HistoryHelper {
 
     inline int getScore(Board &board, int color, Move move) {
 
+        int st = move.getStartSquare();
         int tr = move.getTargetSquare();
+	    int movedPiece = board.occupancyPiece(st);
 
         if (board.occupancy(tr) == EMPTY) {
-        	int st = move.getStartSquare();
 
 	        int stTh, trTh;
 	        if (color == WHITE) {
@@ -88,15 +95,17 @@ struct HistoryHelper {
 	        int history = 0;
 	        
 	        history += (historyScore[color][st][tr][stTh][trTh]);
-	        history += (pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh]);
+	        history += (pieceSquareHistory[color][movedPiece][tr][stTh][trTh]);
 
-	        history += (counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr]);
+	        history += (counterHistory[color][board.lastPs][board.lastSq][movedPiece][tr]);
 
-	        history /= 3;
+	        int index = board.zobristKeyPawn & pwnSz;
+	        history += pawnHistory[index][color][movedPiece][tr];
+
+	        history /= 4;
 	        return history + maxHistoryScore; // to prevent negative values
 
 	    } else {
-	    	int movedPiece = board.occupancyPiece(move.getStartSquare());
 	    	int capturedPiece = board.occupancyPiece(tr);
 
 	        return (captHistoryScore[color][movedPiece][tr][capturedPiece]) +
