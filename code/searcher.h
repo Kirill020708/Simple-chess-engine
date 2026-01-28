@@ -973,18 +973,36 @@ struct Worker {
 	                    (branchFactor + clamp(float(dnodes[depth]) / dnodes[depth - 1], float(1.3), float(6))) / 2;
 
 	            int estimatedTimeForNextDepth = times[depth] * branchFactor;
-	            // cout<<estimatedTimeForNextDepth<<'\n';
-	            if (timeThinked >= softBound) {
-	                if (depth >= 3) {
-	                    if (bestMoves[depth] == bestMoves[depth - 1] &&
-	                        bestMoves[depth] == bestMoves[depth - 2]) { // if best move is stable, abort the search
-	                        stopIDsearch = true;
-	                    }
-	                    if (timeUntilHardBound < estimatedTimeForNextDepth) {
-	                        stopIDsearch = true;
-	                    }
-	                }
+
+	            int bestMoveStreak = 1;
+	            for (int i = depth - 1; i >= 1; i--) {
+	            	if (bestMoves[depth] != bestMoves[i])
+	            		break;
+	            	bestMoveStreak++;
 	            }
+
+	            float bestmoveStabilityMult[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
+
+	            bestMoveStreak = min(bestMoveStreak, 5);
+
+	            int targetTime = softBound * bestmoveStabilityMult[bestMoveStreak - 1];
+
+	            if (timeThinked >= targetTime) {
+	            	stopIDsearch = true;
+	            }
+
+	            // cout<<estimatedTimeForNextDepth<<'\n';
+	            // if (timeThinked >= softBound) {
+	            //     if (depth >= 3) {
+	            //         if (bestMoves[depth] == bestMoves[depth - 1] &&
+	            //             bestMoves[depth] == bestMoves[depth - 2]) { // if best move is stable, abort the search
+	            //             stopIDsearch = true;
+	            //         }
+	            //         if (timeUntilHardBound < estimatedTimeForNextDepth) {
+	            //             stopIDsearch = true;
+	            //         }
+	            //     }
+	            // }
 
             	int totalNodes = 0;
             	for (int i = 0; i < workers.size(); i++)

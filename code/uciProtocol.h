@@ -271,8 +271,8 @@ struct UCIcommunicationHepler {
             // cout<<timeToThink<<'\n';
             int softBound = inf, hardBound = inf;
             if (wtime != -1) {
-                softBound = timeToThink * 0.75;
-                hardBound = min(int(timeToThink * 2), basetime - 100);
+                softBound = timeToThink;
+                hardBound = min(basetime / 2, basetime - 100);
             }
             if (movetime != -1) {
                 softBound = hardBound = timeToThink = movetime;
