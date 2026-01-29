@@ -958,7 +958,7 @@ struct Worker {
             	aspirationSearch(board, depth, score);
 
             score = rootScore;
-            
+
 	        if (bestMove == Move()) {
 	        	auto ttEntry = transpositionTable.getEntry(board, board.getZobristKey(), 0);
 	        	if (ttEntry.bestMove != Move() && moveGenerator.isMoveLegal(board, ttEntry.bestMove))
@@ -1008,6 +1008,8 @@ struct Worker {
 	            float bestmoveStabilityMult[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
 
 	            bestMoveStreak = min(bestMoveStreak, 5);
+
+	            nodes = max(nodes, 1);
 
 	            float bestmoveNodePart = float(rootNodes[bestMove.move]) / nodes;
 
