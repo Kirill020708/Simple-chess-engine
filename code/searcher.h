@@ -475,7 +475,7 @@ struct Worker {
         // 	moveListGenerator.hashMove=searchStack[depthFromRoot+1].bestMove;
         // }
 
-        if (depth >= 6 && isPvNode && ttMove == Move()) {
+        if (depth >= 6 && isPvNode && nodeType == NONE) {
 
             depth--;
         }
@@ -824,6 +824,9 @@ struct Worker {
             	moveListGenerator.generateMoves(board, historyHelper, color, depthFromRoot, DO_SORT, ALL_MOVES);
             }
         }
+
+        if (type == UPPER_BOUND)
+        	bestHashMove = Move();
 
         if (!isMovingSideInCheck && (bestHashMove == Move() || board.isQuietMove(bestHashMove))) {
         	staticEval = evaluator.evaluatePosition(board, color, nnueEvaluator, corrhistHelper);
