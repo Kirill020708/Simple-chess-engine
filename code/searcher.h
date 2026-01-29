@@ -732,8 +732,11 @@ struct Worker {
             if (!isMoveInteresting)
                 quietMovesSearched++;
 
-            if (stopSearch)
+            if (stopSearch) {
+            	if (isRoot && bestMove == Move())
+            		bestMove = move;
                 return 0;
+            }
 
             if (maxEvaluation < score) {
                 if (score > alpha)
