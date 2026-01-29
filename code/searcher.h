@@ -997,9 +997,19 @@ struct Worker {
 
 	            float bestmoveNodePart = float(rootNodes[bestMove.move]) / nodes;
 
+	            float evalStabilityMult = 1;
+	            if (depth > 1) {
+		            int averagePrevEval = 0;
+		            for (int i = 1; i < depth; i++)
+		            	averagePrevEval += scores[i];
+		            averagePrevEval /= (depth - 1);
+		            evalStabilityMult = clamp(abs(averagePrevEval - score) / 200.0, 0.0, 1.5) + 0.7;
+		        }
+
 	            int targetTime = softBound 
 	            * bestmoveStabilityMult[bestMoveStreak - 1]
-	            * (1.7 - bestmoveNodePart);
+	            * (1.7 - bestmoveNodePart)
+	            * evalStabilityMult;
 
 	            if (timeThinked >= targetTime) {
 	            	stopIDsearch = true;
