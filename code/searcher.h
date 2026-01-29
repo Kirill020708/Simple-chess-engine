@@ -733,8 +733,6 @@ struct Worker {
                 quietMovesSearched++;
 
             if (stopSearch) {
-            	if (isRoot && bestMove == Move())
-            		bestMove = move;
                 return 0;
             }
 
@@ -960,6 +958,16 @@ struct Worker {
             	aspirationSearch(board, depth, score);
 
             score = rootScore;
+            
+	        if (bestMove == Move()) {
+	        	auto ttEntry = transpositionTable.getEntry(board, board.getZobristKey(), 0);
+	        	if (ttEntry.bestMove != Move() && moveGenerator.isMoveLegal(board, ttEntry.bestMove))
+	        		bestMove = ttEntry.bestMove;
+	        	else {
+	        		moveListGenerator.generateMoves(board, historyHelper, color, 0, DO_SORT, ALL_MOVES);
+	        		bestMove = moveListGenerator.moveList[0][0];
+	        	}
+	        }
 
             if (isMainThread) {
             	std::chrono::steady_clock::time_point timeNow = std::chrono::steady_clock::now();
