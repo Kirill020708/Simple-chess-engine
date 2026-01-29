@@ -1009,7 +1009,8 @@ struct Worker {
 
 	            bestMoveStreak = min(bestMoveStreak, 5);
 
-	            nodes = max(nodes, 1);
+	            if (nodes == 0)
+	            	nodes = 1;
 
 	            float bestmoveNodePart = float(rootNodes[bestMove.move]) / nodes;
 
