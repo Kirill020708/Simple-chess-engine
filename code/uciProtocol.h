@@ -272,7 +272,7 @@ struct UCIcommunicationHepler {
             int softBound = inf, hardBound = inf;
             if (wtime != -1) {
                 softBound = timeToThink;
-                hardBound = min(basetime / 2, basetime - 100);
+                hardBound = max(min(basetime / 2, basetime - 10), 1);
             }
             if (movetime != -1) {
                 softBound = hardBound = timeToThink = movetime;

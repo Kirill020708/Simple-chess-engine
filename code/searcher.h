@@ -1073,6 +1073,7 @@ struct Searcher {
         vector<Board> boards(threadNumber, mainBoard);
         for (int i = 0; i < threadNumber; i++) {
             workers[i].nodes = 0;
+            workers[i].bestMove = Move();
             workers[i].minimal = minimal;
             workers[i].stopSearch = false;
             workers[i].nnueEvaluator = mainNnueEvaluator;
