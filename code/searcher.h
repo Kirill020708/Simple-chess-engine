@@ -1022,6 +1022,14 @@ struct Worker {
 	            	stopIDsearch = true;
 	            }
 
+	            if (estimatedTimeForNextDepth > timeUntilHardBound)
+	            	stopIDsearch = true;
+
+	            int timeUntilSoftBound = targetTime - timeThinked;
+
+	            if (estimatedTimeForNextDepth / 4 > timeUntilSoftBound)
+	            	stopIDsearch = true;
+
 	            // cout<<estimatedTimeForNextDepth<<'\n';
 	            // if (timeThinked >= softBound) {
 	            //     if (depth >= 3) {
