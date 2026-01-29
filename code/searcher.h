@@ -1027,7 +1027,7 @@ struct Worker {
 
 	            int timeUntilSoftBound = targetTime - timeThinked;
 
-	            if (estimatedTimeForNextDepth * 2 > timeUntilSoftBound)
+	            if (estimatedTimeForNextDepth / 2 > timeUntilSoftBound)
 	            	stopIDsearch = true;
 
 	            // cout<<estimatedTimeForNextDepth<<'\n';
