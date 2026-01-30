@@ -228,52 +228,38 @@ struct MoveListGenerator {
 
     bool isStalled(Board &board, int color) {
         Board boardCopy = board;
-        Bitboard friendPieces;
+        Bitboard friendPieces, opponentPieces;
 
-        if (color == WHITE)
+        if (color == WHITE) {
             friendPieces = board.whitePieces;
-        else
+            opponentPieces = board.blackPieces;
+        } else {
             friendPieces = board.blackPieces;
+            opponentPieces = board.whitePieces;
+        }
 
         Bitboard pieces = friendPieces;
+
+        Bitboard movemask = ull(-1);
+        if (moveGenerator.isInCheck(board, color))
+            movemask = moveGenerator.queenMoves(board, (board.kings & friendPieces).getFirstBitNumber()) | opponentPieces;
 
         while (pieces > 0) {
             int startSquare = pieces.getFirstBitNumberAndExclude();
             Bitboard moves = moveGenerator.moves(board, startSquare);
             moves &= (~friendPieces);
+            moves &= movemask;
 
             while (moves > 0) {
                 int targetSquare = moves.getFirstBitNumberAndExclude();
 
-                if (board.occupancyPiece(startSquare) == PAWN &&
-                    ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
-                    Move promotionMoves[4];
-                    promotionMoves[0] =
-                        Move(startSquare, targetSquare, KNIGHT, pieceSquareTable.materialEval[KNIGHT] << captureShift);
-                    promotionMoves[1] =
-                        Move(startSquare, targetSquare, BISHOP, pieceSquareTable.materialEval[BISHOP] << captureShift);
-                    promotionMoves[2] =
-                        Move(startSquare, targetSquare, ROOK, pieceSquareTable.materialEval[ROOK] << captureShift);
-                    promotionMoves[3] =
-                        Move(startSquare, targetSquare, QUEEN, pieceSquareTable.materialEval[QUEEN] << captureShift);
-                    for (int i = 0; i < 4; i++) {
-                        board.makeMove(promotionMoves[i]);
-                        if (moveGenerator.isInCheck(board, color)) {
-                            board = boardCopy;
-                            continue;
-                        }
-                        board = boardCopy;
-                        return false;
-                    }
-                } else {
-                    board.makeMove(Move(startSquare, targetSquare, NOPIECE));
-                    if (moveGenerator.isInCheck(board, color)) {
-                        board = boardCopy;
-                        continue;
-                    }
+                board.makeMove(Move(startSquare, targetSquare, NOPIECE));
+                if (moveGenerator.isInCheck(board, color)) {
                     board = boardCopy;
-                    return false;
+                    continue;
                 }
+                board = boardCopy;
+                return false;
             }
         }
         return true;
