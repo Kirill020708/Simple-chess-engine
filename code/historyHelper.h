@@ -93,7 +93,7 @@ struct HistoryHelper {
 	        history += (counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr]);
 
 	        history /= 3;
-	        return history + maxHistoryScore; // to prevent negative values
+	        return (history * 1.3 + maxHistoryScore); // to prevent negative values
 
 	    } else {
 	    	int movedPiece = board.occupancyPiece(move.getStartSquare());

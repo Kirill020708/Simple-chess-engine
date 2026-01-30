@@ -25,7 +25,7 @@ struct Move {
         score = 0;
     }
 
-    Move(int startSq, int targetSq, int flag, int score_) {
+    Move(int startSq, int targetSq, int flag, ll score_) {
         move = startSq + (targetSq << 6) + (flag << 12);
         score = score_;
     }
