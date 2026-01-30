@@ -74,7 +74,8 @@ struct alignas(64) Board {
     ull zobristKeyWhite;
     ull zobristKeyBlack;
 
-    int lastSq = 0, lastPs = 0;
+    int ply1Sq = 0, ply1Ps = 0;
+    int ply2Sq = 0, ply2Ps = 0;
 
     int age = 0;
 
@@ -143,11 +144,11 @@ struct alignas(64) Board {
             if (piece == KNIGHT || piece == BISHOP)
                 zobristKeyMinor ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
             if(piece != PAWN) {
-	            if (pieceColor == WHITE)
-	                zobristKeyWhite ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
-	            if (pieceColor == BLACK)
-	                zobristKeyBlack ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
-	        }
+                if (pieceColor == WHITE)
+                    zobristKeyWhite ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
+                if (pieceColor == BLACK)
+                    zobristKeyBlack ^= zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
+            }
         }
     }
 
@@ -183,27 +184,27 @@ struct alignas(64) Board {
 
         if (pieceColor != EMPTY) {
 
-	        ull pieceKey = zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
+            ull pieceKey = zobristKeys.pieceKeys[square][(pieceColor << 3) + piece];
 
-	        zobristKey ^= pieceKey;
+            zobristKey ^= pieceKey;
 
 
-	        if (piece == KNIGHT || piece == BISHOP){
-	            zobristKeyMinor ^= pieceKey;
-	        }
-	        
-	        if (piece == PAWN) {
-	            zobristKeyPawn ^= pieceKey;
-	        } else {
-		        if (pieceColor == WHITE){
-		            zobristKeyWhite ^= pieceKey;
-		        }
+            if (piece == KNIGHT || piece == BISHOP){
+                zobristKeyMinor ^= pieceKey;
+            }
+            
+            if (piece == PAWN) {
+                zobristKeyPawn ^= pieceKey;
+            } else {
+                if (pieceColor == WHITE){
+                    zobristKeyWhite ^= pieceKey;
+                }
 
-		        if (pieceColor == BLACK){
-		            zobristKeyBlack ^= pieceKey;
-		        }
-		    }
-		}
+                if (pieceColor == BLACK){
+                    zobristKeyBlack ^= pieceKey;
+                }
+            }
+        }
 
         // evaluation -= pieceSquareTable.getPieceEval(piece, square, pieceColor, endgameWeight());
         whitePieces &= (~(1ull << square));
@@ -264,12 +265,12 @@ struct alignas(64) Board {
         if (pieceType == PAWN)
             zobristKeyPawn ^= pieceKey;
         else {
-	        if (color == WHITE)
-	            zobristKeyWhite ^= pieceKey;
+            if (color == WHITE)
+                zobristKeyWhite ^= pieceKey;
 
-	        if (color == BLACK)
-	            zobristKeyBlack ^= pieceKey;
-	    }
+            if (color == BLACK)
+                zobristKeyBlack ^= pieceKey;
+        }
     }
 
     inline void putPiece(int square, int color, int pieceType, NNUEevaluator &nnueEvaluator) {
@@ -316,8 +317,10 @@ struct alignas(64) Board {
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
 
-        lastSq = targetSquare;
-        lastPs = movingPiece;
+        ply2Sq = ply1Sq;
+        ply2Ps = ply1Ps;
+        ply1Sq = targetSquare;
+        ply1Ps = movingPiece;
 
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
@@ -373,8 +376,10 @@ struct alignas(64) Board {
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
 
-        lastSq = targetSquare;
-        lastPs = movingPiece;
+        ply2Sq = ply1Sq;
+        ply2Ps = ply1Ps;
+        ply1Sq = targetSquare;
+        ply1Ps = movingPiece;
         
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
@@ -418,7 +423,7 @@ struct alignas(64) Board {
             castlingBlackKingsideBroke = 1;
     }
 
-	inline void clearPositionZbr(int square) {
+    inline void clearPositionZbr(int square) {
         int piece = occupancyPiece(square);
         int pieceColor = occupancy(square);
 

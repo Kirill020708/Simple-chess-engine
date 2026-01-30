@@ -20,6 +20,7 @@ struct HistoryHelper {
     int historyScore[2][64][64][2][2];
     int pieceSquareHistory[2][8][64][2][2];
     int counterHistory[2][8][64][8][64];
+    int contPly2History[2][8][64][8][64];
     int captHistoryScore[2][8][64][8];
     int maxHistoryScore = 511;
 
@@ -55,8 +56,11 @@ struct HistoryHelper {
 	        pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] +=
 	            score - pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh] * abs(score) / maxHistoryScore;
 
-	        counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr] +=
-	            score - counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr] * abs(score) / maxHistoryScore;
+	        counterHistory[color][board.ply1Ps][board.ply1Sq][board.occupancyPiece(st)][tr] +=
+	            score - counterHistory[color][board.ply1Ps][board.ply1Sq][board.occupancyPiece(st)][tr] * abs(score) / maxHistoryScore;
+
+	        contPly2History[color][board.ply2Ps][board.ply2Sq][board.occupancyPiece(st)][tr] +=
+	            score - contPly2History[color][board.ply2Ps][board.ply2Sq][board.occupancyPiece(st)][tr] * abs(score) / maxHistoryScore;
 
 
 
@@ -90,7 +94,9 @@ struct HistoryHelper {
 	        history += (historyScore[color][st][tr][stTh][trTh]);
 	        history += (pieceSquareHistory[color][board.occupancyPiece(st)][tr][stTh][trTh]);
 
-	        history += (counterHistory[color][board.lastPs][board.lastSq][board.occupancyPiece(st)][tr]);
+	        history += (counterHistory[color][board.ply1Ps][board.ply1Sq][board.occupancyPiece(st)][tr]);
+
+	        history += (contPly2History[color][board.ply2Ps][board.ply2Sq][board.occupancyPiece(st)][tr]);
 
 	        history /= 3;
 	        return history + maxHistoryScore; // to prevent negative values
@@ -148,8 +154,8 @@ struct CorrHistoryHelper {
 		corrHistTableBlack[color][index] +=
 			score - corrHistTableBlack[color][index] * abs(score) / maxCorrHistValue;
 		
-		corrHistLastmove[color][board.lastPs][board.lastSq] +=
-			score - corrHistLastmove[color][board.lastPs][board.lastSq] * abs(score) / maxCorrHistValue;
+		corrHistLastmove[color][board.ply1Ps][board.ply1Sq] +=
+			score - corrHistLastmove[color][board.ply1Ps][board.ply1Sq] * abs(score) / maxCorrHistValue;
 	}
 
     inline int getScore(int color, Board &board) {
@@ -167,7 +173,7 @@ struct CorrHistoryHelper {
 		index = board.zobristKeyBlack & sznd;
 		corrScore += (50 * corrHistTableBlack[color][index]) / 300;
 
-		corrScore += (50 * corrHistLastmove[color][board.lastPs][board.lastSq]) / 300;
+		corrScore += (50 * corrHistLastmove[color][board.ply1Ps][board.ply1Sq]) / 300;
 
 		return corrScore;
     }
