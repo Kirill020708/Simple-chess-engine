@@ -108,7 +108,7 @@ struct MoveListGenerator {
                     	continue;
 
                     if (captureEval >= -100)
-                        captureCoeff += (1 << 15);
+                        captureCoeff += (1 << 27);
 
                     int historyScore = historyHelper.getScore(board, color, Move(startSquare, targetSquare, NOPIECE));
 
@@ -117,7 +117,7 @@ struct MoveListGenerator {
                     // cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<captureEval<<'\n';
                 } else
                     captureCoeff =
-                        (1 << 15); // if move isn't capture, make it's value below winning SSE but before loosing
+                        (1 << 27); // if move isn't capture, make it's value below winning SSE but before loosing
 
                 if (board.occupancyPiece(startSquare) == PAWN &&
                     ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
