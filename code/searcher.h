@@ -41,6 +41,7 @@ struct StackState {
     bool excludeTTmove = false;
     Move excludeMove;
     Move bestMove;
+    Move madeMove;
 };
 
 enum NodeType {
@@ -393,7 +394,11 @@ struct Worker {
             !searchStack[depthFromRoot].excludeTTmove &&
             !isMateScores) {
 
-            int margin = (50 - improving * 30) * max(depth, 1) * max(depth, 1);
+
+            int historyValue = historyHelper.getScore(board, color, searchStack[depthFromRoot].madeMove) - historyHelper.maxHistoryScore;
+            float historyValueF = historyValue / float(historyHelper.maxHistoryScore);
+
+            int margin = (50 - improving * 30 + historyValueF * 10) * max(depth, 1) * max(depth, 1);
 
             if (staticEval >= beta + margin)
                 return (staticEval + beta) / 2;
@@ -421,6 +426,7 @@ struct Worker {
             	min((staticEval - beta) / 200.0, 5.0));
 
             int prevEnPassColumn = board.makeNullMove();
+            searchStack[depthFromRoot + 1].madeMove = Move();
             int score = -search<NonPV>(board, oppositeColor, depth - 1 - R, 0, -beta, -beta + 1, depthFromRoot + 1, extended);
             board.makeNullMove();
             board.enPassantColumn = prevEnPassColumn;
@@ -657,6 +663,8 @@ struct Worker {
             occuredPositionsHelper.occuredPositions[board.age + 1] = newKey;
 
             board.makeMove(move, nnueEvaluator);
+
+            searchStack[depthFromRoot + 1].madeMove = move;
 
             // transpositionTable.prefetch(board.getZobristKey());
 
