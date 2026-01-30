@@ -74,7 +74,8 @@ struct alignas(64) Board {
     ull zobristKeyWhite;
     ull zobristKeyBlack;
 
-    int lastSq = 0, lastPs = 0;
+    int ply1Sq = 0, ply1Ps = 0;
+    int ply2Sq = 0, ply2Ps = 0;
 
     int age = 0;
 
@@ -316,8 +317,10 @@ struct alignas(64) Board {
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
 
-        lastSq = targetSquare;
-        lastPs = movingPiece;
+        ply2Sq = ply1Sq;
+        ply2Ps = ply1Ps;
+        ply1Sq = targetSquare;
+        ply1Ps = movingPiece;
 
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
@@ -373,8 +376,10 @@ struct alignas(64) Board {
         int color = occupancy(startSquare);
         int movingPiece = occupancyPiece(startSquare);
 
-        lastSq = targetSquare;
-        lastPs = movingPiece;
+        ply2Sq = ply1Sq;
+        ply2Ps = ply1Ps;
+        ply1Sq = targetSquare;
+        ply1Ps = movingPiece;
         
         enPassantColumn = NO_EN_PASSANT;
         if (movingPiece == PAWN) {
