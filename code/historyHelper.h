@@ -120,6 +120,7 @@ struct CorrHistoryHelper {
 	int corrHistTableBlack[2][1 << 14];
 
 	int corrHistLastmove[2][8][64];
+	int corrHist2ply[2][8][64][8][64];
 
 	const int maxCorrHistValue = 300;
 
@@ -156,6 +157,9 @@ struct CorrHistoryHelper {
 		
 		corrHistLastmove[color][board.ply1Ps][board.ply1Sq] +=
 			score - corrHistLastmove[color][board.ply1Ps][board.ply1Sq] * abs(score) / maxCorrHistValue;
+		
+		corrHist2ply[color][board.ply2Ps][board.ply2Sq][board.ply1Ps][board.ply1Sq] +=
+			score - corrHist2ply[color][board.ply2Ps][board.ply2Sq][board.ply1Ps][board.ply1Sq] * abs(score) / maxCorrHistValue;
 	}
 
     inline int getScore(int color, Board &board) {
@@ -174,6 +178,8 @@ struct CorrHistoryHelper {
 		corrScore += (50 * corrHistTableBlack[color][index]) / 300;
 
 		corrScore += (50 * corrHistLastmove[color][board.ply1Ps][board.ply1Sq]) / 300;
+
+		corrScore += (50 * corrHist2ply[color][board.ply2Ps][board.ply2Sq][board.ply1Ps][board.ply1Sq]) / 300;
 
 		return corrScore;
     }
