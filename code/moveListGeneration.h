@@ -46,10 +46,10 @@
 
 const int maxListSize = 256;
 
-// score: 10 bits for history (or see) < 2 bit for killer < 16 bits for mvv-lva < 1 bit for TT move
+// score: 20 bits for history (or see) < 2 bit for killer < 16 bits for mvv-lva < 1 bit for TT move
 
 struct MoveListGenerator {
-    const int killerMoveShift = 10, captureShift = 12, hashMoveShift = 28;
+    const int killerMoveShift = 20, captureShift = 22, hashMoveShift = 38;
 
     Move moveList[maxDepth][maxListSize];
     int moveListSize[maxDepth];
@@ -91,7 +91,7 @@ struct MoveListGenerator {
             while (moves > 0) {
                 int targetSquare = moves.getFirstBitNumberAndExclude();
 
-                int captureCoeff = 0, isCapture = 0, sseEval;
+                ll captureCoeff = 0, isCapture = 0, sseEval;
                 if (opponentPieces.getBit(targetSquare)) {
                     isCapture = 1;
                     // cout<<Move(startSquare,targetSquare,0).convertToUCI()<<'
@@ -108,26 +108,26 @@ struct MoveListGenerator {
                     	continue;
 
                     if (captureEval >= -100)
-                        captureCoeff += (1 << 15);
+                        captureCoeff += (1ull << 15);
 
                     int historyScore = historyHelper.getScore(board, color, Move(startSquare, targetSquare, NOPIECE));
 
-                    captureCoeff += (material[capturedPiece] + historyScore * 20) + 10;
+                    captureCoeff += (material[capturedPiece] + historyScore * 0.3) + 10;
 
                     // cout<<Move(startSquare,targetSquare,0).convertToUCI()<<' '<<captureEval<<'\n';
                 } else
                     captureCoeff =
-                        (1 << 15); // if move isn't capture, make it's value below winning SSE but before loosing
+                        (1ull << 15); // if move isn't capture, make it's value below winning SSE but before loosing
 
                 if (board.occupancyPiece(startSquare) == PAWN &&
                     ((color == WHITE && targetSquare < 8) || (color == BLACK && targetSquare >= 56))) { // promotion
                     Move promotionMoves[4];
                     promotionMoves[0] =
-                        Move(startSquare, targetSquare, KNIGHT, (material[KNIGHT] + captureCoeff) << captureShift);
+                        Move(startSquare, targetSquare, KNIGHT, ull(material[KNIGHT] + captureCoeff) << captureShift);
                     promotionMoves[1] =
-                        Move(startSquare, targetSquare, BISHOP, (material[BISHOP] + captureCoeff) << captureShift);
-                    promotionMoves[2] = Move(startSquare, targetSquare, ROOK, (material[ROOK] + captureCoeff) << captureShift);
-                    promotionMoves[3] = Move(startSquare, targetSquare, QUEEN, (material[QUEEN] + captureCoeff) << captureShift);
+                        Move(startSquare, targetSquare, BISHOP, ull(material[BISHOP] + captureCoeff) << captureShift);
+                    promotionMoves[2] = Move(startSquare, targetSquare, ROOK, ull(material[ROOK] + captureCoeff) << captureShift);
+                    promotionMoves[3] = Move(startSquare, targetSquare, QUEEN, ull(material[QUEEN] + captureCoeff) << captureShift);
                     // promotionMoves[0]=Move(startSquare,targetSquare,KNIGHT,pieceSquareTable.materialEval[KNIGHT]<<captureShift);
                     // promotionMoves[1]=Move(startSquare,targetSquare,BISHOP,pieceSquareTable.materialEval[BISHOP]<<captureShift);
                     // promotionMoves[2]=Move(startSquare,targetSquare,ROOK,pieceSquareTable.materialEval[ROOK]<<captureShift);
@@ -140,7 +140,7 @@ struct MoveListGenerator {
                         }
                         board = boardCopy;
                         if (promotionMoves[i] == hashMove)
-                            promotionMoves[i].score += (1 << hashMoveShift);
+                            promotionMoves[i].score += (1ull << hashMoveShift);
                         if (onlyCaptures)
                             promotionMoves[i].score += (sseEval + 15);
                         moveList[depth][moveListSize[depth]++] = promotionMoves[i];
@@ -161,11 +161,11 @@ struct MoveListGenerator {
                         move.score += (sseEval + 15);
                     }
                     if (move == hashMove)
-                        move.score += (1 << hashMoveShift);
+                        move.score += (1ull << hashMoveShift);
                     if (move == killerMove)
-                        move.score += (1 << (killerMoveShift + 1));
+                        move.score += (1ull << (killerMoveShift + 1));
                     else if (move == killerBackup)
-                        move.score += (1 << killerMoveShift);
+                        move.score += (1ull << killerMoveShift);
                     moveList[depth][moveListSize[depth]++] = move;
                 }
             }

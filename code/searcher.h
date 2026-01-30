@@ -606,7 +606,7 @@ struct Worker {
             	continue;
             }
             
-            if (!beingMated && !isRoot && !isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -100 * depth * depth) {
+            if (!beingMated && !isRoot && !isPvNode && movesSearched > 0 && !isMovingSideInCheck && !isMoveInteresting && historyValue < -6400 * depth * depth) {
             	continue;
             }
 
@@ -797,8 +797,8 @@ struct Worker {
 		        	historyHelper.whiteAttacks = whiteAttacks;
 		        	historyHelper.blackAttacks = blackAttacks;
 
-		        	int historyBonus = 10 * depth + 0;
-		        	int maluseBonus = 10 * depth + 0;
+		        	int historyBonus = 640 * depth + 0;
+		        	int maluseBonus = 640 * depth + 0;
 
                     historyHelper.update(board, color, move, historyBonus);
 

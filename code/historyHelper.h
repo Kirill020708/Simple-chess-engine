@@ -21,7 +21,7 @@ struct HistoryHelper {
     int pieceSquareHistory[2][8][64][2][2];
     int counterHistory[2][8][64][8][64];
     int captHistoryScore[2][8][64][8];
-    int maxHistoryScore = 511;
+    int maxHistoryScore = 32767;
 
     Bitboard whiteAttacks, blackAttacks;
 
