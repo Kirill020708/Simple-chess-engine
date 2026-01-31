@@ -98,7 +98,6 @@ struct HistoryHelper {
 
 	        history += (contPly2History[color][board.ply2Ps][board.ply2Sq][board.occupancyPiece(st)][tr]);
 
-	        history /= 2;
 	        return history + maxHistoryScore; // to prevent negative values
 
 	    } else {
