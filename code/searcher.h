@@ -1091,7 +1091,6 @@ struct Searcher {
             workers[i].minimal = minimal;
             workers[i].stopSearch = false;
             workers[i].nnueEvaluator = mainNnueEvaluator;
-            workers[i].corrhistHelper.clear();
             workers[i].occuredPositionsHelper = mainOccuredPositionsHelper;
             mainBoard.initNNUE(workers[i].nnueEvaluator);
             for (ll j = 0; j < 256; j++) {
