@@ -922,6 +922,7 @@ struct Worker {
     }
 
     bool minimal = false;
+    bool doNormalization = true;
 
     void IDsearch(Board &board, int maxDepth, int softBound, int hardBound, int nodesLimit, int nodesH, bool isMainThread, bool printUCI, vector<Worker> &workers) {
         
@@ -1041,8 +1042,13 @@ struct Worker {
 
             	if (printUCI && (!minimal || stopIDsearch || depth == maxDepth)) {
 	                cout << "info depth " << depth << " seldepth " << seldepth << " score ";
-	                if (MATE_SCORE - abs(score) > maxDepth)
-	                    cout << "cp " << normalizeNNUEscore(score, board.getNormalizeMaterial());
+	                if (MATE_SCORE - abs(score) > maxDepth){
+	                    cout << "cp ";
+	                	if (doNormalization)
+	                		cout << normalizeNNUEscore(score, board.getNormalizeMaterial());
+	                	else
+	                		cout << score;
+	                }
 	                else {
 	                    cout << "mate ";
 	                    if (score > 0)

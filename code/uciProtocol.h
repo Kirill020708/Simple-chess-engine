@@ -125,6 +125,7 @@ struct UCIcommunicationHepler {
             cout << "id author Kirill020708\n" << endl;
 
             cout << "option name HardNodesLimit type spin default 1000000000 min 1 max 1000000000" << endl;
+            cout << "option name Normalize type check default true" << endl;
             cout << "option name Threads type spin default 1 min 1 max 1024" << endl;
             cout << "option name Hash type spin default 256 min 1 max 33554432" << endl;
             cout << "option name Minimal type check default false" << endl;
@@ -291,6 +292,12 @@ struct UCIcommunicationHepler {
         if (mainCommand == "setoption") {
             if (tokens[2] == "HardNodesLimit") {
                 hardNodesOpt = stoi(tokens[4]);
+            }
+            if (tokens[2] == "Normalize") {
+                if (tokens[4] == "true")
+                    searcher.workers[0].doNormalization = true;
+                else
+                    searcher.workers[0].doNormalization = false;
             }
             if (tokens[2] == "Minimal") {
                 if (tokens[4] == "true")
