@@ -526,6 +526,8 @@ struct Worker {
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
         	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
         		return beta;
+        	else if(ttEntry.evaluation >= beta)
+        		extendTTmove = -1;
         }
 
         int maxEvaluation = -inf;
