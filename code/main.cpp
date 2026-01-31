@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
 	    	auto tokens = splitStr(args, " ");
 	    	int N = stoi(tokens[1]);
 	    	int seed = stoi(tokens[3]);
+            bool printInfo = 1;
+            if (tokens.size() == 5 && tokens[4] == "noprintinfo")
+                printInfo = 0;
 	    	mt19937_64 rngS(seed);
 
 	    	MoveListGenerator moveListGenerator;
@@ -90,14 +93,29 @@ int main(int argc, char *argv[]) {
 	    	while (N--) {
 	    		auto boardCopy = mainBoard;
 	    		int nmbOfMoves = 8 + (rngS() % 2);
+                bool isOk = 1;
+
 	    		while (nmbOfMoves--) {
 	                moveListGenerator.generateMoves(boardCopy, historyHelper,boardCopy.boardColor, 0, DONT_SORT, ALL_MOVES);
 	                int movesCount = moveListGenerator.moveListSize[0];
+                    if (movesCount == 0) {
+                        isOk = 0;
+                        break;
+                    }
 	                Move randomMove = moveListGenerator.moveList[0][rngS() % movesCount];
 	                boardCopy.makeMove(randomMove);
 	            }
 
-	            cout << "info string genfens " << boardCopy.generateFEN() << endl;
+                if (moveListGenerator.isStalled(boardCopy, boardCopy.boardColor))
+                    isOk = 0;
+
+                if (isOk) {
+                    if (printInfo)
+	                    cout << "info string genfens ";
+                    cout << boardCopy.generateFEN() << endl;
+                }
+                else
+                    N++;
 	    	}
 
 	    	exit(0);
