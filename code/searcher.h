@@ -496,6 +496,8 @@ struct Worker {
         	moveListGenerator.moveListSize[depthFromRoot] = 1;
         }
 
+        bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
+
         int extendTTmove = 0;
         if (
         	extended <= 30 &&
@@ -520,8 +522,12 @@ struct Worker {
         		singularExtended++;
 
         		extendTTmove = 1;
+
         		if (!isPvNode && singularScore < singularBeta - 30)
         			extendTTmove++;
+
+        		if (!isPvNode && !isTTCapture && singularScore < singularBeta - 80)
+    				extendTTmove++;
 
         		// cout<<board.generateFEN()<<' '<<ttMove.convertToUCI()<<' '<<ttEntry.evaluation<<' '<<singularScore<<' '<<int(ttEntry.depth)<<'\n';
         	} else if (singularScore >= beta && MATE_SCORE - abs(singularScore) > maxDepth)
@@ -547,8 +553,6 @@ struct Worker {
             // accumB[i]=nnueEvaluator.hlSumB[i];
         }
         #endif
-
-        bool isTTCapture = (ttMove != Move() && !board.isQuietMove(ttMove));
 
         bool searchedTTmove = false;
 
