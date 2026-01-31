@@ -665,9 +665,6 @@ struct Worker {
             // cout<<move.convertToUCI()<<' '<<newStaticEval<<'\n';
 
 
-            if (extended <= 30 && depthFromRoot < maxDepth - 10 && moveGenerator.isInCheck(board, oppositeColor)) // if in check, search deeper for 1 ply
-                extendDepth++;
-
             int prevNodes = nodes;
 
             int score;
